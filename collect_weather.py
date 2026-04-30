@@ -277,14 +277,10 @@ def exporteer_json(df: pd.DataFrame):
     # Datum als string
     df["datum"] = df["datum"].astype(str)
 
-    # NaN → None
-    df = df.where(pd.notnull(df), other=None)
-# Forceer NaN → None via round-trip
-records = json.loads(
-    df.to_json(orient="records", force_ascii=False, default_handler=str)
-        .replace(": NaN", ": null")
-        .replace(":NaN", ":null")
-)
+    # NaN → null (NaN is invalid JSON)
+    json_str = df.to_json(orient="records", force_ascii=False, date_format="iso")
+    json_str = json_str.replace(": NaN", ": null").replace(":NaN", ":null")
+    records = json.loads(json_str)
 
     output = {
         "gegenereerd_op": str(date.today()),
@@ -297,7 +293,7 @@ records = json.loads(
     }
 
     with open(JSON_FILE, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2, default=str)
+        json.dump(output, f, ensure_ascii=False, indent=2)
 
     print(f"  → JSON opgeslagen: {JSON_FILE}  ({len(df)} rijen)")
 
