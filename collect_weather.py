@@ -278,7 +278,13 @@ def exporteer_json(df: pd.DataFrame):
     df["datum"] = df["datum"].astype(str)
 
     # NaN → None
-    df = df.where(pd.notnull(df), None)
+    df = df.where(pd.notnull(df), other=None)
+# Forceer NaN → None via round-trip
+records = json.loads(
+    df.to_json(orient="records", force_ascii=False, default_handler=str)
+        .replace(": NaN", ": null")
+        .replace(":NaN", ":null")
+)
 
     output = {
         "gegenereerd_op": str(date.today()),
@@ -287,7 +293,7 @@ def exporteer_json(df: pd.DataFrame):
             "lat":  LATITUDE,
             "lon":  LONGITUDE,
         },
-        "data": df.to_dict(orient="records"),
+        "data": records,
     }
 
     with open(JSON_FILE, "w", encoding="utf-8") as f:
