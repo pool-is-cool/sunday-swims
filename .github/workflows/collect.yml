@@ -1,0 +1,41 @@
+name: Collect weather & canal data
+
+on:
+  schedule:
+    # Every day at 08:00 Brussels time (= 07:00 UTC in winter, 06:00 UTC in summer)
+    # Using 06:00 UTC to cover both winter and summer time
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Also allows manual trigger via GitHub website (useful for testing)
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run data collection
+        env:
+          HIC_TOKEN: ${{ secrets.HIC_TOKEN }}
+        run: python collect_weather.py
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name  "Sunday Swims Bot"
+          git config user.email "bot@sundayswims"
+          git add data/sunday_swims_data.json
+          git diff --cached --quiet || git commit -m "data: update $(date +'%Y-%m-%d')"
+          git push
