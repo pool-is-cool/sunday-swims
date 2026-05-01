@@ -229,6 +229,55 @@ def laad_metingen() -> pd.DataFrame:
     print(f"  → {len(df)} handmatige meting(en) geladen uit metingen.csv")
     return df
 
+
+# ─── WEERSVOORSPELLING ───────────────────────────────────────────────────────
+
+def haal_voorspelling_op() -> list:
+    """Haalt de weersvoorspelling voor de komende 7 dagen op via Open-Meteo."""
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude":  LATITUDE,
+        "longitude": LONGITUDE,
+        "daily": [
+            "precipitation_sum",
+            "precipitation_probability_max",
+            "temperature_2m_max",
+            "temperature_2m_min",
+            "temperature_2m_mean",
+            "windspeed_10m_max",
+            "winddirection_10m_dominant",
+            "uv_index_max",
+            "sunshine_duration",
+            "cloudcover_mean",
+            "weathercode",
+        ],
+        "forecast_days": 7,
+        "timezone": "Europe/Brussels",
+    }
+
+    print("  → Weersvoorspelling ophalen (7 dagen)...")
+    r = requests.get(url, params=params, timeout=30)
+    r.raise_for_status()
+    d = r.json()
+
+    records = []
+    for i, datum in enumerate(d["daily"]["time"]):
+        records.append({
+            "datum":                  datum,
+            "temp_max_c":             d["daily"]["temperature_2m_max"][i],
+            "temp_min_c":             d["daily"]["temperature_2m_min"][i],
+            "temp_gemiddeld_c":       d["daily"]["temperature_2m_mean"][i],
+            "neerslag_mm":            d["daily"]["precipitation_sum"][i],
+            "neerslag_kans_pct":      d["daily"]["precipitation_probability_max"][i],
+            "windsnelheid_max_kmh":   d["daily"]["windspeed_10m_max"][i],
+            "windrichting_naam":      windrichting_naar_naam(d["daily"]["winddirection_10m_dominant"][i]),
+            "uv_index_max":           d["daily"]["uv_index_max"][i],
+            "zonneschijn_uur":        round(d["daily"]["sunshine_duration"][i] / 3600, 1) if d["daily"]["sunshine_duration"][i] else None,
+            "bewolking_pct":          d["daily"]["cloudcover_mean"][i],
+            "weathercode":            d["daily"]["weathercode"][i],
+        })
+    return records
+
 # ─── JSON ────────────────────────────────────────────────────────────────────
 
 def laad_bestaande_json() -> pd.DataFrame:
@@ -282,6 +331,8 @@ def exporteer_json(df: pd.DataFrame):
     json_str = json_str.replace(": NaN", ": null").replace(":NaN", ":null")
     records = json.loads(json_str)
 
+    voorspelling = haal_voorspelling_op()
+
     output = {
         "gegenereerd_op": str(date.today()),
         "locatie": {
@@ -290,6 +341,7 @@ def exporteer_json(df: pd.DataFrame):
             "lon":  LONGITUDE,
         },
         "data": records,
+        "voorspelling": voorspelling,
     }
 
     with open(JSON_FILE, "w", encoding="utf-8") as f:
