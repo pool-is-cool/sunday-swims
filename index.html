@@ -226,7 +226,7 @@ function renderCharts(data) {
       <div class="chart-wrap"><canvas id="chart-${i}"></canvas></div>
     </div>`
   ).join("");
-  requestAnimationFrame(() => defs.forEach((c,i) => makeMultiChart(`chart-${i}`, lbls, c.ds)));
+  setTimeout(() => defs.forEach((c,i) => makeMultiChart(`chart-${i}`, lbls, c.ds)), 50);
 }
 
 function renderQuality(data) {
