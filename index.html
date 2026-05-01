@@ -226,7 +226,20 @@ function renderCharts(data) {
       <div class="chart-wrap"><canvas id="chart-${i}"></canvas></div>
     </div>`
   ).join("");
-  setTimeout(() => defs.forEach((c,i) => makeMultiChart(`chart-${i}`, lbls, c.ds)), 50);
+  // Safari needs charts drawn after full layout paint
+const drawCharts = () => {
+  let allReady = true;
+  defs.forEach((c,i) => {
+    const el = document.getElementById(`chart-${i}`);
+    if (!el || el.offsetWidth === 0) { allReady = false; }
+  });
+  if (allReady) {
+    defs.forEach((c,i) => makeMultiChart(`chart-${i}`, lbls, c.ds));
+  } else {
+    setTimeout(drawCharts, 100);
+  }
+};
+setTimeout(drawCharts, 100);
 }
 
 function renderQuality(data) {
