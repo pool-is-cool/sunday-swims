@@ -1,5 +1,5 @@
 {
-  "gegenereerd_op": "2026-04-30",
+  "gegenereerd_op": "2026-05-01",
   "locatie": {
     "naam": "Kanaal Brussel-Charleroi, Anderlecht",
     "lat": 50.8403,
@@ -1895,6 +1895,27 @@
       "neerslag_48u_mm": 0.0,
       "neerslag_72u_mm": 0.0,
       "windrichting_naam": "O"
+    },
+    {
+      "datum": "2026-05-01",
+      "neerslag_mm": 0.0,
+      "neerslag_uren": 0.0,
+      "regen_mm": 0.0,
+      "sneeuw_cm": 0.0,
+      "buien_mm": 0.0,
+      "temp_max_c": 25.1,
+      "temp_min_c": 11.5,
+      "temp_gemiddeld_c": 18.6,
+      "windsnelheid_max_kmh": 15.1,
+      "windrichting_graden": 131.0,
+      "uv_index_max": 6.15,
+      "zonneschijn_uur": 13.82,
+      "bewolking_pct": 30.0,
+      "neerslag_max_mm_per_uur": 0.0,
+      "neerslag_24u_mm": 0.0,
+      "neerslag_48u_mm": 0.0,
+      "neerslag_72u_mm": 0.0,
+      "windrichting_naam": "ZO"
     }
   ]
 }
