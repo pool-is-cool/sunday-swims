@@ -177,11 +177,9 @@ function makeMultiChart(canvasId, labels, datasets) {
   return new Chart(ctx, {
     type:"line",
     data:{labels, datasets: datasets.map(ds => {
-      const g = ctx.createLinearGradient(0,0,0,160);
-      g.addColorStop(0, (ds.fill?ds.color:"transparent")+"28");
-      g.addColorStop(1,"transparent");
+      const bg = ds.fill ? (ds.color + "28") : "transparent";
       return {label:ds.label, data:ds.data, borderColor:ds.color, borderWidth:ds.bold?2.5:1.5,
-        backgroundColor:ds.fill?g:"transparent", pointRadius:0, pointHoverRadius:4,
+        backgroundColor:bg, pointRadius:0, pointHoverRadius:4,
         pointHoverBackgroundColor:ds.color, tension:0.4, fill:ds.fill||false, spanGaps:true,
         borderDash:ds.dashed?[4,3]:[]};
     })},
