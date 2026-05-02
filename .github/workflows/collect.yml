@@ -2,11 +2,14 @@ name: Collect weather & canal data
 
 on:
   schedule:
-    # Every day at 08:00 Brussels time (= 07:00 UTC in winter, 06:00 UTC in summer)
-    # Using 06:00 UTC to cover both winter and summer time
+    # Every day at 06:00 UTC (= 08:00 Brussels summer time)
     - cron: '0 6 * * *'
   workflow_dispatch:
-    # Also allows manual trigger via GitHub website (useful for testing)
+    # Manual trigger via GitHub website
+  push:
+    branches: [main]
+    paths:
+      - 'data/metingen.csv'
 
 permissions:
   contents: write
