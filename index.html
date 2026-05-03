@@ -382,39 +382,61 @@ function tail2months(arr, key) {
 function makeLineChart(canvasId, datasets, opts={}) {
   const el = document.getElementById(canvasId);
   if (!el) return;
-  const annotations = {};
-  if (opts.thresholds) {
-    opts.thresholds.forEach((t,i) => {
-      annotations[`line${i}`] = {
-        type:"line", yMin:t.val, yMax:t.val,
-        borderColor:t.color, borderWidth:1.5, borderDash:[5,4],
-        label:{display:true, content:t.label, position:"end",
-               backgroundColor:"transparent", color:t.color, font:{size:9}}
-      };
-    });
-  }
+
+  // Convert {x: date-string, y: value} to category axis
+  // Collect all unique dates across datasets, sorted
+  const allDates = [...new Set(datasets.flatMap(ds => ds.data.map(p => p.x)))].sort();
+  const labels = allDates.map(d => new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
+
+  // Build threshold lines as extra datasets (dashed horizontal lines)
+  const thresholdDatasets = (opts.thresholds||[]).map(t => ({
+    label: t.label,
+    data: allDates.map(() => t.val),
+    borderColor: t.color,
+    borderWidth: 1.5,
+    borderDash: [5,4],
+    pointRadius: 0,
+    fill: false,
+    spanGaps: true,
+    tension: 0,
+    backgroundColor: "transparent",
+  }));
+
+  const chartDatasets = datasets.map(ds => ({
+    label: ds.label,
+    data: allDates.map(d => {
+      const pt = ds.data.find(p => p.x === d);
+      return pt ? pt.y : null;
+    }),
+    borderColor: ds.color,
+    borderWidth: ds.bold ? 2.5 : 1.5,
+    backgroundColor: ds.color + "18",
+    pointRadius: allDates.length < 20 ? 5 : 3,
+    pointBackgroundColor: ds.color,
+    pointHoverRadius: 6,
+    tension: 0.3,
+    fill: false,
+    spanGaps: false,
+    borderDash: ds.dashed ? [4,3] : [],
+  }));
+
   return new Chart(el.getContext("2d"), {
-    type:"line",
-    data:{datasets: datasets.map(ds => ({
-      label:ds.label, data:ds.data,
-      borderColor:ds.color, borderWidth:ds.bold?2.5:1.5,
-      backgroundColor:ds.color+"18",
-      pointRadius:ds.data.length<30?4:2,
-      pointBackgroundColor:ds.color,
-      tension:0.3, fill:false, spanGaps:false,
-      borderDash:ds.dashed?[4,3]:[],
-    }))},
-    options:{responsive:true, maintainAspectRatio:false,
-      interaction:{mode:"index",intersect:false},
-      plugins:{
-        legend:{display:false},
-        tooltip:{backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(0,0,0,0.1)",borderWidth:1,padding:10},
-        annotation: opts.thresholds ? {annotations} : {}
+    type: "line",
+    data: { labels, datasets: [...chartDatasets, ...thresholdDatasets] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(13,27,42,0.9)",
+          borderColor: "rgba(0,0,0,0.1)", borderWidth: 1, padding: 10,
+          filter: item => item.datasetIndex < datasets.length, // hide threshold lines from tooltip
+        }
       },
-      scales:{
-        x:{type:"time", time:{unit:"day",displayFormats:{day:"d MMM"}},
-           grid:{color:"rgba(0,0,0,0.04)"}, ticks:{maxTicksLimit:8}},
-        y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{maxTicksLimit:5},min:0}
+      scales: {
+        x: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { maxTicksLimit: 8 } },
+        y: { grid: { color: "rgba(0,0,0,0.06)" }, ticks: { maxTicksLimit: 5 }, min: 0 }
       }
     }
   });
