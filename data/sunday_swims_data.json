@@ -3135,6 +3135,40 @@
       "notities": null
     }
   ],
+  "metingen": [
+    {
+      "datum": "2025-07-01",
+      "ss_watertemp_c": NaN,
+      "ss_ecoli": 130,
+      "ss_enterococcen": 11,
+      "ref1_watertemp_c": NaN,
+      "ref1_ecoli": NaN,
+      "ref1_enterococcen": NaN,
+      "ref2_watertemp_c": NaN,
+      "ref2_ecoli": NaN,
+      "ref2_enterococcen": NaN,
+      "ref3_watertemp_c": NaN,
+      "ref3_ecoli": NaN,
+      "ref3_enterococcen": NaN,
+      "notities": "for BIG JUMP 2025"
+    },
+    {
+      "datum": "2025-07-09",
+      "ss_watertemp_c": NaN,
+      "ss_ecoli": 360,
+      "ss_enterococcen": 230,
+      "ref1_watertemp_c": NaN,
+      "ref1_ecoli": NaN,
+      "ref1_enterococcen": NaN,
+      "ref2_watertemp_c": NaN,
+      "ref2_ecoli": NaN,
+      "ref2_enterococcen": NaN,
+      "ref3_watertemp_c": NaN,
+      "ref3_ecoli": NaN,
+      "ref3_enterococcen": NaN,
+      "notities": "for BIG JUMP 2025"
+    }
+  ],
   "voorspelling": [
     {
       "datum": "2026-05-03",
@@ -3167,8 +3201,8 @@
     {
       "datum": "2026-05-05",
       "temp_max_c": 13.6,
-      "temp_min_c": 10.1,
-      "temp_gemiddeld_c": 11.5,
+      "temp_min_c": 10.6,
+      "temp_gemiddeld_c": 11.9,
       "neerslag_mm": 7.95,
       "neerslag_kans_pct": 74,
       "windsnelheid_max_kmh": 18.4,
@@ -3180,9 +3214,9 @@
     },
     {
       "datum": "2026-05-06",
-      "temp_max_c": 12.6,
-      "temp_min_c": 7.1,
-      "temp_gemiddeld_c": 10.0,
+      "temp_max_c": 10.8,
+      "temp_min_c": 6.2,
+      "temp_gemiddeld_c": 7.8,
       "neerslag_mm": 3.1,
       "neerslag_kans_pct": 59,
       "windsnelheid_max_kmh": 22.3,
@@ -3194,9 +3228,9 @@
     },
     {
       "datum": "2026-05-07",
-      "temp_max_c": 12.5,
-      "temp_min_c": 4.6,
-      "temp_gemiddeld_c": 8.8,
+      "temp_max_c": 11.3,
+      "temp_min_c": 5.1,
+      "temp_gemiddeld_c": 8.5,
       "neerslag_mm": 0.0,
       "neerslag_kans_pct": 8,
       "windsnelheid_max_kmh": 6.6,
@@ -3208,9 +3242,9 @@
     },
     {
       "datum": "2026-05-08",
-      "temp_max_c": 15.5,
+      "temp_max_c": 14.6,
       "temp_min_c": 7.4,
-      "temp_gemiddeld_c": 11.7,
+      "temp_gemiddeld_c": 11.3,
       "neerslag_mm": 0.0,
       "neerslag_kans_pct": 29,
       "windsnelheid_max_kmh": 8.5,
