@@ -150,7 +150,7 @@
 
   <!-- 1. SWIMMING CONDITIONS TODAY -->
   <div class="swim-section">
-    <div class="swim-section-title">🏊 Swimming conditions — today</div>
+    <div class="swim-section-title" id="swim-title">🏊 Swimming conditions — today</div>
     <div class="swim-grid">
       <!-- Webcam -->
       <div class="swim-card">
@@ -182,6 +182,9 @@
   <!-- 2. WATER QUALITY -->
   <div id="water-quality">
     <div class="section-title">Water quality — latest measurements</div>
+    <div style="background:#fff8f5;border:1px solid #ffcc80;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--warn);line-height:1.6;">
+      <strong>⚠ Note:</strong> Water quality measurements are for now dummy/test data. Real laboratory analyses will be added as the project progresses.
+    </div>
 
     <div class="sub-section-title">Sunday Swims — Focus location</div>
     <div class="chart-card-full">
@@ -238,6 +241,12 @@
     <div class="cards-grid" id="canal-cards-grid"></div>
     <div class="sub-section-title">14-day history</div>
     <div class="charts-grid" id="canal-charts-grid"></div>
+  <div class="sub-section-title">Water temperature — focus location</div>
+    <div class="chart-card-full">
+      <div class="chart-title">Water temperature (°C) — past 2 months</div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>Water temp. (°C)</span></div>
+      <div class="chart-wrap"><canvas id="watertemp-chart"></canvas></div>
+    </div>
   </div>
 
   <!-- 5. AIS -->
@@ -285,7 +294,8 @@ const NORMS = {
   ecoli:        { vgood: 1000, acceptable: 2000 },
   enterococcen: { vgood: 400,  acceptable: 700  },
 };
-const PRECIP_THRESHOLDS = { low: 10, mid: 25, high: 50 };
+const PRECIP_THRESHOLDS    = { low: 10, mid: 25, high: 50 };
+const PRECIP_24H_THRESHOLDS = { low: 5,  mid: 15, high: 30 };
 
 const WMO = {
   0:["☀️","Clear"],1:["🌤️","Mostly clear"],2:["⛅","Partly cloudy"],3:["☁️","Overcast"],
@@ -346,6 +356,13 @@ function precipBadge(v) {
   if (v<PRECIP_THRESHOLDS.low)  return {label:"Low",cls:"precip-badge-green"};
   if (v<PRECIP_THRESHOLDS.mid)  return {label:"Moderate",cls:"precip-badge-yellow"};
   if (v<PRECIP_THRESHOLDS.high) return {label:"High",cls:"precip-badge-orange"};
+  return {label:"Very high",cls:"precip-badge-red"};
+}
+function precip24hBadge(v) {
+  if (v===null) return {label:"—",cls:"badge-nd"};
+  if (v<PRECIP_24H_THRESHOLDS.low)  return {label:"Low",cls:"precip-badge-green"};
+  if (v<PRECIP_24H_THRESHOLDS.mid)  return {label:"Moderate",cls:"precip-badge-yellow"};
+  if (v<PRECIP_24H_THRESHOLDS.high) return {label:"High",cls:"precip-badge-orange"};
   return {label:"Very high",cls:"precip-badge-red"};
 }
 function aisColor(mins) {
@@ -430,6 +447,12 @@ function makeMultiChart(canvasId, labels, datasets, dualAxis) {
 
 // SWIM SNAPSHOT
 function renderSwimSnapshot(data, forecast, metingen) {
+  // Set title with today's date
+  const todayDate = new Date();
+  const titleDate = todayDate.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const titleEl = document.getElementById("swim-title");
+  if (titleEl) titleEl.innerHTML = `🏊 Swimming conditions &mdash; ${titleDate}`;
+
   // Weather
   const today = forecast.find(f=>isToday(f.datum))||forecast[0];
   const [icon]= today?(WMO[today.weathercode]||["🌡️"]):["🌡️"];
@@ -448,12 +471,15 @@ function renderSwimSnapshot(data, forecast, metingen) {
   let lastDate="—";
   for(let i=metingen.length-1;i>=0;i--) if(metingen[i].ss_ecoli!=null){lastDate=dayMonthYear(metingen[i].datum);break;}
   const precip72 = last(data,"neerslag_72u_mm");
+  const precip24 = last(data,"neerslag_24u_mm");
   const pb = precipBadge(precip72);
+  const pb24 = precip24hBadge(precip24);
   document.getElementById("swim-water-content").innerHTML = `
     <div class="swim-row"><span class="swim-row-label">Water temp.</span><span class="swim-row-val">${waterTemp!==null?fmt(waterTemp,1)+" °C":"—"}</span></div>
     <div class="swim-row"><span class="swim-row-label">E. coli forecast</span><span class="swim-row-val na">— <span style="font-size:10px">(model pending)</span></span></div>
     <div class="swim-row"><span class="swim-row-label">E. coli (last lab)</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${ecoliLast!==null?fmt(ecoliLast,0)+" KVE":"—"}</span>${ecoliLast!==null?`<span class="quality-badge ${eb.cls}">${eb.label}</span>`:""}</div></div>
     <div class="swim-row"><span class="swim-row-label">Last sample</span><span class="swim-row-val" style="font-size:11px">${lastDate}</span></div>
+    <div class="swim-row"><span class="swim-row-label">Precip. 24h</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${fmt(precip24,1)} mm</span><span class="quality-badge ${pb24.cls}">${pb24.label}</span></div></div>
     <div class="swim-row"><span class="swim-row-label">Precip. 72h</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${fmt(precip72,1)} mm</span><span class="quality-badge ${pb.cls}">${pb.label}</span></div></div>
     <div style="margin-top:8px;font-size:10px;color:var(--mid);line-height:1.4;">Lab results have ~48h delay. Predictive model (Berlin/Copenhagen/Paris approach) planned for future phase.</div>
   `;
@@ -684,6 +710,12 @@ async function init() {
     renderWeatherCharts(data);
     renderCanalCharts(data);
     renderAIS();
+    // Water temp chart
+    setTimeout(()=>{
+      makeLineChart("watertemp-chart",
+        [{label:"Water temp.",data:tail2months(metingen,"ss_watertemp_c"),color:"#0891b2",bold:true}],
+        {});
+    },200);
 
     banner.className="ok";
     banner.innerHTML=`✓ &nbsp; ${data.length} days loaded — last entry: <strong>${data[data.length-1].datum}</strong>`;
