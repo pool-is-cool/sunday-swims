@@ -340,8 +340,9 @@ def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
     if alle_metingen is not None and not alle_metingen.empty:
         m = alle_metingen.copy()
         m["datum"] = m["datum"].astype(str)
-        m = m.where(pd.notnull(m), None)
-        metingen_records = m.to_dict(orient="records")
+        m_json = m.to_json(orient="records", force_ascii=False)
+        m_json = m_json.replace(": NaN", ": null").replace(":NaN", ":null")
+        metingen_records = json.loads(m_json)
 
     voorspelling = haal_voorspelling_op()
 
