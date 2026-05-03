@@ -126,6 +126,7 @@ function qualityBadge(v, type) {
 }
 function isToday(s) { return s===new Date().toISOString().slice(0,10); }
 function dayMonth(s) { return new Date(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
+function dayMonthYear(s) { return new Date(s).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }
 function weekday(s) { return new Date(s).toLocaleDateString("en-GB",{weekday:"short"}); }
 
 function renderForecast(forecast) {
@@ -251,7 +252,7 @@ function renderQuality(data) {
     const temp=last(data,`${loc.key}_watertemp_c`), ecoli=last(data,`${loc.key}_ecoli`), entero=last(data,`${loc.key}_enterococcen`);
     const eb=qualityBadge(ecoli,"ecoli"), nb=qualityBadge(entero,"enterococcen");
     let lastDate="—";
-    for (let i=data.length-1;i>=0;i--) if (data[i][`${loc.key}_ecoli`]!=null){lastDate=dayMonth(data[i].datum);break;}
+    for (let i=data.length-1;i>=0;i--) if (data[i][`${loc.key}_ecoli`]!=null){lastDate=dayMonthYear(data[i].datum);break;}
     return `<div class="quality-card">
       <div class="quality-card-title">${loc.label}</div>
       <div class="quality-row"><span>Water temp.</span><span class="quality-val">${temp!==null?fmt(temp,1)+" °C":"—"}</span></div>
