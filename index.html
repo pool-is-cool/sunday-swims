@@ -112,7 +112,7 @@ const WMO = {
   85:["🌨️","Snow shower"],95:["⛈️","Thunderstorm"],99:["⛈️","Thunderstorm"]
 };
 Chart.defaults.color = "#546e7a";
-Chart.defaults.font.family = "'Roboto Mono', monospace";
+Chart.defaults["font"]["family"] = "'Roboto Mono', monospace";
 Chart.defaults.font.size = 10;
 
 function fmt(v, d=1) { return (v===null||v===undefined) ? "—" : Number(v).toFixed(d); }
@@ -265,10 +265,11 @@ function renderQuality(data) {
 async function init() {
   const banner = document.getElementById("status-banner");
   try {
-    console.log("Starting fetch from:", DATA_URL);
-    const res = await fetch(DATA_URL);
+    const res = await fetch(DATA_URL, {cache: "no-cache", headers: {"Accept": "application/json"}});
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
+    const text = await res.text();
+    console.log("Raw response first 100 chars:", text.slice(0,100));
+    const json = JSON.parse(text);
     const data = json.data, forecast = json.voorspelling||[];
     if (!data||data.length===0) throw new Error("No data in file");
     banner.className="ok";
