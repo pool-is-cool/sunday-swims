@@ -265,6 +265,7 @@ function renderQuality(data) {
 async function init() {
   const banner = document.getElementById("status-banner");
   try {
+    console.log("Starting fetch from:", DATA_URL);
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
