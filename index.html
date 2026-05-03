@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUNDAY SWIMS — Canal Water Data</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue:    #1565c0; --blue-mid: #1976d2; --blue-light: #e3f2fd;
+      --text:    #1a1a2e; --mid:  #546e7a; --border: #cfd8dc;
+      --bg:      #f5f7fa; --card: #ffffff;
+      --accent:  #f97316; --good: #2e7d32; --warn: #e65100; --bad: #c62828;
+      --sans:    'Roboto', sans-serif;
+      --mono:    'Roboto Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+    .water-bg { display: none; }
+    .wave { display: none; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+    header { padding: 48px 0 32px; border-bottom: 2px solid var(--blue); margin-bottom: 40px; }
+    .header-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue-mid); margin-bottom: 10px; }
+    h1 { font-family: var(--sans); font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.1; color: var(--blue); letter-spacing: -0.01em; }
+    h1 em { font-style: normal; font-weight: 300; color: var(--mid); }
+    .header-sub { margin-top: 12px; font-family: var(--mono); font-size: 12px; color: var(--mid); display: flex; gap: 24px; flex-wrap: wrap; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out infinite; display: inline-block; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.4);} }
+    #status-banner { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; margin-bottom: 40px; font-family: var(--mono); font-size: 12px; color: var(--mid); }
+    #status-banner.error { border-color: #ef9a9a; background: #ffebee; color: var(--bad); }
+    #status-banner.ok    { border-color: #a5d6a7; background: #e8f5e9; color: var(--good); }
+    .section-title { font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--blue-mid); margin-bottom: 18px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .forecast-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 48px; }
+    @media (max-width: 700px) { .forecast-strip { grid-template-columns: repeat(4, 1fr); } }
+    .forecast-day { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; text-align: center; transition: box-shadow 0.2s, transform 0.2s; }
+    .forecast-day.today { border-color: var(--blue); background: var(--blue-light); }
+    .forecast-day:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .fc-weekday { font-family: var(--sans); font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); margin-bottom: 4px; }
+    .fc-date    { font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px; }
+    .fc-icon    { font-size: 1.6rem; margin-bottom: 6px; }
+    .fc-temps   { font-family: var(--mono); font-size: 1rem; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+    .fc-temps span { font-size: 0.75rem; color: var(--mid); }
+    .fc-precip  { font-family: var(--mono); font-size: 10px; color: var(--blue-mid); margin-bottom: 2px; }
+    .fc-wind    { font-family: var(--mono); font-size: 10px; color: var(--mid); }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 48px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: box-shadow 0.2s, transform 0.2s; }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .card-label { font-family: var(--sans); font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 8px; }
+    .card-value { font-family: var(--mono); font-size: 1.9rem; font-weight: 500; color: var(--blue); line-height: 1; margin-bottom: 2px; }
+    .card-unit  { font-family: var(--mono); font-size: 11px; color: var(--mid); margin-bottom: 10px; }
+    .card-trend { font-family: var(--mono); font-size: 11px; color: var(--mid); }
+    .up { color: var(--bad); } .down { color: var(--good); }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 20px; margin-bottom: 48px; }
+    @media (max-width: 580px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+    .chart-title { font-family: var(--sans); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); margin-bottom: 6px; }
+    .chart-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-family: var(--sans); font-size: 11px; color: var(--mid); }
+    .legend-dot  { width: 10px; height: 3px; border-radius: 2px; }
+    .chart-wrap  { position: relative; height: 160px; }
+    .quality-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 48px; }
+    .quality-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    .quality-card-title { font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin-bottom: 14px; }
+    .quality-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+    .quality-row:last-child { border-bottom: none; }
+    .quality-val { font-family: var(--mono); font-weight: 500; font-size: 1.1rem; color: var(--text); }
+    .quality-badge { font-family: var(--sans); font-size: 9px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; }
+    .badge-good { background: #e8f5e9; color: var(--good); }
+    .badge-warn { background: #fff3e0; color: var(--warn); }
+    .badge-bad  { background: #ffebee; color: var(--bad); }
+    .badge-nd   { background: #f5f5f5;  color: var(--mid); }
+    footer { border-top: 1px solid var(--border); padding-top: 28px; font-family: var(--mono); font-size: 11px; color: var(--mid); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    footer a { color: var(--mid); text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="water-bg"><div class="wave"></div><div class="wave"></div><div class="wave"></div></div>
+<div class="container">
+  <header>
+    <div class="header-label">Pool is Cool — Canal Monitoring</div>
+    <h1>Sunday <em>Swims</em></h1>
+    <div class="header-sub">
+      <span><div class="dot"></div> Live data — Anderlecht, Brussels</span>
+      <span id="last-updated">Loading...</span>
+    </div>
+  </header>
+  <div id="status-banner">⟳ &nbsp; Loading data...</div>
+  <div class="section-title">Weather forecast — next 7 days</div>
+  <div class="forecast-strip" id="forecast-strip"></div>
+  <div class="section-title">Current conditions — last recorded day</div>
+  <div class="cards-grid" id="cards-grid"></div>
+  <div class="section-title">Water quality — latest measurements</div>
+  <div class="quality-grid" id="quality-grid"></div>
+  <div class="section-title">14-day history</div>
+  <div class="charts-grid" id="charts-grid"></div>
+  <footer>
+    <span>Weather: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> &nbsp;|&nbsp; Canal: MOW-HIC / waterinfo.vlaanderen.be</span>
+    <span><a href="https://pooliscool.org" target="_blank">Pool is Cool</a></span>
+    <span id="footer-date"></span>
+  </footer>
+</div>
+<script>
+const DATA_URL = "/sunday-swims/data/sunday_swims_data.json";
+const NORMS = { ecoli: { good: 500, sufficient: 1000 }, enterococcen: { good: 200, sufficient: 400 } };
+const WMO = {
+  0:["☀️","Clear"],1:["🌤️","Mostly clear"],2:["⛅","Partly cloudy"],3:["☁️","Overcast"],
+  45:["🌫️","Fog"],48:["🌫️","Fog"],51:["🌦️","Drizzle"],53:["🌦️","Drizzle"],55:["🌦️","Drizzle"],
+  61:["🌧️","Rain"],63:["🌧️","Rain"],65:["🌧️","Heavy rain"],71:["🌨️","Snow"],73:["🌨️","Snow"],
+  75:["❄️","Heavy snow"],80:["🌦️","Showers"],81:["🌧️","Showers"],82:["⛈️","Heavy showers"],
+  85:["🌨️","Snow shower"],95:["⛈️","Thunderstorm"],99:["⛈️","Thunderstorm"]
+};
+Chart.defaults.color = "#546e7a";
+Chart.defaults.font.family = "'Roboto Mono', monospace";
+Chart.defaults.font.size = 10;
+
+function fmt(v, d=1) { return (v===null||v===undefined) ? "—" : Number(v).toFixed(d); }
+function last(arr, key) { for (let i=arr.length-1;i>=0;i--) if (arr[i][key]!=null) return arr[i][key]; return null; }
+function tail14(arr, key) { return arr.slice(-14).map(r => r[key]??null); }
+function labels14(arr) { return arr.slice(-14).map(r => new Date(r.datum).toLocaleDateString("en-GB",{day:"numeric",month:"short"})); }
+function qualityBadge(v, type) {
+  if (v===null) return {label:"No data",cls:"badge-nd"};
+  const n=NORMS[type];
+  return v<=n.good ? {label:"Good",cls:"badge-good"} : v<=n.sufficient ? {label:"Sufficient",cls:"badge-warn"} : {label:"Poor",cls:"badge-bad"};
+}
+function isToday(s) { return s===new Date().toISOString().slice(0,10); }
+function dayMonth(s) { return new Date(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
+function weekday(s) { return new Date(s).toLocaleDateString("en-GB",{weekday:"short"}); }
+
+function renderForecast(forecast) {
+  document.getElementById("forecast-strip").innerHTML = forecast.map(f => {
+    const [icon] = WMO[f.weathercode]||["🌡️"];
+    return `<div class="forecast-day ${isToday(f.datum)?"today":""}">
+      <div class="fc-weekday">${isToday(f.datum)?"Today":weekday(f.datum)}</div>
+      <div class="fc-date">${dayMonth(f.datum)}</div>
+      <div class="fc-icon">${icon}</div>
+      <div class="fc-temps">${fmt(f.temp_max_c,0)}° <span>/ ${fmt(f.temp_min_c,0)}°</span></div>
+      <div class="fc-precip">💧 ${fmt(f.neerslag_mm,1)} mm &nbsp; ${f.neerslag_kans_pct??"—"}%</div>
+      <div class="fc-wind">💨 ${fmt(f.windsnelheid_max_kmh,0)} km/h ${f.windrichting_naam??""}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderCards(data) {
+  const latest = data[data.length-1];
+  const cards = [
+    {label:"Precipitation",   key:"neerslag_mm",         unit:"mm/day",dec:1},
+    {label:"Precip. 72h",     key:"neerslag_72u_mm",     unit:"mm",    dec:1},
+    {label:"Temp. max",       key:"temp_max_c",           unit:"°C",    dec:1},
+    {label:"Temp. min",       key:"temp_min_c",           unit:"°C",    dec:1},
+    {label:"Wind speed",      key:"windsnelheid_max_kmh", unit:"km/h",  dec:0},
+    {label:"Wind direction",  key:"windrichting_naam",    unit:"",      isText:true},
+    {label:"UV index",        key:"uv_index_max",         unit:"",      dec:1},
+    {label:"Sunshine",        key:"zonneschijn_uur",      unit:"h",     dec:1},
+    {label:"Cloud cover",     key:"bewolking_pct",        unit:"%",     dec:0},
+    {label:"Canal flow (avg)",key:"kanaal_afvoer_gem",    unit:"m³/s",  dec:2},
+    {label:"Canal flow (min)",key:"kanaal_afvoer_min",    unit:"m³/s",  dec:2},
+    {label:"Canal level",     key:"kanaal_peil_gem",      unit:"cm",    dec:1},
+  ];
+  document.getElementById("cards-grid").innerHTML = cards.map(c => {
+    const raw = latest[c.key];
+    const val = (raw===null||raw===undefined) ? "—" : c.isText ? raw : fmt(raw,c.dec);
+    let trend = "&nbsp;";
+    if (!c.isText && data.length>=8) {
+      const prev = data[data.length-8][c.key];
+      if (prev!==null && raw!==null) {
+        const diff = raw-prev, cls=diff>0.05?"up":diff<-0.05?"down":"", arrow=diff>0.05?"↑":diff<-0.05?"↓":"→";
+        trend = `<span class="${cls}">${arrow} ${Math.abs(diff).toFixed(1)} vs 7d ago</span>`;
+      }
+    }
+    return `<div class="card"><div class="card-label">${c.label}</div><div class="card-value">${val}</div><div class="card-unit">${c.unit}</div><div class="card-trend">${trend}</div></div>`;
+  }).join("");
+}
+
+function makeMultiChart(canvasId, labels, datasets, dualAxis) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  const scales = {
+    x:{grid:{color:"rgba(212,234,247,0.04)"},ticks:{maxTicksLimit:7}},
+    y:{grid:{color:"rgba(212,234,247,0.06)"},ticks:{maxTicksLimit:5},position:"left"}
+  };
+  if (dualAxis) {
+    scales.y1 = {grid:{display:false}, ticks:{maxTicksLimit:5,color:"#fbbf24"}, position:"right"};
+  }
+  return new Chart(ctx, {
+    type:"line",
+    data:{labels, datasets: datasets.map(ds => {
+      const bg = ds.fill ? (ds.color + "28") : "transparent";
+      return {label:ds.label, data:ds.data, borderColor:ds.color, borderWidth:ds.bold?2.5:1.5,
+        backgroundColor:bg, pointRadius:0, pointHoverRadius:4,
+        pointHoverBackgroundColor:ds.color, tension:0.4, fill:ds.fill||false, spanGaps:true,
+        borderDash:ds.dashed?[4,3]:[],
+        yAxisID:ds.yAxisID||"y"};
+    })},
+    options:{responsive:true, maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{legend:{display:false}, tooltip:{backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(212,234,247,0.15)",borderWidth:1,padding:10}},
+      scales
+    }
+  });
+}
+
+function renderCharts(data) {
+  const lbls = labels14(data);
+  const defs = [
+    {title:"Temperature", legend:[{l:"Max",c:"#f97316"},{l:"Mean",c:"#fbbf24"},{l:"Min",c:"#94a3b8"}],
+     ds:[{label:"Max",data:tail14(data,"temp_max_c"),color:"#f97316",bold:true},
+         {label:"Mean",data:tail14(data,"temp_gemiddeld_c"),color:"#fbbf24",dashed:true},
+         {label:"Min",data:tail14(data,"temp_min_c"),color:"#94a3b8"}]},
+    {title:"Precipitation", legend:[{l:"Daily (mm)",c:"#60a5fa"},{l:"72h cumul.",c:"#3b82f6"}],
+     ds:[{label:"Daily",data:tail14(data,"neerslag_mm"),color:"#60a5fa",fill:true,bold:true},
+         {label:"72h",data:tail14(data,"neerslag_72u_mm"),color:"#3b82f6",dashed:true}]},
+    {title:"Cloud cover & UV", legend:[{l:"Cloud cover (%)",c:"#64748b"},{l:"UV index",c:"#fbbf24"}], dualAxis:true,
+     ds:[{label:"Cloud cover (%)",data:tail14(data,"bewolking_pct"),color:"#64748b",fill:true,yAxisID:"y"},
+         {label:"UV index",data:tail14(data,"uv_index_max"),color:"#fbbf24",bold:true,yAxisID:"y1"}]},
+    {title:"Wind speed", legend:[{l:"Max km/h",c:"#a78bfa"}],
+     ds:[{label:"Wind",data:tail14(data,"windsnelheid_max_kmh"),color:"#a78bfa",fill:true}]},
+    {title:"Canal flow", legend:[{l:"Average",c:"#22d3ee"},{l:"Min (reversal)",c:"#0891b2"}],
+     ds:[{label:"Avg",data:tail14(data,"kanaal_afvoer_gem"),color:"#22d3ee",bold:true},
+         {label:"Min",data:tail14(data,"kanaal_afvoer_min"),color:"#0891b2",dashed:true}]},
+    {title:"Water level — canal & Ruisbroek", legend:[{l:"Canal",c:"#0ea5e9"},{l:"Upstream",c:"#06b6d4"},{l:"Downstream",c:"#0284c7"}],
+     ds:[{label:"Canal",data:tail14(data,"kanaal_peil_gem"),color:"#0ea5e9",bold:true},
+         {label:"Upstr.",data:tail14(data,"ruisbroek_opw_peil_gem"),color:"#06b6d4"},
+         {label:"Downstr.",data:tail14(data,"ruisbroek_afw_peil_gem"),color:"#0284c7",dashed:true}]},
+  ];
+  document.getElementById("charts-grid").innerHTML = defs.map((c,i) =>
+    `<div class="chart-card">
+      <div class="chart-title">${c.title}</div>
+      <div class="chart-legend">${c.legend.map(l=>`<span class="legend-item"><span class="legend-dot" style="background:${l.c}"></span>${l.l}</span>`).join("")}</div>
+      <div class="chart-wrap"><canvas id="chart-${i}"></canvas></div>
+    </div>`
+  ).join("");
+  const drawCharts = () => {
+  let allReady = true;
+  defs.forEach((c,i) => {
+    const el = document.getElementById(`chart-${i}`);
+    if (!el || el.offsetWidth === 0) { allReady = false; }
+  });
+  if (allReady) {
+    defs.forEach((c,i) => makeMultiChart(`chart-${i}`, lbls, c.ds, c.dualAxis||false));
+  } else {
+    setTimeout(drawCharts, 100);
+  }
+};
+setTimeout(drawCharts, 100);
+}
+
+function renderQuality(data) {
+  const locs = [{key:"ss",label:"Sunday Swims — Focus"},{key:"ref1",label:"Reference 1"},{key:"ref2",label:"Reference 2"},{key:"ref3",label:"Reference 3"}];
+  document.getElementById("quality-grid").innerHTML = locs.map(loc => {
+    const temp=last(data,`${loc.key}_watertemp_c`), ecoli=last(data,`${loc.key}_ecoli`), entero=last(data,`${loc.key}_enterococcen`);
+    const eb=qualityBadge(ecoli,"ecoli"), nb=qualityBadge(entero,"enterococcen");
+    let lastDate="—";
+    for (let i=data.length-1;i>=0;i--) if (data[i][`${loc.key}_ecoli`]!=null){lastDate=dayMonth(data[i].datum);break;}
+    return `<div class="quality-card">
+      <div class="quality-card-title">${loc.label}</div>
+      <div class="quality-row"><span>Water temp.</span><span class="quality-val">${temp!==null?fmt(temp,1)+" °C":"—"}</span></div>
+      <div class="quality-row"><span>E. coli</span><div style="display:flex;align-items:center;gap:8px;"><span class="quality-val">${ecoli!==null?fmt(ecoli,0):"—"}</span><span class="quality-badge ${eb.cls}">${eb.label}</span></div></div>
+      <div class="quality-row"><span>Enterococci</span><div style="display:flex;align-items:center;gap:8px;"><span class="quality-val">${entero!==null?fmt(entero,0):"—"}</span><span class="quality-badge ${nb.cls}">${nb.label}</span></div></div>
+      <div style="margin-top:12px;font-size:10px;color:var(--mid);">Last sample: ${lastDate}</div>
+    </div>`;
+  }).join("");
+}
+
+async function init() {
+  const banner = document.getElementById("status-banner");
+  try {
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const data = json.data, forecast = json.voorspelling||[];
+    if (!data||data.length===0) throw new Error("No data in file");
+    banner.className="ok";
+    banner.innerHTML=`✓ &nbsp; ${data.length} days loaded — last entry: <strong>${data[data.length-1].datum}</strong>`;
+    document.getElementById("last-updated").textContent=`Generated: ${json.gegenereerd_op}`;
+    document.getElementById("footer-date").textContent=`Last updated: ${json.gegenereerd_op}`;
+    const metingen = json.metingen && json.metingen.length > 0 ? json.metingen : data;
+    if (forecast.length>0) renderForecast(forecast);
+    renderCards(data);
+    renderQuality(metingen);
+    renderCharts(data);
+  } catch(err) {
+    banner.className="error";
+    banner.innerHTML=`✗ &nbsp; Could not load data: ${err.message}. Make sure <code>sunday_swims_data.json</code> is in the same folder as this file.`;
+  }
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
