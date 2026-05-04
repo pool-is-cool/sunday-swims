@@ -1,12 +1,12 @@
 datum,ss_watertemp_c,ss_ecoli,ss_enterococcen,cyano_observatie,cyano_microcystins,ref1_watertemp_c,ref1_ecoli,ref1_enterococcen,ref2_watertemp_c,ref2_ecoli,ref2_enterococcen,ref3_watertemp_c,ref3_ecoli,ref3_enterococcen,notities
-2025-07-01,,130,11,,,,,,,,,,,,for BIG JUMP 2025
-2025-07-09,,360,230,,,,,,,,,,,,for BIG JUMP 2025
-2026-03-03,7,410,24,,,,,,,,,,,,dummy data
-2026-03-10,11,130,120,,,,,,,,,,,,dummy data
-2026-03-17,10,210,200,,,,,,,,,,,,dummy data
-2026-03-24,8,1200,800,,,,,,,,,,,,dummy data
-2026-04-01,13,400,360,,,,,,,,,,,,dummy data
-2026-04-07,15,50,110,,,,,,,,,,,,dummy data
-2026-04-14,14,120,20,,,,,,,,,,,,dummy data
-2026-04-21,13,10,24,,,,,,,,,,,,dummy data
-2026-04-28,15,70,36,,,,,,,,,,,,dummy data
+2025-07-01,,130,11,0,,,,,,,,,,,for BIG JUMP 2025
+2025-07-09,,360,230,0,,,,,,,,,,,for BIG JUMP 2025
+2026-03-03,7,410,24,1,,,,,,,,,,,dummy data
+2026-03-10,11,130,120,1,15,,,,,,,,,,dummy data
+2026-03-17,10,210,200,0,,,,,,,,,,,dummy data
+2026-03-24,8,1200,800,0,,,,,,,,,,,dummy data
+2026-04-01,13,400,360,0,,,,,,,,,,,dummy data
+2026-04-07,15,50,110,0,,,,,,,,,,,dummy data
+2026-04-14,14,120,20,0,,,,,,,,,,,dummy data
+2026-04-21,13,10,24,0,,,,,,,,,,,dummy data
+2026-04-28,15,70,36,0,,,,,,,,,,,dummy data
