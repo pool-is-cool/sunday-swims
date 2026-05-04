@@ -3565,7 +3565,7 @@
       "neerslag_kans_pct": 84,
       "windsnelheid_max_kmh": 10.4,
       "windrichting_naam": "Z",
-      "uv_index_max": 4.8,
+      "uv_index_max": 4.55,
       "zonneschijn_uur": 0.2,
       "bewolking_pct": 100,
       "weathercode": 55
@@ -3579,7 +3579,7 @@
       "neerslag_kans_pct": 90,
       "windsnelheid_max_kmh": 17.6,
       "windrichting_naam": "N",
-      "uv_index_max": 2.35,
+      "uv_index_max": 2.4,
       "zonneschijn_uur": null,
       "bewolking_pct": 100,
       "weathercode": 63
@@ -3593,7 +3593,7 @@
       "neerslag_kans_pct": 93,
       "windsnelheid_max_kmh": 17.6,
       "windrichting_naam": "N",
-      "uv_index_max": 2.65,
+      "uv_index_max": 0.55,
       "zonneschijn_uur": 1.8,
       "bewolking_pct": 97,
       "weathercode": 63
@@ -3607,7 +3607,7 @@
       "neerslag_kans_pct": 19,
       "windsnelheid_max_kmh": 12.3,
       "windrichting_naam": "N",
-      "uv_index_max": 6.15,
+      "uv_index_max": 4.75,
       "zonneschijn_uur": 5.0,
       "bewolking_pct": 93,
       "weathercode": 51
@@ -3621,7 +3621,7 @@
       "neerslag_kans_pct": 15,
       "windsnelheid_max_kmh": 8.5,
       "windrichting_naam": "ZO",
-      "uv_index_max": 6.35,
+      "uv_index_max": 6.1,
       "zonneschijn_uur": 14.1,
       "bewolking_pct": 96,
       "weathercode": 51
@@ -3635,7 +3635,7 @@
       "neerslag_kans_pct": 70,
       "windsnelheid_max_kmh": 12.8,
       "windrichting_naam": "Z",
-      "uv_index_max": 5.95,
+      "uv_index_max": 5.9,
       "zonneschijn_uur": 14.9,
       "bewolking_pct": 59,
       "weathercode": 61
@@ -3649,7 +3649,7 @@
       "neerslag_kans_pct": 61,
       "windsnelheid_max_kmh": 10.5,
       "windrichting_naam": "O",
-      "uv_index_max": 4.85,
+      "uv_index_max": 4.5,
       "zonneschijn_uur": 2.6,
       "bewolking_pct": 87,
       "weathercode": 51
