@@ -205,6 +205,16 @@
       </div>
       <div class="chart-wrap"><canvas id="entero-focus-chart"></canvas></div>
     </div>
+    <div class="chart-card-full">
+      <div class="chart-title">Cyanobacteria — observations &amp; microcystins (past 2 months)</div>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#e65100"></span>Microcystins (µg/l)</span>
+        <span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#39ff14;margin-right:3px;border:1px solid #ccc;"></span>Visual observation</span>
+        <span class="legend-item"><span class="legend-dash" style="border-color:#c62828"></span>Limit 10 µg/l</span>
+      </div>
+      <div class="chart-wrap"><canvas id="cyano-chart"></canvas></div>
+    </div>
+
     <div style="margin-bottom:24px">
       <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Last 8 measurements — focus location</div>
       <table class="quality-table" id="focus-measurements-table"></table>
@@ -492,6 +502,21 @@ function renderSwimSnapshot(data, forecast, metingen) {
   const eb = qualityBadge(ecoliLast,"ecoli");
   let lastDate="—";
   for(let i=metingen.length-1;i>=0;i--) if(metingen[i].ss_ecoli!=null){lastDate=dayMonthYear(metingen[i].datum);break;}
+  // Cyanobacteria latest observation
+  let cyanoVal = "No recent data", cyanoStyle = "color:var(--mid)";
+  for(let i=metingen.length-1;i>=0;i--) {
+    const obs = metingen[i].cyano_observatie;
+    if(obs!==null&&obs!==undefined) {
+      const d = dayMonthYear(metingen[i].datum);
+      const isObs = obs===1||obs==="1"||String(obs).toLowerCase()==="yes";
+      cyanoVal  = isObs ? `⚠ Observed (${d})` : `Not observed (${d})`;
+      cyanoStyle = isObs ? "color:#39ff14;font-weight:600;text-shadow:0 0 6px #39ff1460" : "color:var(--mid)";
+      break;
+    }
+  }
+  const cyanoEl = document.getElementById("swim-cyano-val");
+  if(cyanoEl){ cyanoEl.textContent=cyanoVal; cyanoEl.style.cssText=cyanoStyle; }
+
   const precip72 = last(data,"neerslag_72u_mm");
   const precip24 = last(data,"neerslag_24u_mm");
   const pb = precipBadge(precip72);
@@ -503,6 +528,7 @@ function renderSwimSnapshot(data, forecast, metingen) {
     <div class="swim-row"><span class="swim-row-label">Last sample</span><span class="swim-row-val" style="font-size:11px">${lastDate}</span></div>
     <div class="swim-row"><span class="swim-row-label">Precip. 24h</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${fmt(precip24,1)} mm</span><span class="quality-badge ${pb24.cls}">${pb24.label}</span></div></div>
     <div class="swim-row"><span class="swim-row-label">Precip. 72h</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${fmt(precip72,1)} mm</span><span class="quality-badge ${pb.cls}">${pb.label}</span></div></div>
+    <div class="swim-row"><span class="swim-row-label">Cyanobacteria</span><span class="swim-row-val" id="swim-cyano-val">—</span></div>
     <div style="margin-top:8px;font-size:10px;color:var(--mid);line-height:1.4;">Lab results have ~48h delay. Predictive model (Berlin/Copenhagen/Paris approach) planned for future phase.</div>
   `;
 
@@ -680,17 +706,35 @@ function renderWaterQualityCharts(metingen) {
   const eb8 = last8.map(r=>qualityBadge(r.ss_ecoli,"ecoli"));
   const nb8 = last8.map(r=>qualityBadge(r.ss_enterococcen,"enterococcen"));
   document.getElementById("focus-measurements-table").innerHTML =
-    `<thead><tr><th>Date</th><th>Water temp.</th><th>E. coli</th><th></th><th>Enterococci</th><th></th></tr></thead><tbody>` +
-    last8.map((r,i)=>`<tr>
-      <td>${dayMonthYear(r.datum)}</td>
-      <td>${r.ss_watertemp_c!=null?fmt(r.ss_watertemp_c,1)+" °C":"—"}</td>
-      <td>${r.ss_ecoli!=null?fmt(r.ss_ecoli,0):"—"}</td>
-      <td>${r.ss_ecoli!=null?`<span class="quality-badge ${eb8[i].cls}">${eb8[i].label}</span>`:""}</td>
-      <td>${r.ss_enterococcen!=null?fmt(r.ss_enterococcen,0):"—"}</td>
-      <td>${r.ss_enterococcen!=null?`<span class="quality-badge ${nb8[i].cls}">${nb8[i].label}</span>`:""}</td>
-    </tr>`).join("") +
-    (last8.length===0?`<tr><td colspan="6" style="color:var(--mid);padding:12px 10px">No measurements yet</td></tr>`:"") +
+    `<thead><tr><th>Date</th><th>Water temp.</th><th>E. coli</th><th></th><th>Enterococci</th><th></th><th>Cyano obs.</th><th>Microcystins (µg/l)</th><th></th></tr></thead><tbody>` +
+    last8.map((r,i)=>{
+      const obs = r.cyano_observatie;
+      const isObs = obs===1||obs==="1"||String(obs).toLowerCase()==="yes";
+      const cyanoStr = (obs===null||obs===undefined) ? "—"
+        : isObs ? `<span style="color:#2d7a00;font-weight:600;background:#e8ffcc;padding:2px 7px;border-radius:10px;">Yes</span>`
+                : "No";
+      const micro = r.cyano_microcystins;
+      const microBadge = (micro!==null&&micro!==undefined)
+        ? (micro>10 ? `<span class="quality-badge badge-bad">Above limit</span>`
+                    : `<span class="quality-badge badge-vgood">Below limit</span>`)
+        : "";
+      return `<tr>
+        <td>${dayMonthYear(r.datum)}</td>
+        <td>${r.ss_watertemp_c!=null?fmt(r.ss_watertemp_c,1)+" °C":"—"}</td>
+        <td>${r.ss_ecoli!=null?fmt(r.ss_ecoli,0):"—"}</td>
+        <td>${r.ss_ecoli!=null?`<span class="quality-badge ${eb8[i].cls}">${eb8[i].label}</span>`:""}</td>
+        <td>${r.ss_enterococcen!=null?fmt(r.ss_enterococcen,0):"—"}</td>
+        <td>${r.ss_enterococcen!=null?`<span class="quality-badge ${nb8[i].cls}">${nb8[i].label}</span>`:""}</td>
+        <td>${cyanoStr}</td>
+        <td>${(micro!==null&&micro!==undefined)?fmt(micro,2):"—"}</td>
+        <td>${microBadge}</td>
+      </tr>`;
+    }).join("") +
+    (last8.length===0?`<tr><td colspan="9" style="color:var(--mid);padding:12px 10px">No measurements yet</td></tr>`:"") +
     `</tbody>`;
+  // footnote
+  const tbl = document.getElementById("focus-measurements-table");
+  if(tbl) tbl.insertAdjacentHTML("afterend","<div style='font-size:10px;color:var(--mid);margin-top:6px;'>Cyano obs. = visual cyanobacteria observation. Microcystins in µg/l. WHO guideline limit: 10 µg/l.</div>");
 }
 
 // AIS
@@ -732,6 +776,68 @@ async function init() {
     renderWeatherCharts(data);
     renderCanalCharts(data);
     renderAIS();
+    // Cyano chart
+    setTimeout(()=>{
+      const cyanoData = tail2months(metingen,"cyano_microcystins");
+      const obsData   = tail2months(metingen,"cyano_observatie")
+        .filter(p => p.y===1||p.y==="1"||String(p.y).toLowerCase()==="yes")
+        .map(p => ({x:p.x, y:0.5})); // place dots at y=0.5 for visibility
+
+      // Build combined date labels
+      const allDates = [...new Set([...cyanoData,...obsData].map(p=>p.x))].sort();
+      const labels = allDates.map(d=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
+
+      const el = document.getElementById("cyano-chart");
+      if(!el) return;
+      new Chart(el.getContext("2d"),{
+        type:"line",
+        data:{labels, datasets:[
+          // Microcystin line
+          {label:"Microcystins (µg/l)",
+           data:allDates.map(d=>{const p=cyanoData.find(p=>p.x===d);return p?p.y:null;}),
+           borderColor:"#e65100",borderWidth:2,backgroundColor:"#e6510018",
+           pointRadius:4,pointBackgroundColor:"#e65100",
+           tension:0.3,fill:false,spanGaps:false,type:"line"},
+          // Limit line
+          {label:"Limit 10 µg/l",
+           data:allDates.map(()=>10),
+           borderColor:"#c62828",borderWidth:1.5,borderDash:[5,4],
+           pointRadius:0,fill:false,spanGaps:true,tension:0,
+           backgroundColor:"transparent"},
+          // Observation dots — scatter-style via line chart with no connecting line
+          {label:"Visual observation",
+           data:allDates.map(d=>{const p=obsData.find(p=>p.x===d);return p?p.y:null;}),
+           borderColor:"transparent",
+           backgroundColor:"#39ff14",
+           pointBackgroundColor:"#39ff14",
+           pointBorderColor:"#2d7a00",
+           pointBorderWidth:1.5,
+           pointRadius:8,
+           pointHoverRadius:10,
+           fill:false,spanGaps:false,
+           showLine:false,
+           tension:0},
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          interaction:{mode:"index",intersect:false},
+          plugins:{
+            legend:{display:false},
+            tooltip:{backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(0,0,0,0.1)",borderWidth:1,padding:10,
+              callbacks:{label:ctx=>{
+                if(ctx.datasetIndex===2) return " Cyanobacteria observed";
+                if(ctx.datasetIndex===1) return " Limit: 10 µg/l";
+                return ` ${ctx.dataset.label}: ${ctx.raw} µg/l`;
+              }}}
+          },
+          scales:{
+            x:{grid:{color:"rgba(0,0,0,0.04)"},ticks:{maxTicksLimit:8}},
+            y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{maxTicksLimit:5},min:0,
+               title:{display:true,text:"µg/l",font:{size:10},color:"var(--mid)"}}
+          }
+        }
+      });
+    },200);
+
     // Water temp chart
     setTimeout(()=>{
       makeLineChart("watertemp-chart",

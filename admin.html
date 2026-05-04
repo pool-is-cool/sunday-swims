@@ -140,6 +140,24 @@
     </div>
 
     <div class="form-section">
+      <div class="form-section-title">Cyanobacteria — focus location</div>
+      <div class="field-grid two">
+        <div class="field">
+          <label>Visual observation</label>
+          <select id="cyano_observatie" style="background:rgba(255,255,255,0.05);border:1px solid rgba(212,234,247,0.12);border-radius:8px;padding:10px 12px;color:#fff;font-family:var(--mono);font-size:13px;outline:none;">
+            <option value="">— not recorded —</option>
+            <option value="0">No — not observed</option>
+            <option value="1">Yes — observed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Microcystins (µg/l)</label>
+          <input type="number" step="0.01" id="cyano_microcystins" placeholder="e.g. 2.4">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
       <div class="form-section-title">Reference 1</div>
       <div class="field-grid">
         <div class="field"><label>Water temp (°C)</label><input type="number" step="0.1" id="ref1_watertemp_c" placeholder="—"></div>
@@ -209,6 +227,7 @@ const API   = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`;
 
 const COLUMNS = [
   "datum","ss_watertemp_c","ss_ecoli","ss_enterococcen",
+  "cyano_observatie","cyano_microcystins",
   "ref1_watertemp_c","ref1_ecoli","ref1_enterococcen",
   "ref2_watertemp_c","ref2_ecoli","ref2_enterococcen",
   "ref3_watertemp_c","ref3_ecoli","ref3_enterococcen",
@@ -329,11 +348,13 @@ async function submitMeasurement() {
     status.textContent = `✓ Measurement for ${datum} saved. The website will update at the next scheduled run (06:00 UTC).`;
 
     // Clear form (keep date)
-    ["ss_watertemp_c","ss_ecoli","ss_enterococcen",
+    ["ss_watertemp_c","ss_ecoli","ss_enterococcen","cyano_microcystins",
      "ref1_watertemp_c","ref1_ecoli","ref1_enterococcen",
      "ref2_watertemp_c","ref2_ecoli","ref2_enterococcen",
      "ref3_watertemp_c","ref3_ecoli","ref3_enterococcen","notities"]
       .forEach(k => { const el = document.getElementById(k); if(el) el.value = ""; });
+    const cyanoSel = document.getElementById("cyano_observatie");
+    if(cyanoSel) cyanoSel.value = "";
 
     loadHistory();
   } catch(e) {
