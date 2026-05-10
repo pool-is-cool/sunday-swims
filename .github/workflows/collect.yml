@@ -1,9 +1,9 @@
 name: Collect weather & canal data
 
 on:
+  workflow_dispatch:
   schedule:
-    # Every day at 06:00 UTC (= 08:00 Brussels summer time)
-    - cron: '0 6 * * *'
+    - cron: '0 6 * * *'  # keep as fallback if you want
   workflow_dispatch:
     # Manual trigger via GitHub website
   push:
