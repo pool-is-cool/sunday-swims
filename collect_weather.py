@@ -9,6 +9,7 @@ Dit script draait automatisch elke dag via GitHub Actions.
 - Exporteert data/sunday_swims_data.json voor de website
 
 HIC_TOKEN wordt ingelezen als omgevingsvariabele (GitHub Secret).
+Het is de Base64-gecodeerde 'clientId:clientSecret' string van HIC.
 """
 
 import requests
@@ -23,10 +24,11 @@ from pathlib import Path
 LATITUDE  = 50.8403
 LONGITUDE = 4.3372
 
-# Token wordt meegegeven via GitHub Secrets (omgevingsvariabele)
+# HIC_TOKEN = Base64 'clientId:clientSecret' string (GitHub Secret)
 HIC_TOKEN = os.environ.get("HIC_TOKEN", "")
 
-HIC_BASE_URL = "https://hicws.vlaanderen.be/KiWIS/KiWIS"
+HIC_BASE_URL  = "https://hicws.vlaanderen.be/KiWIS/KiWIS"
+HIC_AUTH_URL  = "https://hicwsauth.vlaanderen.be/auth"
 
 SCRIPT_DIR   = Path(__file__).parent
 DATA_DIR     = SCRIPT_DIR / "data"
@@ -47,6 +49,40 @@ def windrichting_naar_naam(graden) -> str:
         richtingen = ["N", "NO", "O", "ZO", "Z", "ZW", "W", "NW"]
         return richtingen[round(g / 45) % 8]
     except Exception:
+        return ""
+
+# ─── HIC AUTHENTICATIE ───────────────────────────────────────────────────────
+
+def haal_hic_access_token() -> str:
+    """
+    Vraagt een access token op bij de HIC auth service.
+    HIC_TOKEN is de Base64-gecodeerde 'clientId:clientSecret' string.
+    Het token is 24 uur geldig — per dagelijkse run één keer opvragen.
+    """
+    if not HIC_TOKEN:
+        print("  → Geen HIC_TOKEN gevonden, kanaaldata wordt overgeslagen.")
+        return ""
+
+    print("  → HIC access token opvragen...")
+    try:
+        r = requests.post(
+            HIC_AUTH_URL,
+            headers={
+                "Authorization": f"Basic {HIC_TOKEN}",
+                "Content-Type":  "application/x-www-form-urlencoded",
+            },
+            data={"grant_type": "client_credentials"},
+            timeout=30,
+        )
+        r.raise_for_status()
+        token = r.json().get("access_token", "")
+        if token:
+            print("  ✓ HIC access token ontvangen.")
+        else:
+            print("  ! HIC auth response bevat geen access_token.")
+        return token
+    except Exception as e:
+        print(f"  ! HIC authenticatie mislukt: {e}")
         return ""
 
 # ─── OPEN-METEO ──────────────────────────────────────────────────────────────
@@ -118,18 +154,24 @@ def bereken_cumulatieve_neerslag(df: pd.DataFrame) -> pd.DataFrame:
 
 # ─── MOW-HIC ─────────────────────────────────────────────────────────────────
 
-def hic_zoek_ts_id(station: str, parameter: str):
+def hic_zoek_ts_id(station: str, parameter: str, access_token: str):
+    """Zoekt het ts_id op voor een gegeven station en parameter."""
     params = {
         "service":            "kisters",
         "type":               "queryServices",
         "request":            "getTimeseriesList",
+        "datasource":         "4",
         "station_name":       station,
         "parametertype_name": parameter,
         "format":             "json",
-        "Authorization":      f"Bearer {HIC_TOKEN}",
     }
     try:
-        r = requests.get(HIC_BASE_URL, params=params, timeout=30)
+        r = requests.get(
+            HIC_BASE_URL,
+            params=params,
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=30,
+        )
         r.raise_for_status()
         data = r.json()
         if len(data) > 1:
@@ -139,18 +181,25 @@ def hic_zoek_ts_id(station: str, parameter: str):
     return None
 
 
-def haal_hic_data_op(ts_id: str, start_datum: str, eind_datum: str) -> pd.DataFrame:
+def haal_hic_data_op(ts_id: str, start_datum: str, eind_datum: str,
+                     access_token: str) -> pd.DataFrame:
+    """Haalt tijdreeksdata op voor een gegeven ts_id en datumrange."""
     params = {
-        "service":       "kisters",
-        "type":          "queryServices",
-        "request":       "getTimeseriesValues",
-        "ts_id":         ts_id,
-        "from":          f"{start_datum}T00:00:00",
-        "to":            f"{eind_datum}T23:59:59",
-        "format":        "json",
-        "Authorization": f"Bearer {HIC_TOKEN}",
+        "service":    "kisters",
+        "type":       "queryServices",
+        "request":    "getTimeseriesValues",
+        "datasource": "4",
+        "ts_id":      ts_id,
+        "from":       f"{start_datum}T00:00:00",
+        "to":         f"{eind_datum}T23:59:59",
+        "format":     "json",
     }
-    r = requests.get(HIC_BASE_URL, params=params, timeout=60)
+    r = requests.get(
+        HIC_BASE_URL,
+        params=params,
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=60,
+    )
     r.raise_for_status()
     data = r.json()
 
@@ -170,10 +219,6 @@ def haal_hic_data_op(ts_id: str, start_datum: str, eind_datum: str) -> pd.DataFr
 def aggregeer_naar_dag(df_uur: pd.DataFrame, prefix: str,
                        heeft_min: bool = False) -> pd.DataFrame:
     df_uur["datum"] = df_uur["datum_uur"].dt.date
-    agg_dict = {"mean": "mean", "max": "max"}
-    if heeft_min:
-        agg_dict["min"] = "min"
-
     agg = df_uur.groupby("datum")["waarde"].agg(**{
         f"{prefix}_gem": "mean",
         f"{prefix}_max": "max",
@@ -182,34 +227,34 @@ def aggregeer_naar_dag(df_uur: pd.DataFrame, prefix: str,
     return agg
 
 
-def haal_alle_hic_data_op(start_datum: str, eind_datum: str):
-    if not HIC_TOKEN:
-        print("  → Geen HIC-token, kanaaldata overgeslagen.")
-        return None
-
+def haal_alle_hic_data_op(start_datum: str, eind_datum: str,
+                           access_token: str):
+    """Haalt kanaaldata op voor alle geconfigureerde stations."""
     print("  → Kanaaldata ophalen via MOW-HIC...")
     resultaat = None
 
     station_params = [
-        ("kbc02g-1066",     "afvoer",    "kanaal_afvoer",      True),
-        ("kbc02g-1066",     "waterpeil", "kanaal_peil",         False),
-        ("KC-RUI-OPW-1095", "waterpeil", "ruisbroek_opw_peil",  False),
-        ("KC-RUI-AFW-1095", "waterpeil", "ruisbroek_afw_peil",  False),
+        ("kbc02g-1066",     "afvoer",    "kanaal_afvoer",     True),
+        ("kbc02g-1066",     "waterpeil", "kanaal_peil",        False),
+        ("KC-RUI-OPW-1095", "waterpeil", "ruisbroek_opw_peil", False),
+        ("KC-RUI-AFW-1095", "waterpeil", "ruisbroek_afw_peil", False),
     ]
 
     for station, parameter, prefix, heeft_min in station_params:
         print(f"    → {station} / {parameter}...")
-        ts_id = hic_zoek_ts_id(station, parameter)
+        ts_id = hic_zoek_ts_id(station, parameter, access_token)
         if ts_id is None:
             continue
         try:
-            df_uur = haal_hic_data_op(ts_id, start_datum, eind_datum)
+            df_uur = haal_hic_data_op(ts_id, start_datum, eind_datum,
+                                       access_token)
             if df_uur.empty:
                 continue
             df_dag = aggregeer_naar_dag(df_uur, prefix, heeft_min)
-            resultaat = df_dag if resultaat is None else resultaat.merge(df_dag, on="datum", how="outer")
+            resultaat = (df_dag if resultaat is None
+                         else resultaat.merge(df_dag, on="datum", how="outer"))
         except Exception as e:
-            print(f"    ! Fout: {e}")
+            print(f"    ! Fout bij {station}/{parameter}: {e}")
 
     return resultaat
 
@@ -228,7 +273,6 @@ def laad_metingen() -> pd.DataFrame:
     df["datum"] = pd.to_datetime(df["datum"]).dt.date
     print(f"  → {len(df)} handmatige meting(en) geladen uit metingen.csv")
     return df
-
 
 # ─── WEERSVOORSPELLING ───────────────────────────────────────────────────────
 
@@ -263,18 +307,20 @@ def haal_voorspelling_op() -> list:
     records = []
     for i, datum in enumerate(d["daily"]["time"]):
         records.append({
-            "datum":                  datum,
-            "temp_max_c":             d["daily"]["temperature_2m_max"][i],
-            "temp_min_c":             d["daily"]["temperature_2m_min"][i],
-            "temp_gemiddeld_c":       d["daily"]["temperature_2m_mean"][i],
-            "neerslag_mm":            d["daily"]["precipitation_sum"][i],
-            "neerslag_kans_pct":      d["daily"]["precipitation_probability_max"][i],
-            "windsnelheid_max_kmh":   d["daily"]["windspeed_10m_max"][i],
-            "windrichting_naam":      windrichting_naar_naam(d["daily"]["winddirection_10m_dominant"][i]),
-            "uv_index_max":           d["daily"]["uv_index_max"][i],
-            "zonneschijn_uur":        round(d["daily"]["sunshine_duration"][i] / 3600, 1) if d["daily"]["sunshine_duration"][i] else None,
-            "bewolking_pct":          d["daily"]["cloudcover_mean"][i],
-            "weathercode":            d["daily"]["weathercode"][i],
+            "datum":                datum,
+            "temp_max_c":           d["daily"]["temperature_2m_max"][i],
+            "temp_min_c":           d["daily"]["temperature_2m_min"][i],
+            "temp_gemiddeld_c":     d["daily"]["temperature_2m_mean"][i],
+            "neerslag_mm":          d["daily"]["precipitation_sum"][i],
+            "neerslag_kans_pct":    d["daily"]["precipitation_probability_max"][i],
+            "windsnelheid_max_kmh": d["daily"]["windspeed_10m_max"][i],
+            "windrichting_naam":    windrichting_naar_naam(
+                                        d["daily"]["winddirection_10m_dominant"][i]),
+            "uv_index_max":         d["daily"]["uv_index_max"][i],
+            "zonneschijn_uur":      round(d["daily"]["sunshine_duration"][i] / 3600, 1)
+                                    if d["daily"]["sunshine_duration"][i] else None,
+            "bewolking_pct":        d["daily"]["cloudcover_mean"][i],
+            "weathercode":          d["daily"]["weathercode"][i],
         })
     return records
 
@@ -316,26 +362,19 @@ def bepaal_ontbrekende_datums(bestaande_df: pd.DataFrame):
 
 
 def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
-    """Exporteert de dataset naar data/sunday_swims_data.json.
-    
-    alle_metingen bevat ALLE handmatige metingen (ook ouder dan 90 dagen),
-    zodat waterkwaliteitsdata altijd beschikbaar is op de website.
-    """
+    """Exporteert de dataset naar data/sunday_swims_data.json."""
     df = df.sort_values("datum").reset_index(drop=True)
 
-    # Windrichting als naam toevoegen
     if "windrichting_graden" in df.columns:
-        df["windrichting_naam"] = df["windrichting_graden"].apply(windrichting_naar_naam)
+        df["windrichting_naam"] = df["windrichting_graden"].apply(
+            windrichting_naar_naam)
 
-    # Datum als string
     df["datum"] = df["datum"].astype(str)
 
-    # NaN → null (NaN is invalid JSON)
     json_str = df.to_json(orient="records", force_ascii=False, date_format="iso")
     json_str = json_str.replace(": NaN", ": null").replace(":NaN", ":null")
-    records = json.loads(json_str)
+    records  = json.loads(json_str)
 
-    # Alle metingen als aparte lijst (volledige geschiedenis)
     metingen_records = []
     if alle_metingen is not None and not alle_metingen.empty:
         m = alle_metingen.copy()
@@ -353,15 +392,16 @@ def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
             "lat":  LATITUDE,
             "lon":  LONGITUDE,
         },
-        "data": records,
-        "metingen": metingen_records,
+        "data":        records,
+        "metingen":    metingen_records,
         "voorspelling": voorspelling,
     }
 
     with open(JSON_FILE, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
-    print(f"  → JSON opgeslagen: {JSON_FILE}  ({len(df)} rijen, {len(metingen_records)} metingen)")
+    print(f"  → JSON opgeslagen: {JSON_FILE}  "
+          f"({len(df)} rijen, {len(metingen_records)} metingen)")
 
 # ─── HOOFDPROGRAMMA ──────────────────────────────────────────────────────────
 
@@ -370,6 +410,10 @@ def main():
     print("║  SUNDAY SWIMS — Weerdataverzameling      ║")
     print("╚══════════════════════════════════════════╝\n")
 
+    # Stap 1: HIC access token ophalen (eenmalig per run)
+    access_token = haal_hic_access_token()
+
+    # Stap 2: Bepaal welke datums nog ontbreken
     bestaande_df = laad_bestaande_json()
     start, eind  = bepaal_ontbrekende_datums(bestaande_df)
 
@@ -377,14 +421,19 @@ def main():
         print("  ✓ Weerdata up-to-date.")
         nieuwe_df = pd.DataFrame()
     else:
+        # Stap 3: Weerdata ophalen
         nieuwe_df = haal_weerdata_op(start, eind)
 
-        hic_df = haal_alle_hic_data_op(start, eind)
-        if hic_df is not None:
-            hic_df["datum"] = pd.to_datetime(hic_df["datum"]).dt.date
-            nieuwe_df = nieuwe_df.merge(hic_df, on="datum", how="left")
+        # Stap 4: Kanaaldata ophalen (alleen als token beschikbaar)
+        if access_token:
+            hic_df = haal_alle_hic_data_op(start, eind, access_token)
+            if hic_df is not None:
+                hic_df["datum"] = pd.to_datetime(hic_df["datum"]).dt.date
+                nieuwe_df = nieuwe_df.merge(hic_df, on="datum", how="left")
+        else:
+            print("  → Kanaaldata overgeslagen (geen geldig access token).")
 
-    # Samenvoegen
+    # Stap 5: Samenvoegen met bestaande data
     if not bestaande_df.empty and not nieuwe_df.empty:
         gecombineerd = (
             pd.concat([bestaande_df, nieuwe_df], ignore_index=True)
@@ -397,19 +446,19 @@ def main():
     else:
         gecombineerd = bestaande_df
 
-    # Cumulatieve neerslag herberekenen over volledige dataset
+    # Stap 6: Cumulatieve neerslag herberekenen over volledige dataset
     gecombineerd = bereken_cumulatieve_neerslag(gecombineerd)
 
-    # Handmatige metingen samenvoegen
+    # Stap 7: Handmatige metingen samenvoegen
     metingen = laad_metingen()
     if not metingen.empty:
-        # Verwijder handmatige kolommen uit gecombineerd zodat metingen.csv altijd wint
         handmatige_kolommen = [c for c in metingen.columns if c != "datum"]
         for k in handmatige_kolommen:
             if k in gecombineerd.columns:
                 gecombineerd = gecombineerd.drop(columns=[k])
         gecombineerd = gecombineerd.merge(metingen, on="datum", how="left")
 
+    # Stap 8: Exporteren
     exporteer_json(gecombineerd, metingen)
 
     print(f"\n  ✓ Klaar! Totaal: {len(gecombineerd)} dagen in dataset.\n")
