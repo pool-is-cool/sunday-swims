@@ -1,11 +1,8 @@
 name: Collect weather & canal data
-
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *'  # keep as fallback if you want
-  workflow_dispatch:
-    # Manual trigger via GitHub website
+    - cron: '0 6 * * *'  # fallback
   push:
     branches: [main]
     paths:
