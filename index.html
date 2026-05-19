@@ -247,6 +247,9 @@
   <!-- 4. CANAL -->
   <div id="canal">
     <div class="section-title">Canal</div>
+    <div style="background:#f9f9f9;border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--mid);line-height:1.6;">
+      Canal data: <a href="https://hicws.vlaanderen.be/" target="_blank">Flanders Hydraulics Research — HIC</a>. Data is unvalidated and intended for operational use only.
+    </div>
     <div class="sub-section-title">Current conditions</div>
     <div class="cards-grid" id="canal-cards-grid"></div>
     <div class="sub-section-title">14-day history</div>
@@ -292,7 +295,7 @@
   <div id="status-banner">⟳ &nbsp; Loading data...</div>
 
   <footer>
-    <span>Weather: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> &nbsp;|&nbsp; Canal: MOW-HIC / waterinfo.vlaanderen.be</span>
+    <span>Weather: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> &nbsp;|&nbsp; Canal: <a href="https://hicws.vlaanderen.be/" target="_blank">Flanders Hydraulics Research — HIC</a></span>
     <span><a href="https://pooliscool.org" target="_blank">Pool is Cool</a></span>
     <span id="footer-date"></span>
   </footer>
@@ -591,11 +594,11 @@ function renderWeatherCards(data) {
 function renderCanalCards(data) {
   const latest=data[data.length-1];
   const cards=[
-    {label:"Canal flow (avg)",key:"kanaal_afvoer_gem",    unit:"m³/s",dec:2},
-    {label:"Canal flow (min)",key:"kanaal_afvoer_min",    unit:"m³/s",dec:2},
-    {label:"Canal level",     key:"kanaal_peil_gem",      unit:"cm",  dec:1},
-    {label:"Ruisbroek upstr.",key:"ruisbroek_opw_peil_gem",unit:"cm", dec:1},
-    {label:"Ruisbroek downstr.",key:"ruisbroek_afw_peil_gem",unit:"cm",dec:1},
+    {label:"Canal flow (avg)",key:"kanaal_afvoer_gem",    unit:"m³/s",  dec:2},
+    {label:"Canal flow (min)",key:"kanaal_afvoer_min",    unit:"m³/s",  dec:2},
+    {label:"Canal level",     key:"kanaal_peil_gem",      unit:"cm TAW",dec:1},
+    {label:"Ruisbroek upstr.",key:"ruisbroek_opw_peil_gem",unit:"cm TAW",dec:1},
+    {label:"Ruisbroek downstr.",key:"ruisbroek_afw_peil_gem",unit:"cm TAW",dec:1},
   ];
   document.getElementById("canal-cards-grid").innerHTML = cards.map(c=>{
     const raw=latest[c.key];
