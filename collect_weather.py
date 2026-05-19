@@ -113,9 +113,10 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     dt_eind  = datetime.fromisoformat(eind_datum)  + timedelta(days=1)
 
     cql = (
-        f"code={KMI_STATION} AND "
-        f"timestamp BETWEEN '{dt_start.strftime('%Y-%m-%d')} 00:00:00' "
-        f"AND '{dt_eind.strftime('%Y-%m-%d')} 23:59:59'"
+        f"code IN ({KMI_STATION}) AND "
+        f"timestamp DURING "
+        f"{dt_start.strftime('%Y-%m-%dT00:00:00Z')}/"
+        f"{dt_eind.strftime('%Y-%m-%dT00:00:00Z')}"
     )
 
     params = {
