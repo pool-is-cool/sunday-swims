@@ -283,6 +283,35 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     return result
 
 
+def haal_uv_index_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
+    """
+    Haalt UV-index op via Open-Meteo (niet beschikbaar bij KMI).
+    Geeft een DataFrame terug met kolommen 'datum' en 'uv_index_max'.
+    """
+    print(f"  → UV-index ophalen via Open-Meteo: {start_datum} → {eind_datum}...")
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude":   LATITUDE,
+        "longitude":  LONGITUDE,
+        "daily":      ["uv_index_max"],
+        "start_date": start_datum,
+        "end_date":   eind_datum,
+        "timezone":   "Europe/Brussels",
+    }
+    try:
+        r = requests.get(url, params=params, timeout=30)
+        r.raise_for_status()
+        d = r.json()
+        df = pd.DataFrame({
+            "datum":        [pd.Timestamp(t).date() for t in d["daily"]["time"]],
+            "uv_index_max": d["daily"]["uv_index_max"],
+        })
+        print(f"  ✓ UV-index: {len(df)} dag(en) verwerkt.")
+        return df
+    except Exception as e:
+        print(f"  ! UV-index ophalen mislukt: {e}")
+        return pd.DataFrame()
+
 def bereken_cumulatieve_neerslag(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values("datum").reset_index(drop=True)
     df["neerslag_24u_mm"] = df["neerslag_mm"].rolling(1, min_periods=1).sum().round(1)
@@ -604,7 +633,13 @@ def main():
             print("  ! Geen KMI-data beschikbaar — run overgeslagen.")
             return
 
-        # Stap 4: Kanaaldata ophalen via groep 3323277
+        # Stap 4: UV-index ophalen via Open-Meteo
+        uv_df = haal_uv_index_op(start, eind)
+        if not uv_df.empty:
+            uv_df["datum"] = pd.to_datetime(uv_df["datum"]).apply(lambda x: x.date() if hasattr(x, 'date') else x)
+            nieuwe_df = nieuwe_df.merge(uv_df, on="datum", how="left")
+
+        # Stap 5: Kanaaldata ophalen via groep 3323277
         if access_token:
             hic_df = haal_alle_hic_data_op(start, eind, access_token)
             if hic_df is not None:
