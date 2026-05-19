@@ -119,18 +119,16 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
         f"{dt_eind.strftime('%Y-%m-%dT00:00:00Z')}"
     )
 
-    params = {
-        "service":     "wfs",
-        "version":     "2.0.0",
-        "request":     "getFeature",
-        "typeNames":   "synop:synop_data",
-        "outputformat":"json",
-        "CQL_FILTER":  cql,
-        "sortBy":      "timestamp+A",
-    }
+    # CQL_FILTER mag niet dubbel ge-URL-encoded worden door requests.
+    # We bouwen de URL handmatig met quote_plus op enkel de CQL-waarde.
+    base = (
+        f"{KMI_WFS_URL}?service=wfs&version=2.0.0&request=getFeature"
+        f"&typeNames=synop:synop_data&outputformat=json&sortBy=timestamp+A"
+        f"&CQL_FILTER={quote_plus(cql)}"
+    )
 
     try:
-        r = requests.get(KMI_WFS_URL, params=params, timeout=60)
+        r = requests.get(base, timeout=60)
         r.raise_for_status()
         data = r.json()
     except Exception as e:
