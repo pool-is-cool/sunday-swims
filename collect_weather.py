@@ -4,7 +4,7 @@ SUNDAY SWIMS — Weerdataverzameling (GitHub versie)
 =====================================================
 Dit script draait automatisch elke dag via GitHub Actions.
 - Haalt weerdata op via open-meteo.com
-- Haalt kanaaldata op via MOW-HIC (indien token beschikbaar)
+- Haalt kanaaldata op via MOW-HIC groep 3323277 (indien token beschikbaar)
 - Combineert met handmatige metingen uit data/metingen.csv
 - Exporteert data/sunday_swims_data.json voor de website
 
@@ -27,8 +27,9 @@ LONGITUDE = 4.3372
 # HIC_TOKEN = Base64 'clientId:clientSecret' string (GitHub Secret)
 HIC_TOKEN = os.environ.get("HIC_TOKEN", "")
 
-HIC_BASE_URL  = "https://hicws.vlaanderen.be/KiWIS/KiWIS"
-HIC_AUTH_URL  = "https://hicwsauth.vlaanderen.be/auth"
+HIC_BASE_URL      = "https://hicws.vlaanderen.be/KiWIS/KiWIS"
+HIC_AUTH_URL      = "https://hicwsauth.vlaanderen.be/auth"
+HIC_GROUP_ID      = "3323277"   # Dedicated groep aangemaakt door Leen Boeckx (MOW-HIC)
 
 SCRIPT_DIR   = Path(__file__).parent
 DATA_DIR     = SCRIPT_DIR / "data"
@@ -36,6 +37,17 @@ JSON_FILE    = DATA_DIR / "sunday_swims_data.json"
 METINGEN_CSV = DATA_DIR / "metingen.csv"
 
 DATA_DIR.mkdir(exist_ok=True)
+
+# Mapping van ts_name (zoals HIC ze noemt) naar onze kolomnamen en aggregatie-instellingen.
+# heeft_min=True betekent dat we ook de minimumwaarde bijhouden (relevant voor afvoer/debiet).
+# Pas aan zodra de exacte ts_name-waarden bekend zijn uit de groepsrespons.
+HIC_KOLOMMEN = {
+    # ts_name (HIC)             prefix                    heeft_min
+    "afvoer":                  ("kanaal_afvoer",           True),
+    "waterpeil":               ("kanaal_peil",             False),
+    "waterpeil_ruisbroek_opw": ("ruisbroek_opw_peil",      False),
+    "waterpeil_ruisbroek_afw": ("ruisbroek_afw_peil",      False),
+}
 
 # ─── HULPFUNCTIES ────────────────────────────────────────────────────────────
 
@@ -154,15 +166,18 @@ def bereken_cumulatieve_neerslag(df: pd.DataFrame) -> pd.DataFrame:
 
 # ─── MOW-HIC ─────────────────────────────────────────────────────────────────
 
-def hic_zoek_ts_id(station: str, parameter: str, access_token: str):
-    """Zoekt het ts_id op voor een gegeven station en parameter."""
+def haal_hic_groepslijst(access_token: str) -> list:
+    """
+    Haalt de lijst van tijdreeksen op uit groep 3323277.
+    Geeft een lijst van dicts terug met ts_id, ts_name, station_name, etc.
+    Logt de volledige lijst zodat we de exacte ts_name-waarden kunnen aflezen.
+    """
     params = {
         "service":            "kisters",
         "type":               "queryServices",
         "request":            "getTimeseriesList",
         "datasource":         "4",
-        "station_name":       station,
-        "parametertype_name": parameter,
+        "timeseriesgroup_id": HIC_GROUP_ID,
         "format":             "json",
     }
     try:
@@ -174,16 +189,31 @@ def hic_zoek_ts_id(station: str, parameter: str, access_token: str):
         )
         r.raise_for_status()
         data = r.json()
-        if len(data) > 1:
-            return str(data[1][0])
+
+        if not data or len(data) < 2:
+            print("  ! Groepslijst is leeg of onverwacht formaat.")
+            print(f"    Ruwe respons: {data}")
+            return []
+
+        # Eerste rij = kolomnamen, rest = data
+        kolommen = data[0]
+        rijen     = data[1:]
+        reeksen   = [dict(zip(kolommen, rij)) for rij in rijen]
+
+        print(f"  ✓ {len(reeksen)} tijdreeks(en) gevonden in groep {HIC_GROUP_ID}:")
+        for ts in reeksen:
+            print(f"    ts_id={ts.get('ts_id')}  station={ts.get('station_name')}  "
+                  f"ts_name={ts.get('ts_name')}  parameter={ts.get('parametertype_name')}")
+        return reeksen
+
     except Exception as e:
-        print(f"    ! ts_id niet gevonden voor {station}/{parameter}: {e}")
-    return None
+        print(f"  ! Ophalen groepslijst mislukt: {e}")
+        return []
 
 
-def haal_hic_data_op(ts_id: str, start_datum: str, eind_datum: str,
-                     access_token: str) -> pd.DataFrame:
-    """Haalt tijdreeksdata op voor een gegeven ts_id en datumrange."""
+def haal_hic_tijdreeks_op(ts_id: str, start_datum: str, eind_datum: str,
+                           access_token: str) -> pd.DataFrame:
+    """Haalt ruwe uurdata op voor één ts_id."""
     params = {
         "service":    "kisters",
         "type":       "queryServices",
@@ -218,6 +248,8 @@ def haal_hic_data_op(ts_id: str, start_datum: str, eind_datum: str,
 
 def aggregeer_naar_dag(df_uur: pd.DataFrame, prefix: str,
                        heeft_min: bool = False) -> pd.DataFrame:
+    """Aggregeert uurdata naar daggemiddelden (+ max, optioneel min)."""
+    df_uur = df_uur.copy()
     df_uur["datum"] = df_uur["datum_uur"].dt.date
     agg = df_uur.groupby("datum")["waarde"].agg(**{
         f"{prefix}_gem": "mean",
@@ -227,34 +259,66 @@ def aggregeer_naar_dag(df_uur: pd.DataFrame, prefix: str,
     return agg
 
 
+def bepaal_prefix_en_min(ts_name: str, station_name: str) -> tuple:
+    """
+    Bepaalt de kolomprefix en heeft_min op basis van ts_name en station_name.
+    Past de mapping toe uit HIC_KOLOMMEN; geeft (None, False) terug als onbekend.
+    """
+    naam = (ts_name or "").lower()
+    station = (station_name or "").lower()
+
+    if "afvoer" in naam or "discharge" in naam or "debiet" in naam:
+        return "kanaal_afvoer", True
+    if "ruisbroek" in station and ("opw" in station or "upstream" in station):
+        return "ruisbroek_opw_peil", False
+    if "ruisbroek" in station and ("afw" in station or "downstream" in station):
+        return "ruisbroek_afw_peil", False
+    if "waterpeil" in naam or "level" in naam or "peil" in naam:
+        return "kanaal_peil", False
+
+    return None, False
+
+
 def haal_alle_hic_data_op(start_datum: str, eind_datum: str,
                            access_token: str):
-    """Haalt kanaaldata op voor alle geconfigureerde stations."""
-    print("  → Kanaaldata ophalen via MOW-HIC...")
+    """
+    Haalt kanaaldata op via groep 3323277.
+    Stap 1: tijdreekslijst ophalen uit de groep.
+    Stap 2: per tijdreeks data ophalen en aggregeren naar dag.
+    """
+    print(f"  → Kanaaldata ophalen via MOW-HIC groep {HIC_GROUP_ID}...")
+    reeksen = haal_hic_groepslijst(access_token)
+
+    if not reeksen:
+        print("  ! Geen tijdreeksen gevonden, kanaaldata overgeslagen.")
+        return None
+
     resultaat = None
 
-    station_params = [
-        ("kbc02g-1066",     "afvoer",    "kanaal_afvoer",     True),
-        ("kbc02g-1066",     "waterpeil", "kanaal_peil",        False),
-        ("KC-RUI-OPW-1095", "waterpeil", "ruisbroek_opw_peil", False),
-        ("KC-RUI-AFW-1095", "waterpeil", "ruisbroek_afw_peil", False),
-    ]
+    for ts in reeksen:
+        ts_id      = ts.get("ts_id")
+        ts_name    = ts.get("ts_name", "")
+        station    = ts.get("station_name", "")
+        prefix, heeft_min = bepaal_prefix_en_min(ts_name, station)
 
-    for station, parameter, prefix, heeft_min in station_params:
-        print(f"    → {station} / {parameter}...")
-        ts_id = hic_zoek_ts_id(station, parameter, access_token)
-        if ts_id is None:
+        if not ts_id:
             continue
+        if prefix is None:
+            print(f"    → Onbekende tijdreeks overgeslagen: {station} / {ts_name}")
+            continue
+
+        print(f"    → {station} / {ts_name} → {prefix}...")
         try:
-            df_uur = haal_hic_data_op(ts_id, start_datum, eind_datum,
-                                       access_token)
+            df_uur = haal_hic_tijdreeks_op(ts_id, start_datum, eind_datum,
+                                            access_token)
             if df_uur.empty:
+                print(f"    ! Geen data voor {station} / {ts_name}")
                 continue
             df_dag = aggregeer_naar_dag(df_uur, prefix, heeft_min)
             resultaat = (df_dag if resultaat is None
                          else resultaat.merge(df_dag, on="datum", how="outer"))
         except Exception as e:
-            print(f"    ! Fout bij {station}/{parameter}: {e}")
+            print(f"    ! Fout bij {station} / {ts_name}: {e}")
 
     return resultaat
 
@@ -392,8 +456,8 @@ def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
             "lat":  LATITUDE,
             "lon":  LONGITUDE,
         },
-        "data":        records,
-        "metingen":    metingen_records,
+        "data":         records,
+        "metingen":     metingen_records,
         "voorspelling": voorspelling,
     }
 
@@ -424,7 +488,7 @@ def main():
         # Stap 3: Weerdata ophalen
         nieuwe_df = haal_weerdata_op(start, eind)
 
-        # Stap 4: Kanaaldata ophalen (alleen als token beschikbaar)
+        # Stap 4: Kanaaldata ophalen via groep 3323277 (alleen als token beschikbaar)
         if access_token:
             hic_df = haal_alle_hic_data_op(start, eind, access_token)
             if hic_df is not None:
