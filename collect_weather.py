@@ -557,18 +557,20 @@ def laad_bestaande_json() -> pd.DataFrame:
 
 def bepaal_ontbrekende_datums(bestaande_df: pd.DataFrame):
     vandaag   = date.today()
+    gisteren  = vandaag - timedelta(days=1)
     max_terug = vandaag - timedelta(days=89)
 
     if bestaande_df.empty:
-        return str(max_terug), str(vandaag)
+        return str(max_terug), str(gisteren)
 
     laatste  = bestaande_df["datum"].max()
     volgende = laatste + timedelta(days=1)
 
-    if volgende > vandaag:
+    if volgende > gisteren:
+        # Alles up-to-date t/m gisteren
         return None, None
 
-    return str(volgende), str(vandaag)
+    return str(volgende), str(gisteren)
 
 
 def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
