@@ -253,7 +253,7 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     zon_raw["datum"] = zon_raw["datum"].apply(lambda d: d - timedelta(days=1))
     zonneschijn = (
         zon_raw.groupby("datum")["sun_duration_24hours"]
-        .first().apply(lambda s: round(s / 3600, 2)).reset_index()
+        .first().apply(lambda s: round(s / 60, 2)).reset_index()
         .rename(columns={"sun_duration_24hours": "zonneschijn_uur"})
     )
 

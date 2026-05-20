@@ -455,14 +455,29 @@ function makeLineChart(canvasId, datasets, opts={}) {
   });
 }
 
-function makeMultiChart(canvasId, labels, datasets, dualAxis) {
+const DIR_LABELS = ["N","NO","O","ZO","Z","ZW","W","NW"];
+
+function makeMultiChart(canvasId, labels, datasets, dualAxis, dirAxis) {
   const el = document.getElementById(canvasId);
   if (!el) return;
   const scales = {
     x:{grid:{color:"rgba(0,0,0,0.04)"},ticks:{maxTicksLimit:7}},
     y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{maxTicksLimit:5},position:"left"}
   };
-  if (dualAxis) scales.y1={grid:{display:false},ticks:{maxTicksLimit:5,color:"#f97316"},position:"right"};
+  if (dualAxis && dirAxis) {
+    scales.y1={
+      grid:{display:false},
+      position:"right",
+      min:-0.5, max:7.5,
+      ticks:{
+        color:"#c084fc",
+        stepSize:1,
+        callback: v => DIR_LABELS[v] ?? ""
+      }
+    };
+  } else if (dualAxis) {
+    scales.y1={grid:{display:false},ticks:{maxTicksLimit:5,color:"#f97316"},position:"right"};
+  }
   return new Chart(el.getContext("2d"), {
     type:"line",
     data:{labels, datasets: datasets.map(ds => ({
@@ -470,12 +485,21 @@ function makeMultiChart(canvasId, labels, datasets, dualAxis) {
       borderWidth:ds.bold?2.5:1.5,
       backgroundColor:ds.fill?(ds.color+"28"):"transparent",
       pointRadius:0, pointHoverRadius:4, pointHoverBackgroundColor:ds.color,
-      tension:0.4, fill:ds.fill||false, spanGaps:true,
+      tension:0.1, fill:ds.fill||false, spanGaps:true,
       borderDash:ds.dashed?[4,3]:[], yAxisID:ds.yAxisID||"y"
     }))},
     options:{responsive:true,maintainAspectRatio:false,
       interaction:{mode:"index",intersect:false},
-      plugins:{legend:{display:false},tooltip:{backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(0,0,0,0.1)",borderWidth:1,padding:10}},
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(0,0,0,0.1)",borderWidth:1,padding:10,
+        callbacks:{label: ctx => {
+          if(dirAxis && ctx.dataset.yAxisID==="y1") {
+            const d = DIR_LABELS[ctx.raw];
+            return d ? ` Direction: ${d}` : "";
+          }
+          return ` ${ctx.dataset.label}: ${ctx.raw}`;
+        }}
+      }},
       scales}
   });
 }
@@ -624,8 +648,9 @@ function renderWeatherCharts(data) {
      ds:[{label:"Cloud cover (%)",data:tail14(data,"bewolking_pct"),color:"#64748b",fill:true,yAxisID:"y"},
          {label:"UV index",data:tail14(data,"uv_index_max"),color:"#fbbf24",bold:true,yAxisID:"y1"},
          {label:"Sunshine (h)",data:tail14(data,"zonneschijn_uur"),color:"#f59e0b",dashed:true,yAxisID:"y1"}]},
-    {title:"Wind speed",legend:[{l:"Max km/h",c:"#a78bfa"}],
-     ds:[{label:"Wind",data:tail14(data,"windsnelheid_max_kmh"),color:"#a78bfa",fill:true}]},
+    {title:"Wind speed & direction",legend:[{l:"Max km/h",c:"#a78bfa"},{l:"Direction",c:"#c084fc"}],dualAxis:true,dirAxis:true,
+     ds:[{label:"Wind speed (km/h)",data:tail14(data,"windsnelheid_max_kmh"),color:"#a78bfa",fill:true,yAxisID:"y"},
+         {label:"Direction",data:tail14(data,"windrichting_naam").map(d=>({N:0,NO:1,O:2,ZO:3,Z:4,ZW:5,W:6,NW:7})[d]??null),color:"#c084fc",dashed:true,yAxisID:"y1",bold:false}]},
     {title:"Humidity",legend:[{l:"Relative humidity (%)",c:"#06b6d4"}],
      ds:[{label:"Humidity",data:tail14(data,"vochtigheid_pct"),color:"#06b6d4",fill:true}]},
     {title:"Pressure",legend:[{l:"Pressure (hPa)",c:"#8b5cf6"}],
@@ -638,7 +663,7 @@ function renderWeatherCharts(data) {
   ).join("");
   const draw=()=>{
     const ok=defs.every((_,i)=>{const el=document.getElementById(`wchart-${i}`);return el&&el.offsetWidth>0;});
-    if(ok) defs.forEach((c,i)=>makeMultiChart(`wchart-${i}`,lbls,c.ds,c.dualAxis||false));
+    if(ok) defs.forEach((c,i)=>makeMultiChart(`wchart-${i}`,lbls,c.ds,c.dualAxis||false,c.dirAxis||false));
     else setTimeout(draw,100);
   };
   setTimeout(draw,100);
