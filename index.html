@@ -422,17 +422,17 @@ function makeLineChart(canvasId, datasets, opts={}) {
       return pt ? pt.y : null;
     }),
     borderColor: ds.color,
-    borderWidth: 0,         // no connecting line between measurements
+    borderWidth: ds.showLine ? 1.5 : 0,
     backgroundColor: ds.color + "18",
     pointRadius: 6,
     pointBackgroundColor: ds.color,
     pointBorderColor: ds.color,
     pointBorderWidth: 1.5,
     pointHoverRadius: 8,
-    tension: 0,
+    tension: ds.showLine ? 0.3 : 0,
     fill: false,
-    spanGaps: false,
-    showLine: false,        // dots only — no line connecting sparse measurements
+    spanGaps: ds.showLine ? true : false,
+    showLine: ds.showLine || false,
     borderDash: ds.dashed ? [4,3] : [],
   }));
 
@@ -891,7 +891,7 @@ async function init() {
     // Water temp chart
     setTimeout(()=>{
       makeLineChart("watertemp-chart",
-        [{label:"Water temp.",data:tail2months(metingen,"ss_watertemp_c"),color:"#0891b2",bold:true}],
+        [{label:"Water temp.",data:tail2months(metingen,"ss_watertemp_c"),color:"#0891b2",bold:true,showLine:true}],
         {});
     },200);
 
