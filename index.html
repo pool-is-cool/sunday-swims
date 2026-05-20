@@ -620,11 +620,16 @@ function renderWeatherCharts(data) {
     {title:"Precipitation",legend:[{l:"Daily (mm)",c:"#60a5fa"},{l:"72h cumul.",c:"#3b82f6"}],
      ds:[{label:"Daily",data:tail14(data,"neerslag_mm"),color:"#60a5fa",fill:true,bold:true},
          {label:"72h",data:tail14(data,"neerslag_72u_mm"),color:"#3b82f6",dashed:true}]},
-    {title:"Cloud cover & UV",legend:[{l:"Cloud cover (%)",c:"#64748b"},{l:"UV index",c:"#fbbf24"}],dualAxis:true,
+    {title:"Cloud cover, UV & Sunshine",legend:[{l:"Cloud cover (%)",c:"#64748b"},{l:"UV index",c:"#fbbf24"},{l:"Sunshine (h)",c:"#f59e0b"}],dualAxis:true,
      ds:[{label:"Cloud cover (%)",data:tail14(data,"bewolking_pct"),color:"#64748b",fill:true,yAxisID:"y"},
-         {label:"UV index",data:tail14(data,"uv_index_max"),color:"#fbbf24",bold:true,yAxisID:"y1"}]},
+         {label:"UV index",data:tail14(data,"uv_index_max"),color:"#fbbf24",bold:true,yAxisID:"y1"},
+         {label:"Sunshine (h)",data:tail14(data,"zonneschijn_uur"),color:"#f59e0b",dashed:true,yAxisID:"y1"}]},
     {title:"Wind speed",legend:[{l:"Max km/h",c:"#a78bfa"}],
      ds:[{label:"Wind",data:tail14(data,"windsnelheid_max_kmh"),color:"#a78bfa",fill:true}]},
+    {title:"Humidity",legend:[{l:"Relative humidity (%)",c:"#06b6d4"}],
+     ds:[{label:"Humidity",data:tail14(data,"vochtigheid_pct"),color:"#06b6d4",fill:true}]},
+    {title:"Pressure",legend:[{l:"Pressure (hPa)",c:"#8b5cf6"}],
+     ds:[{label:"Pressure",data:tail14(data,"luchtdruk_hpa"),color:"#8b5cf6",bold:true}]},
   ];
   document.getElementById("weather-charts-grid").innerHTML = defs.map((c,i)=>
     `<div class="chart-card"><div class="chart-title">${c.title}</div>
