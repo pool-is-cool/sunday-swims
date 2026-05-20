@@ -576,6 +576,8 @@ function renderWeatherCards(data) {
     {label:"UV index",       key:"uv_index_max",         unit:"",      dec:1},
     {label:"Sunshine",       key:"zonneschijn_uur",      unit:"h",     dec:1},
     {label:"Cloud cover",    key:"bewolking_pct",        unit:"%",     dec:0},
+    {label:"Humidity",       key:"vochtigheid_pct",      unit:"%",     dec:1},
+    {label:"Pressure",       key:"luchtdruk_hpa",        unit:"hPa",   dec:1},
   ];
   document.getElementById("weather-cards-grid").innerHTML = cards.map(c=>{
     const raw=latest[c.key];
