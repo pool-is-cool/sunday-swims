@@ -209,7 +209,8 @@
       <div class="chart-title">Cyanobacteria — observations &amp; microcystins (past 2 months)</div>
       <div class="chart-legend">
         <span class="legend-item"><span class="legend-dot" style="background:#e65100"></span>Microcystins (µg/l)</span>
-        <span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#39ff14;margin-right:3px;border:1px solid #ccc;"></span>Visual observation</span>
+        <span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#39ff14;margin-right:3px;border:1px solid #2d7a00;"></span>Observed</span>
+        <span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#94a3b8;margin-right:3px;border:1px solid #64748b;"></span>Not observed</span>
         <span class="legend-item"><span class="legend-dash" style="border-color:#c62828"></span>Limit 10 µg/l</span>
       </div>
       <div class="chart-wrap"><canvas id="cyano-chart"></canvas></div>
@@ -422,14 +423,17 @@ function makeLineChart(canvasId, datasets, opts={}) {
       return pt ? pt.y : null;
     }),
     borderColor: ds.color,
-    borderWidth: ds.bold ? 2.5 : 1.5,
+    borderWidth: 0,         // no connecting line between measurements
     backgroundColor: ds.color + "18",
-    pointRadius: allDates.length < 20 ? 5 : 3,
+    pointRadius: 6,
     pointBackgroundColor: ds.color,
-    pointHoverRadius: 6,
-    tension: 0.3,
+    pointBorderColor: ds.color,
+    pointBorderWidth: 1.5,
+    pointHoverRadius: 8,
+    tension: 0,
     fill: false,
     spanGaps: false,
+    showLine: false,        // dots only — no line connecting sparse measurements
     borderDash: ds.dashed ? [4,3] : [],
   }));
 
@@ -814,12 +818,17 @@ async function init() {
     // Cyano chart
     setTimeout(()=>{
       const cyanoData = tail2months(metingen,"cyano_microcystins");
-      const obsData   = tail2months(metingen,"cyano_observatie")
+      // All observation dates — green dot if observed, grey if not
+      const allObsRaw = tail2months(metingen,"cyano_observatie");
+      const obsYes = allObsRaw
         .filter(p => p.y===1||p.y==="1"||String(p.y).toLowerCase()==="yes")
-        .map(p => ({x:p.x, y:0.5})); // place dots at y=0.5 for visibility
+        .map(p => ({x:p.x, y:0.5}));
+      const obsNo = allObsRaw
+        .filter(p => p.y!==null && p.y!==undefined && !(p.y===1||p.y==="1"||String(p.y).toLowerCase()==="yes"))
+        .map(p => ({x:p.x, y:0.5}));
 
       // Build combined date labels
-      const allDates = [...new Set([...cyanoData,...obsData].map(p=>p.x))].sort();
+      const allDates = [...new Set([...cyanoData,...obsYes,...obsNo].map(p=>p.x))].sort();
       const labels = allDates.map(d=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
 
       const el = document.getElementById("cyano-chart");
@@ -827,31 +836,37 @@ async function init() {
       new Chart(el.getContext("2d"),{
         type:"line",
         data:{labels, datasets:[
-          // Microcystin line
+          // Microcystin dots — no connecting line
           {label:"Microcystins (µg/l)",
            data:allDates.map(d=>{const p=cyanoData.find(p=>p.x===d);return p?p.y:null;}),
-           borderColor:"#e65100",borderWidth:2,backgroundColor:"#e6510018",
-           pointRadius:4,pointBackgroundColor:"#e65100",
-           tension:0.3,fill:false,spanGaps:false,type:"line"},
+           borderColor:"#e65100",borderWidth:0,backgroundColor:"#e6510018",
+           pointRadius:6,pointBackgroundColor:"#e65100",pointBorderColor:"#e65100",pointBorderWidth:1.5,
+           pointHoverRadius:8,
+           tension:0,fill:false,spanGaps:false,showLine:false},
           // Limit line
           {label:"Limit 10 µg/l",
            data:allDates.map(()=>10),
            borderColor:"#c62828",borderWidth:1.5,borderDash:[5,4],
            pointRadius:0,fill:false,spanGaps:true,tension:0,
            backgroundColor:"transparent"},
-          // Observation dots — scatter-style via line chart with no connecting line
-          {label:"Visual observation",
-           data:allDates.map(d=>{const p=obsData.find(p=>p.x===d);return p?p.y:null;}),
+          // Green dots — cyanobacteria observed
+          {label:"Observed",
+           data:allDates.map(d=>{const p=obsYes.find(p=>p.x===d);return p?p.y:null;}),
            borderColor:"transparent",
-           backgroundColor:"#39ff14",
            pointBackgroundColor:"#39ff14",
            pointBorderColor:"#2d7a00",
            pointBorderWidth:1.5,
-           pointRadius:8,
-           pointHoverRadius:10,
-           fill:false,spanGaps:false,
-           showLine:false,
-           tension:0},
+           pointRadius:8,pointHoverRadius:10,
+           fill:false,spanGaps:false,showLine:false,tension:0},
+          // Grey dots — not observed
+          {label:"Not observed",
+           data:allDates.map(d=>{const p=obsNo.find(p=>p.x===d);return p?p.y:null;}),
+           borderColor:"transparent",
+           pointBackgroundColor:"#94a3b8",
+           pointBorderColor:"#64748b",
+           pointBorderWidth:1.5,
+           pointRadius:8,pointHoverRadius:10,
+           fill:false,spanGaps:false,showLine:false,tension:0},
         ]},
         options:{responsive:true,maintainAspectRatio:false,
           interaction:{mode:"index",intersect:false},
@@ -859,7 +874,8 @@ async function init() {
             legend:{display:false},
             tooltip:{backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(0,0,0,0.1)",borderWidth:1,padding:10,
               callbacks:{label:ctx=>{
-                if(ctx.datasetIndex===2) return " Cyanobacteria observed";
+                if(ctx.datasetIndex===2) return " Cyanobacteria: observed";
+                if(ctx.datasetIndex===3) return " Cyanobacteria: not observed";
                 if(ctx.datasetIndex===1) return " Limit: 10 µg/l";
                 return ` ${ctx.dataset.label}: ${ctx.raw} µg/l`;
               }}}
