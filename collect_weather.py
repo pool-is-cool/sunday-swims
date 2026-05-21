@@ -401,11 +401,11 @@ def haal_hic_tijdreeks_op(ts_id: str, start_datum: str, eind_datum: str,
 
 def aggregeer_naar_dag(df_uur: pd.DataFrame, prefix: str,
                        heeft_min: bool = False) -> pd.DataFrame:
-    """Aggregeert uurdata naar daggemiddelden (+ max, optioneel min)."""
+    """Aggregeert uurdata naar dagmediaan (+ max, optioneel min). Mediaan is robuuster voor kanaaldata met lock-operaties."""
     df_uur = df_uur.copy()
     df_uur["datum"] = df_uur["datum_uur"].dt.date
     agg = df_uur.groupby("datum")["waarde"].agg(**{
-        f"{prefix}_gem": "mean",
+        f"{prefix}_gem": "median",
         f"{prefix}_max": "max",
         **({f"{prefix}_min": "min"} if heeft_min else {})
     }).round(3).reset_index()
