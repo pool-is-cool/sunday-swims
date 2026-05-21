@@ -353,13 +353,15 @@ const AIS_NEXT_MINUTES = 23;
 
 // Generate 14-day dummy AIS per day
 function aisDummyDays() {
-  const labels=[], values=[];
+  const labels=[], values=[], isSunday=[];
   for(let i=13;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
+    const dow = d.getDay(); // 0=Sunday
     labels.push(d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
-    values.push(Math.floor(Math.random()*4)+1);
+    isSunday.push(dow===0);
+    values.push(dow===0 ? 0 : Math.floor(Math.random()*5)+2);
   }
-  return {labels,values};
+  return {labels,values,isSunday};
 }
 
 function vesselTypeClass(type) {
