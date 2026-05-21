@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SUNDAY SWIMS — Canal Water Data</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -76,17 +74,6 @@
     .ais-red    { background: #ffebee; color: var(--bad); }
     .ais-disclaimer { font-size: 10px; color: var(--mid); line-height: 1.5; padding: 8px 10px; background: #f9f9f9; border-radius: 6px; border-left: 3px solid var(--border); margin-top: 8px; }
     .ais-dummy-note { font-family: var(--mono); font-size: 9px; color: #bbb; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
-    /* AIS map */
-    #ais-map { height: 300px; border-radius: 10px; border: 1px solid var(--border); }
-    .ais-vessel-type-cargo     { color: #1565c0; }
-    .ais-vessel-type-tanker    { color: #c62828; }
-    .ais-vessel-type-passenger { color: #2e7d32; }
-    .ais-vessel-type-other     { color: var(--mid); }
-    .ais-dir-n { font-size: 10px; background: #e3f2fd; color: #1565c0; border-radius: 4px; padding: 1px 5px; }
-    .ais-dir-s { font-size: 10px; background: #fce4ec; color: #b71c1c; border-radius: 4px; padding: 1px 5px; }
-    .ais-dir-u { font-size: 10px; background: #f5f5f5; color: var(--mid); border-radius: 4px; padding: 1px 5px; }
-    .ais-last-passage { font-size: 11px; color: var(--mid); margin-top: 6px; line-height: 1.5; }
-    .ais-last-passage strong { color: var(--text); }
 
     /* CARDS */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
@@ -138,8 +125,6 @@
     .ais-table td { padding: 7px 10px; border-bottom: 1px solid #f5f5f5; font-family: var(--mono); font-size: 11px; }
     .ais-explain { font-size: 12px; line-height: 1.7; color: var(--mid); padding: 14px 16px; background: #f9f9f9; border-radius: 8px; margin-bottom: 16px; }
     .ais-full-disclaimer { font-size: 11px; color: var(--mid); line-height: 1.6; padding: 14px 16px; background: #fff8f5; border-radius: 8px; border-left: 3px solid #ffcc80; margin-top: 16px; }
-    /* Sunday highlight in bar chart */
-    .ais-sunday-label { color: #1565c0; font-weight: 700; }
 
     /* STATUS */
     #status-banner { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; margin-top: 40px; font-family: var(--mono); font-size: 12px; color: var(--mid); }
@@ -284,10 +269,10 @@
       <strong>How AIS works:</strong> Commercial vessels are required by law to broadcast an AIS (Automatic Identification System) signal containing their position, speed, heading, name and vessel type. This allows real-time tracking of large ships on the canal. The data shown here is collected from AIS receivers near the swimming zone.
     </div>
     <div class="ais-section-grid">
-      <div>
-        <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Live vessel map — focus zone</div>
-        <div id="ais-map"></div>
-        <div class="ais-dummy-note" style="margin-top:6px;">⚠ Dummy vessel positions — real AIS integration pending</div>
+      <div class="ais-map-placeholder">
+        <div style="font-size:2rem">🗺</div>
+        <div>Live vessel map — coming soon</div>
+        <div style="font-size:11px">Will show AIS-tracked vessels near Anderlecht</div>
       </div>
       <div>
         <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Recent vessel passages</div>
@@ -296,11 +281,8 @@
       </div>
     </div>
     <div class="chart-card-full">
-      <div class="chart-title">Vessel passages per day — 14-day history</div>
-      <div class="chart-legend">
-        <span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Weekdays</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#1565c0; opacity:0.35"></span>Sundays (navigation ban)</span>
-      </div>
+      <div class="chart-title">Vessel passages — 14-day history</div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span></div>
       <div class="chart-wrap-sm"><canvas id="ais-chart"></canvas></div>
       <div class="ais-dummy-note" style="margin-top:8px">⚠ Dummy data — real AIS integration pending</div>
     </div>
@@ -338,61 +320,28 @@ const WMO = {
 
 const WIND_EN = { "N":"N","NO":"NE","O":"E","ZO":"SE","Z":"S","ZW":"SW","W":"W","NW":"NW" };
 
-
-// ── AIS dummy data ─────────────────────────────────────────────────────────
-// Structure mirrors what real AIS integration will provide via sunday_swims_data.json
-// ais_passages: recent vessel passages through the swim zone
-// ais_daily: aggregated passage counts per day (for the 14-day chart)
-
-const AIS_PASSAGES = [
-  {name:"BRUSSEL IV",    type:"Cargo",     date:"2026-05-16",time:"07:14",length:"86m", direction:"N", lat:50.8155, lon:4.2985},
-  {name:"ANTWERPEN VII", type:"Tanker",    date:"2026-05-15",time:"14:32",length:"110m",direction:"S", lat:50.8148, lon:4.2982},
-  {name:"SCHELDT STAR",  type:"Cargo",     date:"2026-05-15",time:"09:08",length:"95m", direction:"N", lat:50.8162, lon:4.2990},
-  {name:"CANAL RUNNER",  type:"Cargo",     date:"2026-05-14",time:"16:45",length:"78m", direction:"S", lat:50.8140, lon:4.2978},
-  {name:"FLANDRIA XII",  type:"Passenger", date:"2026-05-14",time:"11:20",length:"52m", direction:"N", lat:50.8170, lon:4.2993},
-  {name:"LIEGE EXPRESS", type:"Cargo",     date:"2026-05-13",time:"08:55",length:"102m",direction:"N", lat:50.8158, lon:4.2987},
-  {name:"MEUSE TRADER",  type:"Tanker",    date:"2026-05-12",time:"13:10",length:"88m", direction:"S", lat:50.8144, lon:4.2981},
+// Dummy AIS
+const AIS_DUMMY = [
+  {name:"BRUSSEL IV",    type:"Cargo",    date:"2026-05-03",time:"07:14",length:"86m"},
+  {name:"ANTWERPEN VII", type:"Tanker",   date:"2026-05-02",time:"14:32",length:"110m"},
+  {name:"SCHELDT STAR",  type:"Cargo",    date:"2026-05-02",time:"09:08",length:"95m"},
+  {name:"CANAL RUNNER",  type:"Cargo",    date:"2026-05-01",time:"16:45",length:"78m"},
+  {name:"FLANDRIA XII",  type:"Passenger",date:"2026-04-30",time:"11:20",length:"52m"},
+  {name:"LIEGE EXPRESS", type:"Cargo",    date:"2026-04-30",time:"08:55",length:"102m"},
+  {name:"MEUSE TRADER",  type:"Tanker",   date:"2026-04-29",time:"13:10",length:"88m"},
 ];
-
-// 14-day daily counts — Sundays have 0 passages (navigation ban)
-function aisDummyDays() {
-  const labels=[], values=[], isSunday=[];
-  for(let i=13;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    const dow = d.getDay(); // 0=Sunday
-    labels.push(d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
-    isSunday.push(dow===0);
-    values.push(dow===0 ? 0 : Math.floor(Math.random()*5)+2);
-  }
-  return {labels,values,isSunday};
-}
-
 const AIS_NEXT_MINUTES = 23;
 
-// ── AIS colour helper ──────────────────────────────────────────────────────
-function aisColor(mins) {
-  if (mins>10) return {cls:"ais-green", label:"Next vessel"};
-  if (mins>5)  return {cls:"ais-yellow",label:"Approaching"};
-  if (mins>1)  return {cls:"ais-orange",label:"Close"};
-  return {cls:"ais-red",label:"Imminent"};
+// Generate 14-day dummy AIS per day
+function aisDummyDays() {
+  const labels=[], values=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
+    values.push(Math.floor(Math.random()*4)+1);
+  }
+  return {labels,values};
 }
-
-// ── AIS vessel type colour ─────────────────────────────────────────────────
-function vesselTypeClass(type) {
-  const t = type.toLowerCase();
-  if (t==="cargo")     return "ais-vessel-type-cargo";
-  if (t==="tanker")    return "ais-vessel-type-tanker";
-  if (t==="passenger") return "ais-vessel-type-passenger";
-  return "ais-vessel-type-other";
-}
-
-// ── Direction badge ────────────────────────────────────────────────────────
-function dirBadge(dir) {
-  if (dir==="N") return `<span class="ais-dir-n">↑ N</span>`;
-  if (dir==="S") return `<span class="ais-dir-s">↓ S</span>`;
-  return `<span class="ais-dir-u">?</span>`;
-}
-
 
 Chart.defaults.color = "#546e7a";
 Chart.defaults["font"]["family"] = "'Roboto Mono', monospace";
@@ -429,6 +378,13 @@ function precip24hBadge(v) {
   if (v<PRECIP_24H_THRESHOLDS.high) return {label:"High",cls:"precip-badge-orange"};
   return {label:"Very high",cls:"precip-badge-red"};
 }
+function aisColor(mins) {
+  if (mins>10) return {cls:"ais-green", label:"Next vessel"};
+  if (mins>5)  return {cls:"ais-yellow",label:"Approaching"};
+  if (mins>1)  return {cls:"ais-orange",label:"Close"};
+  return {cls:"ais-red",label:"Imminent"};
+}
+
 // Past 2 months of metingen for a key
 function tail2months(arr, key) {
   const cutoff = new Date(); cutoff.setMonth(cutoff.getMonth()-2);
@@ -606,20 +562,13 @@ function renderSwimSnapshot(data, forecast, metingen) {
     <div style="margin-top:8px;font-size:10px;color:var(--mid);line-height:1.4;">Lab results have ~48h delay. Predictive model (Berlin/Copenhagen/Paris approach) planned for future phase.</div>
   `;
 
-  // AIS swim card — read from AIS_PASSAGES dummy data
+  // AIS
   const {cls,label}=aisColor(AIS_NEXT_MINUTES);
-  const lastVessel = AIS_PASSAGES[0];
-  const dirLabel = lastVessel.direction==="N" ? "northbound" : lastVessel.direction==="S" ? "southbound" : "—";
   document.getElementById("swim-ais-content").innerHTML = `
     <div class="ais-time-block ${cls}">
       <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
       <div class="ais-time">${AIS_NEXT_MINUTES} min</div>
       <div style="font-size:11px;">until next tracked vessel</div>
-    </div>
-    <div class="ais-last-passage">
-      Last passage: <strong>${lastVessel.name}</strong><br>
-      ${lastVessel.type} &middot; ${lastVessel.length} &middot; ${dirLabel}<br>
-      ${lastVessel.date} at ${lastVessel.time}
     </div>
     <div class="ais-disclaimer">Only AIS-equipped vessels tracked. Pleasure craft, rowing boats and kayaks not visible. Always verify visually.</div>
     <div class="ais-dummy-note">⚠ Dummy data</div>
@@ -674,11 +623,11 @@ function renderWeatherCards(data) {
 function renderCanalCards(data) {
   const latest=data[data.length-1];
   const cards=[
-    {label:"Canal flow (avg)",key:"kanaal_afvoer_gem",    unit:"m³/s",  dec:2},
-    {label:"Canal flow (min)",key:"kanaal_afvoer_min",    unit:"m³/s",  dec:2},
-    {label:"Canal level",     key:"kanaal_peil_gem",      unit:"cm TAW",dec:1},
-    {label:"Ruisbroek upstr.",key:"ruisbroek_opw_peil_gem",unit:"cm TAW",dec:1},
-    {label:"Ruisbroek downstr.",key:"ruisbroek_afw_peil_gem",unit:"cm TAW",dec:1},
+    {label:"Canal flow (avg)",key:"kanaal_afvoer_gem",    unit:"m³/s", dec:2},
+    {label:"Canal flow (min)",key:"kanaal_afvoer_min",    unit:"m³/s", dec:2},
+    {label:"Canal level",     key:"kanaal_peil_gem",      unit:"m TAW",dec:3},
+    {label:"Ruisbroek upstr.",key:"ruisbroek_opw_peil_gem",unit:"m TAW",dec:3},
+    {label:"Ruisbroek downstr.",key:"ruisbroek_afw_peil_gem",unit:"m TAW",dec:3},
   ];
   document.getElementById("canal-cards-grid").innerHTML = cards.map(c=>{
     const raw=latest[c.key];
@@ -828,127 +777,19 @@ function renderWaterQualityCharts(metingen) {
 
 // AIS
 function renderAIS() {
-  // ── Vessel passages table ────────────────────────────────────────────────
   document.getElementById("ais-table").innerHTML =
-    `<thead><tr>
-      <th>Vessel</th><th>Type</th><th>Length</th><th>Dir.</th><th>Date</th><th>Time</th>
-    </tr></thead><tbody>` +
-    AIS_PASSAGES.map(p=>`<tr>
-      <td>${p.name}</td>
-      <td class="${vesselTypeClass(p.type)}">${p.type}</td>
-      <td>${p.length}</td>
-      <td>${dirBadge(p.direction)}</td>
-      <td>${p.date}</td>
-      <td>${p.time}</td>
-    </tr>`).join("")+`</tbody>`;
-
-  // ── 14-day bar chart with Sunday highlighting ────────────────────────────
-  const {labels,values,isSunday}=aisDummyDays();
-  const barColors = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
-  const barBorders = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
+    `<thead><tr><th>Vessel</th><th>Type</th><th>Length</th><th>Date</th><th>Time</th></tr></thead><tbody>` +
+    AIS_DUMMY.map(p=>`<tr><td>${p.name}</td><td>${p.type}</td><td>${p.length}</td><td>${p.date}</td><td>${p.time}</td></tr>`).join("")+`</tbody>`;
+  const {labels,values}=aisDummyDays();
   setTimeout(()=>{
     const el=document.getElementById("ais-chart"); if(!el) return;
     new Chart(el.getContext("2d"),{type:"bar",
-      data:{labels,datasets:[{
-        data:values,
-        backgroundColor:barColors,
-        borderColor:barBorders,
-        borderWidth:1.5,
-        borderRadius:4
-      }]},
+      data:{labels,datasets:[{data:values,backgroundColor:"#1976d228",borderColor:"#1976d2",borderWidth:1.5,borderRadius:4}]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false},
-          tooltip:{
-            backgroundColor:"rgba(13,27,42,0.9)",
-            padding:10,
-            callbacks:{
-              label: ctx => {
-                const idx = ctx.dataIndex;
-                return isSunday[idx]
-                  ? `${ctx.raw} vessels (Sunday \u2014 navigation ban)`
-                  : `${ctx.raw} vessels`;
-              }
-            }
-          }
-        },
-        scales:{
-          x:{
-            grid:{display:false},
-            ticks:{
-              color:(ctx)=>{
-                const d=new Date(); d.setDate(d.getDate()-(13-ctx.index));
-                return d.getDay()===0?"#1565c0":"#546e7a";
-              },
-              font:(ctx)=>{
-                const d=new Date(); d.setDate(d.getDate()-(13-ctx.index));
-                return d.getDay()===0?{weight:"bold"}:{};
-              }
-            }
-          },
-          y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}
-        }
-      }
+        plugins:{legend:{display:false},tooltip:{backgroundColor:"rgba(13,27,42,0.9)",padding:10}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}}}
     });
   },200);
-
-  // ── Leaflet map ──────────────────────────────────────────────────────────
-  // Swim zone centre: 50 48 54.9 N  4 17 57.1 E
-  const SWIM_LAT = 50.8153;
-  const SWIM_LON = 4.2992;
-
-  setTimeout(()=>{
-    const mapEl = document.getElementById("ais-map");
-    if (!mapEl || mapEl._leaflet_id) return;
-
-    const map = L.map("ais-map", {
-      center: [SWIM_LAT, SWIM_LON],
-      zoom: 15,
-      zoomControl: true,
-      scrollWheelZoom: false
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19
-    }).addTo(map);
-
-    // Swim zone marker
-    const swimIcon = L.divIcon({
-      className:"",
-      html:`<div style="width:18px;height:18px;background:#1565c0;border:3px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
-      iconSize:[18,18],
-      iconAnchor:[9,9]
-    });
-    L.marker([SWIM_LAT, SWIM_LON], {icon:swimIcon})
-      .addTo(map)
-      .bindPopup("<strong>Sunday Swims</strong><br>Focus swimming zone");
-
-    // Approximate swim zone circle
-    L.circle([SWIM_LAT, SWIM_LON], {
-      radius: 400,
-      color: "#1565c0",
-      weight: 2,
-      opacity: 0.5,
-      fillColor: "#1565c0",
-      fillOpacity: 0.07
-    }).addTo(map);
-
-    // Vessel markers
-    AIS_PASSAGES.forEach(v => {
-      const col = v.type==="Tanker" ? "#c62828" : v.type==="Passenger" ? "#2e7d32" : "#1565c0";
-      const arrow = v.direction==="N" ? "\u21d1" : v.direction==="S" ? "\u21d3" : "\u21c4";
-      const vIcon = L.divIcon({
-        className:"",
-        html:`<div style="width:22px;height:22px;background:${col};border:2px solid white;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;line-height:1;">${arrow}</div>`,
-        iconSize:[22,22],
-        iconAnchor:[11,11]
-      });
-      L.marker([v.lat, v.lon], {icon:vIcon})
-        .addTo(map)
-        .bindPopup(`<strong>${v.name}</strong><br>${v.type} &middot; ${v.length}<br>${v.date} ${v.time}`);
-    });
-  }, 300);
 }
 
 // MAIN
