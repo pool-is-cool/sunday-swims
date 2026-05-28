@@ -581,6 +581,96 @@ def haal_flowbru_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
 
     return resultaat if resultaat is not None else pd.DataFrame()
 
+
+def bereken_sluis_activiteit(start_datum: str, eind_datum: str) -> pd.DataFrame:
+    """
+    Haalt 5-minuten sas-data op van de sluis Anderlecht (Flowbru) en telt
+    het aantal sluiscycli per dag als maat voor de activiteit.
+
+    Een sluiscyclus = de sas vult of leegt zich volledig:
+      - Fill: niveau stijgt van ~aval naar ~amont niveau
+      - Empty: niveau daalt van ~amont naar ~aval niveau
+
+    We detecteren cycli door signaalwisselingen te tellen in een
+    gesimplificeerd binair signaal: hoog (>= drempelwaarde) vs laag.
+    De drempelwaarde is het gemiddelde van de min en max van de dag.
+    Elke overgang hoog→laag of laag→hoog = 1 activiteit.
+
+    Retourneert DataFrame met kolommen 'datum' en 'sluis_activiteit_dag'.
+    """
+    if not FLOWBRU_USER or not FLOWBRU_PASS:
+        return pd.DataFrame()
+
+    print(f"  → Sluis activiteit ophalen (5-min sas data): {start_datum} → {eind_datum}...")
+    headers = flowbru_auth_header()
+    start_d = date.fromisoformat(start_datum)
+    eind_d  = date.fromisoformat(eind_datum)
+
+    # Sas = SID 9EF0952181A3B8AF, channel ch2 (raw, geen aggregatie)
+    url = (f"{FLOWBRU_BASE}/customers/{FLOWBRU_CID}"
+           f"/sites/9EF0952181A3B8AF/histdata0")
+    body = {
+        "select": ["ch2"],
+        "from":   flowbru_timestamp(start_d),
+        "until":  flowbru_timestamp(eind_d + timedelta(days=1)),
+    }
+
+    try:
+        r = requests.get(url, json=body, headers=headers, timeout=60)
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        print(f"  ! Flowbru sas 5-min ophalen mislukt: {e}")
+        return pd.DataFrame()
+
+    if not data or not isinstance(data, list):
+        print("  ! Geen sas 5-min data ontvangen.")
+        return pd.DataFrame()
+
+    # Verwerk ruwe data naar DataFrame
+    rows = []
+    for entry in data:
+        if not isinstance(entry, list) or len(entry) < 2 or entry[1] is None:
+            continue
+        try:
+            ts_str    = str(entry[0]).ljust(12, "0")
+            ts        = datetime.strptime(ts_str[:12], "%Y%m%d%H%M")
+            waarde    = float(entry[1]) * 0.001  # mmTAW → mTAW
+            rows.append({"ts": ts, "datum": ts.date(), "sas": waarde})
+        except Exception:
+            continue
+
+    if not rows:
+        print("  ! Geen bruikbare sas 5-min rijen.")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows)
+    df = df[(df["datum"] >= start_d) & (df["datum"] <= eind_d)]
+
+    if df.empty:
+        return pd.DataFrame()
+
+    # Tel cycli per dag
+    resultaten = []
+    for dag, groep in df.groupby("datum"):
+        vals = groep.sort_values("ts")["sas"].values
+        if len(vals) < 4:
+            resultaten.append({"datum": dag, "sluis_activiteit_dag": None})
+            continue
+
+        # Drempelwaarde = middelpunt van dagrange
+        drempel = (vals.min() + vals.max()) / 2
+        # Binair signaal: 1 = hoog (sas vol), 0 = laag (sas leeg)
+        signaal = (vals >= drempel).astype(int)
+        # Tel overgangen (0→1 en 1→0), elk = één sluisbeweging
+        overgangen = int((signaal[1:] != signaal[:-1]).sum())
+        resultaten.append({"datum": dag, "sluis_activiteit_dag": overgangen})
+
+    result = pd.DataFrame(resultaten)
+    totaal = result["sluis_activiteit_dag"].sum()
+    print(f"  ✓ Sluis activiteit: {len(result)} dag(en), {totaal} cycli totaal.")
+    return result
+
 # ─── HANDMATIGE METINGEN ─────────────────────────────────────────────────────
 
 def laad_metingen() -> pd.DataFrame:
@@ -769,6 +859,13 @@ def main():
             flowbru_df["datum"] = pd.to_datetime(flowbru_df["datum"]).apply(
                 lambda x: x.date() if hasattr(x, 'date') else x)
             nieuwe_df = nieuwe_df.merge(flowbru_df, on="datum", how="left")
+
+        # Stap 6b: Sluis activiteit ophalen (5-min sas cycli tellen)
+        activiteit_df = bereken_sluis_activiteit(start, eind)
+        if not activiteit_df.empty:
+            activiteit_df["datum"] = pd.to_datetime(activiteit_df["datum"]).apply(
+                lambda x: x.date() if hasattr(x, 'date') else x)
+            nieuwe_df = nieuwe_df.merge(activiteit_df, on="datum", how="left")
 
     # Stap 7: Samenvoegen met bestaande data
     if not bestaande_df.empty and not nieuwe_df.empty:
