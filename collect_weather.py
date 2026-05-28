@@ -6,17 +6,19 @@ Dit script draait automatisch elke dag via GitHub Actions.
 - Haalt gemeten weerdata op via KMI open data (station Ukkel, code 6447)
 - Haalt weersvoorspelling op via Open-Meteo (7 dagen)
 - Haalt kanaaldata op via MOW-HIC groep 3323277 (indien token beschikbaar)
+- Haalt sluisdata en neerslag op via Flowbru/Hydria API (indien credentials beschikbaar)
 - Combineert met handmatige metingen uit data/metingen.csv
 - Exporteert data/sunday_swims_data.json voor de website
 
 HIC_TOKEN wordt ingelezen als omgevingsvariabele (GitHub Secret).
-Het is de Base64-gecodeerde 'clientId:clientSecret' string van HIC.
+FLOWBRU_USER en FLOWBRU_PASS worden ingelezen als GitHub Secrets.
 """
 
 import requests
 import pandas as pd
 import json
 import os
+import base64
 from datetime import date, timedelta, timezone, datetime
 from pathlib import Path
 from urllib.parse import quote_plus
@@ -30,11 +32,57 @@ LONGITUDE = 4.3372
 KMI_WFS_URL    = "https://opendata.meteo.be/service/ows"
 KMI_STATION    = 6447   # Ukkel (Uccle) — dichtstbijzijnde KMI-station
 
-# HIC_TOKEN = Base64 'clientId:clientSecret' string (GitHub Secret)
+# HIC — Base64 'clientId:clientSecret' string (GitHub Secret)
 HIC_TOKEN      = os.environ.get("HIC_TOKEN", "")
 HIC_BASE_URL   = "https://hicws.vlaanderen.be/KiWIS/KiWIS"
 HIC_AUTH_URL   = "https://hicwsauth.vlaanderen.be/auth"
-HIC_GROUP_ID   = "3323277"   # Dedicated groep aangemaakt door Leen Boeckx (MOW-HIC)
+HIC_GROUP_ID   = "3323277"
+
+# Flowbru/Hydria API (GitHub Secrets)
+FLOWBRU_USER   = os.environ.get("FLOWBRU_USER", "")
+FLOWBRU_PASS   = os.environ.get("FLOWBRU_PASS", "")
+FLOWBRU_BASE   = "https://www.flowbru.eu/api/1"
+FLOWBRU_CID    = "9D9E9DE1F0E437A6"
+
+# Flowbru station/channel IDs (uit gebruikersovereenkomst)
+FLOWBRU_STATIONS = [
+    {
+        "name":    "Pluvio Ecluse Anderlecht",
+        "sid":     "9DB48CE145EB1F26",
+        "channel": "ch2",
+        "aggr":    "sum_hr",   # neerslag: som over de dag
+        "prefix":  "flowbru_neerslag",
+        "heeft_min": False,
+        "factor":  1.0,        # mm blijft mm
+    },
+    {
+        "name":    "Canal Ecluse Anderlecht AMONT",
+        "sid":     "9EF0952181A3B8AF",
+        "channel": "ch0",
+        "aggr":    "med",      # mediaan robuust tegen sluis-operaties
+        "prefix":  "flowbru_amont",
+        "heeft_min": False,
+        "factor":  0.001,      # mmTAW → mTAW
+    },
+    {
+        "name":    "Canal Ecluse Anderlecht AVAL",
+        "sid":     "9EF0952181A3B8AF",
+        "channel": "ch1",
+        "aggr":    "med",
+        "prefix":  "flowbru_aval",
+        "heeft_min": False,
+        "factor":  0.001,
+    },
+    {
+        "name":    "Canal Ecluse Anderlecht SAS",
+        "sid":     "9EF0952181A3B8AF",
+        "channel": "ch2",
+        "aggr":    "med",
+        "prefix":  "flowbru_sas",
+        "heeft_min": False,
+        "factor":  0.001,
+    },
+]
 
 SCRIPT_DIR   = Path(__file__).parent
 DATA_DIR     = SCRIPT_DIR / "data"
@@ -96,19 +144,9 @@ def haal_hic_access_token() -> str:
 def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     """
     Haalt dagelijkse weerdata op uit KMI synoptische observaties (station Ukkel).
-
-    Observatietijden per dag (UTC):
-      00:00  precip_range=1  (neerslag 18:00–00:00),  sun_duration_24hours, temp_min (nacht)
-      06:00  precip_range=2  (neerslag 18:00–06:00),  temp_min (ochtend)
-      12:00  precip_range=1  (neerslag 06:00–12:00)
-      18:00  precip_range=2  (neerslag 06:00–18:00),  temp_max
-
-    Dagelijkse neerslag = som van precip_range=2 om 06:00 en 18:00 UTC.
-    Alle tijden zijn UTC; datum = lokale datum (UTC+1/+2).
     """
     print(f"  → KMI weerdata ophalen: {start_datum} → {eind_datum} (station Ukkel)...")
 
-    # Ruim iets extra opvragen aan beide kanten om randgevallen te dekken
     dt_start = datetime.fromisoformat(start_datum) - timedelta(days=1)
     dt_eind  = datetime.fromisoformat(eind_datum)  + timedelta(days=1)
 
@@ -119,8 +157,6 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
         f"{dt_eind.strftime('%Y-%m-%dT00:00:00Z')}"
     )
 
-    # CQL_FILTER mag niet dubbel ge-URL-encoded worden door requests.
-    # We bouwen de URL handmatig met quote_plus op enkel de CQL-waarde.
     base = (
         f"{KMI_WFS_URL}?service=wfs&version=2.0.0&request=getFeature"
         f"&typeNames=synop:synop_data&outputformat=json&sortBy=timestamp+A"
@@ -160,27 +196,15 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
         })
 
     df = pd.DataFrame(rows)
-
-    # Lokale datum (Brussels = UTC+1 standaard, UTC+2 zomer)
-    # We gebruiken UTC+1 als veilige benadering; het verschil is verwaarloosbaar
-    # voor dagaggregatie van synoptische obs die op vaste UTC-tijden vallen.
     df["datum"] = (df["timestamp"] + pd.Timedelta(hours=1)).dt.date
 
-    # ── Neerslag: som van precip_range=2 om 06:00 en 18:00 UTC ──────────────
-    # range=2 om 06:00 = afgelopen 12u (18:00 gisteren – 06:00 vandaag)
-    # range=2 om 18:00 = afgelopen 12u (06:00 – 18:00 vandaag)
-    # Samen = volledige dag 06:00–06:00, wat overeenkomt met de KMI-dagdefinitie.
+    # Neerslag: som van precip_range=2 om 06:00 en 18:00 UTC
     df_r2 = df[
         (df["precip_range"] == 2) &
         (df["timestamp"].dt.hour.isin([6, 18]))
     ].copy()
     df_r2["precip_datum"] = df_r2.apply(
-        lambda row: (
-            # 18:00 UTC obs hoort bij de lokale datum van die dag
-            row["datum"] if row["timestamp"].hour == 18
-            # 06:00 UTC obs hoort bij de lokale datum van dezelfde dag
-            else row["datum"]
-        ),
+        lambda row: row["datum"] if row["timestamp"].hour == 18 else row["datum"],
         axis=1
     )
     neerslag = (
@@ -190,10 +214,6 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     )
     neerslag["neerslag_mm"] = neerslag["neerslag_mm"].round(1)
 
-    # ── Temperatuur ──────────────────────────────────────────────────────────
-    # temp_min: gerapporteerd om 06:00 UTC
-    # temp_max: gerapporteerd om 18:00 UTC
-    # temp_gemiddeld: gemiddelde van alle uurlijkse observaties op die datum
     temp_min = (
         df[df["timestamp"].dt.hour == 6][["datum", "temp_min"]]
         .dropna(subset=["temp_min"])
@@ -211,22 +231,17 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
         .groupby("datum")["temp"].mean().round(1).reset_index()
         .rename(columns={"temp": "temp_gemiddeld_c"})
     )
-
-    # ── Wind ─────────────────────────────────────────────────────────────────
     wind_max = (
         df.dropna(subset=["wind_peak_speed"])
         .groupby("datum")["wind_peak_speed"].max().round(1).reset_index()
         .rename(columns={"wind_peak_speed": "windsnelheid_max_kmh"})
     )
-    # Windrichting: van de 18:00 UTC observatie (meest representatief voor de dag)
     wind_richting = (
         df[df["timestamp"].dt.hour == 18][["datum", "wind_direction"]]
         .dropna(subset=["wind_direction"])
         .groupby("datum")["wind_direction"].first().reset_index()
         .rename(columns={"wind_direction": "windrichting_graden"})
     )
-
-    # ── Overige dagwaarden ───────────────────────────────────────────────────
     vochtigheid = (
         df.dropna(subset=["humidity_relative"])
         .groupby("datum")["humidity_relative"].mean().round(1).reset_index()
@@ -240,12 +255,9 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     bewolking = (
         df.dropna(subset=["cloudiness"])
         .groupby("datum")["cloudiness"]
-        # cloudiness schaal 0–8 (oktas) → omzetten naar % (×12.5)
         .mean().apply(lambda x: round(x * 12.5, 1)).reset_index()
         .rename(columns={"cloudiness": "bewolking_pct"})
     )
-    # Zonneschijn: gerapporteerd om 00:00 UTC als som over afgelopen 24u (in seconden)
-    # Behoort bij de vorige dag lokaal → toewijzen aan datum - 1 dag
     zon_raw = df[
         (df["timestamp"].dt.hour == 0) &
         (df["sun_duration_24hours"].notna())
@@ -257,7 +269,6 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
         .rename(columns={"sun_duration_24hours": "zonneschijn_uur"})
     )
 
-    # ── Samenvoegen ──────────────────────────────────────────────────────────
     dagframes = [
         neerslag, temp_min, temp_max, temp_gem,
         wind_max, wind_richting, vochtigheid,
@@ -267,12 +278,10 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     for frame in dagframes[1:]:
         result = result.merge(frame, on="datum", how="outer")
 
-    # Windrichting als naam
     if "windrichting_graden" in result.columns:
         result["windrichting_naam"] = result["windrichting_graden"].apply(
             windrichting_naar_naam)
 
-    # Filteren op gewenste datumrange
     start_d = date.fromisoformat(start_datum)
     eind_d  = date.fromisoformat(eind_datum)
     result = result[
@@ -284,10 +293,7 @@ def haal_kmi_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
 
 
 def haal_uv_index_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
-    """
-    Haalt UV-index op via Open-Meteo (niet beschikbaar bij KMI).
-    Geeft een DataFrame terug met kolommen 'datum' en 'uv_index_max'.
-    """
+    """Haalt UV-index op via Open-Meteo (niet beschikbaar bij KMI)."""
     print(f"  → UV-index ophalen via Open-Meteo: {start_datum} → {eind_datum}...")
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
@@ -312,6 +318,7 @@ def haal_uv_index_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
         print(f"  ! UV-index ophalen mislukt: {e}")
         return pd.DataFrame()
 
+
 def bereken_cumulatieve_neerslag(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values("datum").reset_index(drop=True)
     df["neerslag_24u_mm"] = df["neerslag_mm"].rolling(1, min_periods=1).sum().round(1)
@@ -322,10 +329,7 @@ def bereken_cumulatieve_neerslag(df: pd.DataFrame) -> pd.DataFrame:
 # ─── MOW-HIC ─────────────────────────────────────────────────────────────────
 
 def haal_hic_groepslijst(access_token: str) -> list:
-    """
-    Haalt de lijst van tijdreeksen op uit groep 3323277.
-    Logt de volledige lijst zodat we de exacte ts_name-waarden kunnen aflezen.
-    """
+    """Haalt de lijst van tijdreeksen op uit groep 3323277."""
     params = {
         "service":            "kisters",
         "type":               "queryServices",
@@ -401,7 +405,8 @@ def haal_hic_tijdreeks_op(ts_id: str, start_datum: str, eind_datum: str,
 
 def aggregeer_naar_dag(df_uur: pd.DataFrame, prefix: str,
                        heeft_min: bool = False) -> pd.DataFrame:
-    """Aggregeert uurdata naar dagmediaan (+ max, optioneel min). Mediaan is robuuster voor kanaaldata met lock-operaties."""
+    """Aggregeert uurdata naar dagmediaan (+ max, optioneel min).
+    Mediaan is robuuster voor kanaaldata met lock-operaties."""
     df_uur = df_uur.copy()
     df_uur["datum"] = df_uur["datum_uur"].dt.date
     agg = df_uur.groupby("datum")["waarde"].agg(**{
@@ -412,19 +417,31 @@ def aggregeer_naar_dag(df_uur: pd.DataFrame, prefix: str,
     return agg
 
 
-def bepaal_prefix_en_min(ts_name: str, station_name: str) -> tuple:
-    """Bepaalt kolomprefix en heeft_min op basis van ts_name en station_name."""
-    naam    = (ts_name or "").lower()
-    station = (station_name or "").lower()
+def bepaal_prefix_en_min(ts_name: str, station_name: str,
+                          parameter: str = "") -> tuple:
+    """Bepaalt kolomprefix en heeft_min op basis van station_name en parameter.
 
-    if "afvoer" in naam or "discharge" in naam or "debiet" in naam:
-        return "kanaal_afvoer", True
-    if "ruisbroek" in station and ("opw" in station or "upstream" in station):
+    HIC groep 3323277 bevat 4 reeksen, alle met ts_name='Pv':
+      - Ruisbroek/Kl Brussel-Charleroi + parameter=H  → kanaal_peil
+      - Ruisbroek/Kl Brussel-Charleroi + parameter=Q  → kanaal_afvoer
+      - Ruisbroek Sluis Opwaarts DVW/...  + parameter=H  → ruisbroek_opw_peil
+      - Ruisbroek Sluis Afwaarts DVW/...  + parameter=H  → ruisbroek_afw_peil
+    """
+    station = (station_name or "").lower()
+    param   = (parameter or "").upper()
+
+    # Ruisbroek upstream/downstream sluis → altijd waterpeil
+    if "opw" in station or "opwaarts" in station:
         return "ruisbroek_opw_peil", False
-    if "ruisbroek" in station and ("afw" in station or "downstream" in station):
+    if "afw" in station or "afwaarts" in station:
         return "ruisbroek_afw_peil", False
-    if "waterpeil" in naam or "level" in naam or "peil" in naam:
-        return "kanaal_peil", False
+
+    # Hoofdkanaalstation: onderscheid H (level) vs Q (debiet/flow)
+    if "ruisbroek" in station:
+        if param == "Q":
+            return "kanaal_afvoer", True   # heeft_min=True: negatief = omgekeerde stroming
+        if param == "H":
+            return "kanaal_peil", False
 
     return None, False
 
@@ -442,10 +459,11 @@ def haal_alle_hic_data_op(start_datum: str, eind_datum: str,
     resultaat = None
 
     for ts in reeksen:
-        ts_id    = ts.get("ts_id")
-        ts_name  = ts.get("ts_name", "")
-        station  = ts.get("station_name", "")
-        prefix, heeft_min = bepaal_prefix_en_min(ts_name, station)
+        ts_id     = ts.get("ts_id")
+        ts_name   = ts.get("ts_name", "")
+        station   = ts.get("station_name", "")
+        parameter = ts.get("parametertype_name", "")
+        prefix, heeft_min = bepaal_prefix_en_min(ts_name, station, parameter)
 
         if not ts_id:
             continue
@@ -453,7 +471,7 @@ def haal_alle_hic_data_op(start_datum: str, eind_datum: str,
             print(f"    → Onbekende tijdreeks overgeslagen: {station} / {ts_name}")
             continue
 
-        print(f"    → {station} / {ts_name} → {prefix}...")
+        print(f"    → {station} / {ts_name} ({parameter}) → {prefix}...")
         try:
             df_uur = haal_hic_tijdreeks_op(ts_id, start_datum, eind_datum,
                                             access_token)
@@ -467,6 +485,101 @@ def haal_alle_hic_data_op(start_datum: str, eind_datum: str,
             print(f"    ! Fout bij {station} / {ts_name}: {e}")
 
     return resultaat
+
+# ─── FLOWBRU / HYDRIA ────────────────────────────────────────────────────────
+
+def flowbru_auth_header() -> dict:
+    """Geeft de Basic Auth header terug voor de Flowbru API."""
+    token = base64.b64encode(
+        f"{FLOWBRU_USER}:{FLOWBRU_PASS}".encode()
+    ).decode()
+    return {"Authorization": f"Basic {token}"}
+
+
+def flowbru_timestamp(d: date) -> str:
+    """Converteert een date naar Flowbru timestamp-formaat YYYYMMDDHHmm (UTC)."""
+    return d.strftime("%Y%m%d0000")
+
+
+def haal_flowbru_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
+    """
+    Haalt dagelijks geaggregeerde data op van de Flowbru API voor alle
+    geconfigureerde stations (sluis Anderlecht: waterstanden + neerslag).
+
+    Aggregatie: 1day interval, methode per kanaal (med of sum_hr).
+    Waterstanden worden van mmTAW naar mTAW omgezet (factor 0.001).
+    Timestamps zijn UTC.
+    """
+    if not FLOWBRU_USER or not FLOWBRU_PASS:
+        print("  → Geen Flowbru credentials gevonden, overgeslagen.")
+        return pd.DataFrame()
+
+    print(f"  → Flowbru data ophalen: {start_datum} → {eind_datum}...")
+    headers = flowbru_auth_header()
+    start_d = date.fromisoformat(start_datum)
+    eind_d  = date.fromisoformat(eind_datum)
+
+    resultaat = None
+
+    for station in FLOWBRU_STATIONS:
+        url = (f"{FLOWBRU_BASE}/customers/{FLOWBRU_CID}"
+               f"/sites/{station['sid']}/histdata0/1day")
+        body = {
+            "select": [f"{station['channel']} {station['aggr']}"],
+            "from":   flowbru_timestamp(start_d - timedelta(days=1)),
+            "until":  flowbru_timestamp(eind_d  + timedelta(days=1)),
+        }
+        try:
+            r = requests.get(url, json=body, headers=headers, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+        except Exception as e:
+            print(f"    ! Flowbru ophalen mislukt voor {station['name']}: {e}")
+            continue
+
+        if not data or not isinstance(data, list):
+            print(f"    ! Geen data voor {station['name']}")
+            continue
+
+        rows = []
+        for entry in data:
+            # Flowbru retourneert [timestamp_str, waarde]
+            if not isinstance(entry, list) or len(entry) < 2:
+                continue
+            ts_str = str(entry[0])
+            val    = entry[1]
+            if val is None:
+                continue
+            try:
+                # Timestamp formaat: YYYYMMDDHHmmssSSS (trailing zeros weggelaten)
+                # Pad to at least 12 chars (YYYYMMDDHHmm)
+                ts_padded = ts_str.ljust(12, "0")
+                ts = datetime.strptime(ts_padded[:12], "%Y%m%d%H%M")
+                datum = ts.date()
+                waarde = float(val) * station["factor"]
+                rows.append({"datum": datum, "waarde": waarde})
+            except Exception:
+                continue
+
+        if not rows:
+            print(f"    ! Geen bruikbare rijen voor {station['name']}")
+            continue
+
+        df = pd.DataFrame(rows)
+        df = df[(df["datum"] >= start_d) & (df["datum"] <= eind_d)]
+
+        if df.empty:
+            continue
+
+        col = f"{station['prefix']}_dag"
+        df = df.rename(columns={"waarde": col})
+        df[col] = df[col].round(3)
+
+        print(f"    ✓ {station['name']}: {len(df)} dag(en)")
+        resultaat = (df if resultaat is None
+                     else resultaat.merge(df, on="datum", how="outer"))
+
+    return resultaat if resultaat is not None else pd.DataFrame()
 
 # ─── HANDMATIGE METINGEN ─────────────────────────────────────────────────────
 
@@ -567,7 +680,6 @@ def bepaal_ontbrekende_datums(bestaande_df: pd.DataFrame):
     volgende = laatste + timedelta(days=1)
 
     if volgende > gisteren:
-        # Alles up-to-date t/m gisteren
         return None, None
 
     return str(volgende), str(gisteren)
@@ -638,19 +750,27 @@ def main():
         # Stap 4: UV-index ophalen via Open-Meteo
         uv_df = haal_uv_index_op(start, eind)
         if not uv_df.empty:
-            uv_df["datum"] = pd.to_datetime(uv_df["datum"]).apply(lambda x: x.date() if hasattr(x, 'date') else x)
+            uv_df["datum"] = pd.to_datetime(uv_df["datum"]).apply(
+                lambda x: x.date() if hasattr(x, 'date') else x)
             nieuwe_df = nieuwe_df.merge(uv_df, on="datum", how="left")
 
-        # Stap 5: Kanaaldata ophalen via groep 3323277
+        # Stap 5: HIC kanaaldata ophalen via groep 3323277
         if access_token:
             hic_df = haal_alle_hic_data_op(start, eind, access_token)
             if hic_df is not None:
                 hic_df["datum"] = pd.to_datetime(hic_df["datum"]).dt.date
                 nieuwe_df = nieuwe_df.merge(hic_df, on="datum", how="left")
         else:
-            print("  → Kanaaldata overgeslagen (geen geldig access token).")
+            print("  → HIC kanaaldata overgeslagen (geen geldig access token).")
 
-    # Stap 5: Samenvoegen met bestaande data
+        # Stap 6: Flowbru sluisdata en neerslag ophalen
+        flowbru_df = haal_flowbru_data_op(start, eind)
+        if not flowbru_df.empty:
+            flowbru_df["datum"] = pd.to_datetime(flowbru_df["datum"]).apply(
+                lambda x: x.date() if hasattr(x, 'date') else x)
+            nieuwe_df = nieuwe_df.merge(flowbru_df, on="datum", how="left")
+
+    # Stap 7: Samenvoegen met bestaande data
     if not bestaande_df.empty and not nieuwe_df.empty:
         gecombineerd = (
             pd.concat([bestaande_df, nieuwe_df], ignore_index=True)
@@ -663,10 +783,10 @@ def main():
     else:
         gecombineerd = bestaande_df
 
-    # Stap 6: Cumulatieve neerslag herberekenen over volledige dataset
+    # Stap 8: Cumulatieve neerslag herberekenen over volledige dataset
     gecombineerd = bereken_cumulatieve_neerslag(gecombineerd)
 
-    # Stap 7: Handmatige metingen samenvoegen
+    # Stap 9: Handmatige metingen samenvoegen
     metingen = laad_metingen()
     if not metingen.empty:
         handmatige_kolommen = [c for c in metingen.columns if c != "datum"]
@@ -675,7 +795,7 @@ def main():
                 gecombineerd = gecombineerd.drop(columns=[k])
         gecombineerd = gecombineerd.merge(metingen, on="datum", how="left")
 
-    # Stap 8: Exporteren
+    # Stap 10: Exporteren
     exporteer_json(gecombineerd, metingen)
 
     print(f"\n  ✓ Klaar! Totaal: {len(gecombineerd)} dagen in dataset.\n")
