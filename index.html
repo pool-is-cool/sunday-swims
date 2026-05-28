@@ -495,7 +495,7 @@ function makeLineChart(canvasId, datasets, opts={}) {
 
 const DIR_LABELS = ["N","NO","O","ZO","Z","ZW","W","NW"];
 
-function makeMultiChart(canvasId, labels, datasets, dualAxis, dirAxis) {
+function makeMultiChart(canvasId, labels, datasets, dualAxis, dirAxis, isBar) {
   const el = document.getElementById(canvasId);
   if (!el) return;
   const scales = {
@@ -517,14 +517,15 @@ function makeMultiChart(canvasId, labels, datasets, dualAxis, dirAxis) {
     scales.y1={grid:{display:false},ticks:{maxTicksLimit:5,color:"#f97316"},position:"right"};
   }
   return new Chart(el.getContext("2d"), {
-    type:"line",
+    type: isBar ? "bar" : "line",
     data:{labels, datasets: datasets.map(ds => ({
       label:ds.label, data:ds.data, borderColor:ds.color,
       borderWidth:ds.bold?2.5:1.5,
-      backgroundColor:ds.fill?(ds.color+"28"):"transparent",
+      backgroundColor: isBar ? (ds.color+"aa") : (ds.fill?(ds.color+"28"):"transparent"),
       pointRadius:0, pointHoverRadius:4, pointHoverBackgroundColor:ds.color,
       tension:0.1, fill:ds.fill||false, spanGaps:true,
-      borderDash:ds.dashed?[4,3]:[], yAxisID:ds.yAxisID||"y"
+      borderDash:ds.dashed?[4,3]:[], yAxisID:ds.yAxisID||"y",
+      borderRadius: isBar ? 3 : 0,
     }))},
     options:{responsive:true,maintainAspectRatio:false,
       interaction:{mode:"index",intersect:false},
@@ -725,7 +726,7 @@ function renderCanalCharts(data) {
     {title:"Water level — Anderlecht lock (upstream / downstream)",legend:[{l:"Upstream",c:"#0d9488"},{l:"Downstream",c:"#0891b2"}],
      ds:[{label:"Upstream",data:tail14(data,"flowbru_amont_dag"),color:"#0d9488",bold:true},
          {label:"Downstream",data:tail14(data,"flowbru_aval_dag"),color:"#0891b2"}]},
-    {title:"Lock activity — Anderlecht (operations/day)",legend:[{l:"Lock operations (up or down)",c:"#f59e0b"}],
+    {title:"Lock activity — Anderlecht (operations/day)",legend:[{l:"Lock operations (up or down)",c:"#f59e0b"}],bar:true,
      ds:[{label:"Lock operations (up or down)",data:tail14(data,"sluis_activiteit_dag"),color:"#f59e0b",fill:true}]},
   ];
   document.getElementById("canal-charts-grid").innerHTML = defs.map((c,i)=>
@@ -735,7 +736,7 @@ function renderCanalCharts(data) {
   ).join("");
   const draw=()=>{
     const ok=defs.every((_,i)=>{const el=document.getElementById(`cchart-${i}`);return el&&el.offsetWidth>0;});
-    if(ok) defs.forEach((c,i)=>makeMultiChart(`cchart-${i}`,lbls,c.ds,c.dualAxis||false));
+    if(ok) defs.forEach((c,i)=>makeMultiChart(`cchart-${i}`,lbls,c.ds,c.dualAxis||false,false,c.bar||false));
     else setTimeout(draw,100);
   };
   setTimeout(draw,100);
