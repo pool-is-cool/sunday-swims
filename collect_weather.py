@@ -405,7 +405,7 @@ def haal_hic_tijdreeks_op(ts_id: str, start_datum: str, eind_datum: str,
         return pd.DataFrame(columns=["datum_uur", "waarde"])
 
     df = pd.DataFrame(rijen, columns=["datum_uur", "waarde"])
-    df["datum_uur"] = pd.to_datetime(df["datum_uur"])
+    df["datum_uur"] = pd.to_datetime(df["datum_uur"], utc=True)
     df["waarde"]    = pd.to_numeric(df["waarde"], errors="coerce")
     return df
 
@@ -809,7 +809,11 @@ def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
         m_json = m_json.replace(": NaN", ": null").replace(":NaN", ":null")
         metingen_records = json.loads(m_json)
 
-    voorspelling = haal_voorspelling_op()
+    try:
+        voorspelling = haal_voorspelling_op()
+    except Exception as e:
+        print(f"  ! Weersvoorspelling ophalen mislukt: {e} — lege voorspelling gebruikt.")
+        voorspelling = []
 
     output = {
         "gegenereerd_op": str(date.today()),
