@@ -273,10 +273,10 @@
       Canal data: <a href="https://hicws.vlaanderen.be/" target="_blank">Flanders Hydraulics Research — HIC</a>. Data is unvalidated and intended for operational use only.
     </div>
     <div class="sub-section-title">Current conditions — yesterday</div>
-    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data | Lock levels &amp; precipitation: Flowbru/Hydria station N03 &amp; P07, 1-day lag | Lock levels &amp; precipitation: Flowbru/Hydria station N03 &amp; P07</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data, 1-day lag | Lock levels &amp; precipitation: Flowbru/Hydria stations N03 &amp; P07</div>
     <div class="cards-grid" id="canal-cards-grid"></div>
     <div class="sub-section-title">14-day history</div>
-    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data | Lock levels, precipitation &amp; activity: Flowbru/Hydria stations N03 &amp; P07</div>
     <div class="charts-grid" id="canal-charts-grid"></div>
   </div>
 
@@ -722,10 +722,11 @@ function renderCanalCharts(data) {
      ds:[{label:"Canal",data:tail14(data,"kanaal_peil_gem"),color:"#0ea5e9",bold:true},
          {label:"Upstr.",data:tail14(data,"ruisbroek_opw_peil_gem"),color:"#06b6d4"},
          {label:"Downstr.",data:tail14(data,"ruisbroek_afw_peil_gem"),color:"#0284c7",dashed:true}]},
-    {title:"Water level — Anderlecht lock (upstream / downstream / chamber)",legend:[{l:"Upstream",c:"#0d9488"},{l:"Downstream",c:"#0891b2"},{l:"Chamber",c:"#6366f1"}],
+    {title:"Water level — Anderlecht lock (upstream / downstream)",legend:[{l:"Upstream",c:"#0d9488"},{l:"Downstream",c:"#0891b2"}],
      ds:[{label:"Upstream",data:tail14(data,"flowbru_amont_dag"),color:"#0d9488",bold:true},
-         {label:"Downstream",data:tail14(data,"flowbru_aval_dag"),color:"#0891b2"},
-         {label:"Chamber",data:tail14(data,"flowbru_sas_dag"),color:"#6366f1",dashed:true}]},
+         {label:"Downstream",data:tail14(data,"flowbru_aval_dag"),color:"#0891b2"}]},
+    {title:"Lock activity — Anderlecht (cycles/day)",legend:[{l:"Lock cycles",c:"#f59e0b"}],
+     ds:[{label:"Lock cycles",data:tail14(data,"sluis_activiteit_dag"),color:"#f59e0b",fill:true}]},
   ];
   document.getElementById("canal-charts-grid").innerHTML = defs.map((c,i)=>
     `<div class="chart-card"><div class="chart-title">${c.title}</div>
