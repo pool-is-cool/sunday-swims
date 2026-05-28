@@ -259,10 +259,10 @@
     <div style="font-size:10px;color:#1565c0;background:#e3f2fd;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Open-Meteo — model forecast, updated daily</div>
     <div class="forecast-strip" id="forecast-strip"></div>
     <div class="sub-section-title">Current conditions — yesterday</div>
-    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">KMI station Uccle — measured data, 1-day lag (daily values only complete after 18:00 UTC) | UV index: Open-Meteo model</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">KMI station Uccle — measured data, 1-day lag | Precipitation: Flowbru rain gauge at Anderlecht lock | UV index: Open-Meteo model</div>
     <div class="cards-grid" id="weather-cards-grid"></div>
     <div class="sub-section-title">14-day history</div>
-    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">KMI station Uccle — measured data | UV index: Open-Meteo model</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">KMI station Uccle — measured data | Precipitation: Flowbru rain gauge at Anderlecht lock | UV index: Open-Meteo model</div>
     <div class="charts-grid" id="weather-charts-grid"></div>
   </div>
 
@@ -273,7 +273,7 @@
       Canal data: <a href="https://hicws.vlaanderen.be/" target="_blank">Flanders Hydraulics Research — HIC</a>. Data is unvalidated and intended for operational use only.
     </div>
     <div class="sub-section-title">Current conditions — yesterday</div>
-    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data, 1-day lag</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data | Lock levels &amp; precipitation: Flowbru/Hydria station N03 &amp; P07, 1-day lag | Lock levels &amp; precipitation: Flowbru/Hydria station N03 &amp; P07</div>
     <div class="cards-grid" id="canal-cards-grid"></div>
     <div class="sub-section-title">14-day history</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data</div>
@@ -582,8 +582,8 @@ function renderSwimSnapshot(data, forecast, metingen) {
   const cyanoEl = document.getElementById("swim-cyano-val");
   if(cyanoEl){ cyanoEl.textContent=cyanoVal; cyanoEl.style.cssText=cyanoStyle; }
 
-  const precip72 = last(data,"neerslag_72u_mm");
-  const precip24 = last(data,"neerslag_24u_mm");
+  const precip72 = last(data,"flowbru_neerslag_72u_mm");
+  const precip24 = last(data,"flowbru_neerslag_dag");
   const pb = precipBadge(precip72);
   const pb24 = precip24hBadge(precip24);
   document.getElementById("swim-water-content").innerHTML = `
@@ -629,8 +629,8 @@ function renderForecast(forecast) {
 function renderWeatherCards(data) {
   const latest=data[data.length-1];
   const cards=[
-    {label:"Precipitation",  key:"neerslag_mm",         unit:"mm/day",dec:1},
-    {label:"Precip. 72h",    key:"neerslag_72u_mm",     unit:"mm",    dec:1},
+    {label:"Precipitation (lock)",key:"flowbru_neerslag_dag",    unit:"mm/day",dec:1},
+    {label:"Precip. 72h (lock)",key:"flowbru_neerslag_72u_mm",unit:"mm",    dec:1},
     {label:"Temp. max",      key:"temp_max_c",           unit:"°C",    dec:1},
     {label:"Temp. min",      key:"temp_min_c",           unit:"°C",    dec:1},
     {label:"Wind speed",     key:"windsnelheid_max_kmh", unit:"km/h",  dec:0},
@@ -663,6 +663,10 @@ function renderCanalCards(data) {
     {label:"Canal level",     key:"kanaal_peil_gem",      unit:"m TAW",dec:3},
     {label:"Ruisbroek upstr.",key:"ruisbroek_opw_peil_gem",unit:"m TAW",dec:3},
     {label:"Ruisbroek downstr.",key:"ruisbroek_afw_peil_gem",unit:"m TAW",dec:3},
+    {label:"Lock upstream",   key:"flowbru_amont_dag",    unit:"m TAW",dec:3},
+    {label:"Lock downstream", key:"flowbru_aval_dag",     unit:"m TAW",dec:3},
+    {label:"Lock chamber",    key:"flowbru_sas_dag",      unit:"m TAW",dec:3},
+    {label:"Lock activity",   key:"sluis_activiteit_dag", unit:"cycles",dec:0},
   ];
   document.getElementById("canal-cards-grid").innerHTML = cards.map(c=>{
     const raw=latest[c.key];
@@ -680,8 +684,8 @@ function renderWeatherCharts(data) {
          {label:"Mean",data:tail14(data,"temp_gemiddeld_c"),color:"#fbbf24",dashed:true},
          {label:"Min",data:tail14(data,"temp_min_c"),color:"#94a3b8"}]},
     {title:"Precipitation",legend:[{l:"Daily (mm)",c:"#60a5fa"},{l:"72h cumul.",c:"#3b82f6"}],
-     ds:[{label:"Daily",data:tail14(data,"neerslag_mm"),color:"#60a5fa",fill:true,bold:true},
-         {label:"72h",data:tail14(data,"neerslag_72u_mm"),color:"#3b82f6",dashed:true}]},
+     ds:[{label:"Daily",data:tail14(data,"flowbru_neerslag_dag"),color:"#60a5fa",fill:true,bold:true},
+         {label:"72h",data:tail14(data,"flowbru_neerslag_72u_mm"),color:"#3b82f6",dashed:true}]},
     {title:"Cloud cover, UV & Sunshine",legend:[{l:"Cloud cover (%)",c:"#64748b"},{l:"UV index",c:"#fbbf24"},{l:"Sunshine (h)",c:"#f59e0b"}],dualAxis:true,
      ds:[{label:"Cloud cover (%)",data:tail14(data,"bewolking_pct"),color:"#64748b",fill:true,yAxisID:"y"},
          {label:"UV index",data:tail14(data,"uv_index_max"),color:"#fbbf24",bold:true,yAxisID:"y1"},
@@ -718,6 +722,10 @@ function renderCanalCharts(data) {
      ds:[{label:"Canal",data:tail14(data,"kanaal_peil_gem"),color:"#0ea5e9",bold:true},
          {label:"Upstr.",data:tail14(data,"ruisbroek_opw_peil_gem"),color:"#06b6d4"},
          {label:"Downstr.",data:tail14(data,"ruisbroek_afw_peil_gem"),color:"#0284c7",dashed:true}]},
+    {title:"Water level — Anderlecht lock (upstream / downstream / chamber)",legend:[{l:"Upstream",c:"#0d9488"},{l:"Downstream",c:"#0891b2"},{l:"Chamber",c:"#6366f1"}],
+     ds:[{label:"Upstream",data:tail14(data,"flowbru_amont_dag"),color:"#0d9488",bold:true},
+         {label:"Downstream",data:tail14(data,"flowbru_aval_dag"),color:"#0891b2"},
+         {label:"Chamber",data:tail14(data,"flowbru_sas_dag"),color:"#6366f1",dashed:true}]},
   ];
   document.getElementById("canal-charts-grid").innerHTML = defs.map((c,i)=>
     `<div class="chart-card"><div class="chart-title">${c.title}</div>

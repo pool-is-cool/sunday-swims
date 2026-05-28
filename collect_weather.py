@@ -17,6 +17,8 @@ FLOWBRU_USER en FLOWBRU_PASS worden ingelezen als GitHub Secrets.
 import requests
 import pandas as pd
 import json
+json_module = json
+import json as json_module
 import os
 import base64
 from datetime import date, timedelta, timezone, datetime
@@ -321,9 +323,14 @@ def haal_uv_index_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
 
 def bereken_cumulatieve_neerslag(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values("datum").reset_index(drop=True)
+    # KMI-based cumulative (kept as reference)
     df["neerslag_24u_mm"] = df["neerslag_mm"].rolling(1, min_periods=1).sum().round(1)
     df["neerslag_48u_mm"] = df["neerslag_mm"].rolling(2, min_periods=1).sum().round(1)
     df["neerslag_72u_mm"] = df["neerslag_mm"].rolling(3, min_periods=1).sum().round(1)
+    # Flowbru-based cumulative (local rain gauge at Anderlecht lock)
+    if "flowbru_neerslag_dag" in df.columns:
+        df["flowbru_neerslag_48u_mm"] = df["flowbru_neerslag_dag"].rolling(2, min_periods=1).sum().round(1)
+        df["flowbru_neerslag_72u_mm"] = df["flowbru_neerslag_dag"].rolling(3, min_periods=1).sum().round(1)
     return df
 
 # ─── MOW-HIC ─────────────────────────────────────────────────────────────────
@@ -530,7 +537,12 @@ def haal_flowbru_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
             "until":  flowbru_timestamp(eind_d  + timedelta(days=1)),
         }
         try:
-            r = requests.get(url, json=body, headers=headers, timeout=30)
+            r = requests.get(
+                url,
+                params={"json": json_module.dumps(body)},
+                headers=headers,
+                timeout=30,
+            )
             r.raise_for_status()
             data = r.json()
         except Exception as e:
@@ -616,7 +628,12 @@ def bereken_sluis_activiteit(start_datum: str, eind_datum: str) -> pd.DataFrame:
     }
 
     try:
-        r = requests.get(url, json=body, headers=headers, timeout=60)
+        r = requests.get(
+            url,
+            params={"json": json_module.dumps(body)},
+            headers=headers,
+            timeout=60,
+        )
         r.raise_for_status()
         data = r.json()
     except Exception as e:
