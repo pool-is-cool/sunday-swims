@@ -52,7 +52,7 @@ FLOWBRU_STATIONS = [
         "name":    "Pluvio Ecluse Anderlecht",
         "sid":     "9DB48CE145EB1F26",
         "channel": "ch2",
-        "aggr":    "sum_hr",   # neerslag: som over de dag
+        "aggr":    "sum_min",  # neerslag: raw waarden in mm/5min → som over de dag
         "prefix":  "flowbru_neerslag",
         "heeft_min": False,
         "factor":  1.0,        # mm blijft mm
