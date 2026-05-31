@@ -145,6 +145,11 @@
     /* FOOTER */
     footer { border-top: 1px solid var(--border); padding-top: 28px; margin-top: 40px; font-family: var(--mono); font-size: 11px; color: var(--mid); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
     footer a { color: var(--mid); text-decoration: underline; }
+  
+    details#ref-locations-details summary::-webkit-details-marker { display: none; }
+    details#ref-locations-details summary::marker { display: none; }
+    details#ref-locations-details[open] .ref-arrow { transform: rotate(180deg); }
+
   </style>
 </head>
 <body>
@@ -238,18 +243,25 @@
       <table class="quality-table" id="focus-measurements-table"></table>
     </div>
 
-    <div class="sub-section-title">Reference locations</div>
-    <div style="font-size:10px;color:#e65100;background:#fff8f5;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Dummy/test data — to be replaced by lab analyses from reference locations</div>
-    <div class="chart-card-full">
-      <div class="chart-title">E. coli — reference locations (past 2 months)</div>
-      <div class="chart-legend" id="ref-ecoli-legend"></div>
-      <div class="chart-wrap"><canvas id="ecoli-ref-chart"></canvas></div>
-    </div>
-    <div class="chart-card-full">
-      <div class="chart-title">Enterococci — reference locations (past 2 months)</div>
-      <div class="chart-legend" id="ref-entero-legend"></div>
-      <div class="chart-wrap"><canvas id="entero-ref-chart"></canvas></div>
-    </div>
+    <details id="ref-locations-details" style="margin-bottom:24px;">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:10px 0;">
+        <div class="sub-section-title" style="margin:0;border:none;padding:0;">Reference locations</div>
+        <span class="ref-arrow" style="font-size:14px;color:var(--mid);transition:transform 0.2s;">▼</span>
+      </summary>
+      <div style="margin-top:8px;">
+        <div style="font-size:10px;color:#e65100;background:#fff8f5;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Dummy/test data — to be replaced by lab analyses from reference locations</div>
+        <div class="chart-card-full">
+          <div class="chart-title">E. coli — reference locations (past 2 months)</div>
+          <div class="chart-legend" id="ref-ecoli-legend"></div>
+          <div class="chart-wrap"><canvas id="ecoli-ref-chart"></canvas></div>
+        </div>
+        <div class="chart-card-full">
+          <div class="chart-title">Enterococci — reference locations (past 2 months)</div>
+          <div class="chart-legend" id="ref-entero-legend"></div>
+          <div class="chart-wrap"><canvas id="entero-ref-chart"></canvas></div>
+        </div>
+      </div>
+    </details>
   </div>
 
   <!-- 3. WEATHER -->
