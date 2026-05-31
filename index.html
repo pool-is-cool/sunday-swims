@@ -659,15 +659,14 @@ function renderWeatherCards(data) {
 function renderCanalCards(data) {
   const latest=data[data.length-1];
   const cards=[
-    {label:"Canal flow (avg)",key:"kanaal_afvoer_gem",    unit:"m³/s", dec:2},
-    {label:"Canal flow (min)",key:"kanaal_afvoer_min",    unit:"m³/s", dec:2},
-    {label:"Canal level",     key:"kanaal_peil_gem",      unit:"m TAW",dec:3},
-    {label:"Ruisbroek upstr.",key:"ruisbroek_opw_peil_gem",unit:"m TAW",dec:3},
-    {label:"Ruisbroek downstr.",key:"ruisbroek_afw_peil_gem",unit:"m TAW",dec:3},
-    {label:"Lock upstream",   key:"flowbru_amont_dag",    unit:"m TAW",dec:3},
-    {label:"Lock downstream", key:"flowbru_aval_dag",     unit:"m TAW",dec:3},
-    {label:"Lock chamber",    key:"flowbru_sas_dag",      unit:"m TAW",dec:3},
-    {label:"Lock operations (↑↓)",key:"sluis_activiteit_dag", unit:"ops/day",dec:0},
+    {label:"Canal Charleroi-Brussels (Lot–Ruisbroek), flow avg",key:"kanaal_afvoer_gem", unit:"m³/s", dec:2},
+    {label:"Canal Charleroi-Brussels (Lot–Ruisbroek), flow min",key:"kanaal_afvoer_min", unit:"m³/s", dec:2},
+    {label:"Canal Charleroi-Brussels (Lot–Ruisbroek), level",key:"kanaal_peil_gem", unit:"m TAW",dec:3},
+    {label:"Lock Ruisbroek, upstream",key:"ruisbroek_opw_peil_gem",   unit:"m TAW",dec:3},
+    {label:"Lock Ruisbroek, downstream",key:"ruisbroek_afw_peil_gem", unit:"m TAW",dec:3},
+    {label:"Lock Anderlecht, upstream",key:"flowbru_amont_dag",       unit:"m TAW",dec:3},
+    {label:"Lock Anderlecht, downstream",key:"flowbru_aval_dag",      unit:"m TAW",dec:3},
+        {label:"Lock Anderlecht, operations (↑↓)",key:"sluis_activiteit_dag",unit:"ops/day",dec:0},
   ];
   document.getElementById("canal-cards-grid").innerHTML = cards.map(c=>{
     const raw=latest[c.key];
@@ -716,14 +715,14 @@ function renderWeatherCharts(data) {
 function renderCanalCharts(data) {
   const lbls=labels14(data);
   const defs=[
-    {title:"Canal flow",legend:[{l:"Average",c:"#22d3ee"},{l:"Min (reversal)",c:"#0891b2"}],
+    {title:"Canal Charleroi-Brussels, flow",legend:[{l:"Canal Charleroi-Brussels, avg",c:"#22d3ee"},{l:"Canal Charleroi-Brussels, min",c:"#0891b2"}],
      ds:[{label:"Avg",data:tail14(data,"kanaal_afvoer_gem"),color:"#22d3ee",bold:true},
          {label:"Min",data:tail14(data,"kanaal_afvoer_min"),color:"#0891b2",dashed:true}]},
-    {title:"Water level — canal & Ruisbroek",legend:[{l:"Canal",c:"#0ea5e9"},{l:"Upstream",c:"#06b6d4"},{l:"Downstream",c:"#0284c7"}],
+    {title:"Water level — Canal Charleroi-Brussels & Lock Ruisbroek",legend:[{l:"Canal Charleroi-Brussels",c:"#0ea5e9"},{l:"Lock Ruisbroek upstream",c:"#06b6d4"},{l:"Lock Ruisbroek downstream",c:"#0284c7"}],
      ds:[{label:"Canal",data:tail14(data,"kanaal_peil_gem"),color:"#0ea5e9",bold:true},
          {label:"Upstr.",data:tail14(data,"ruisbroek_opw_peil_gem"),color:"#06b6d4"},
          {label:"Downstr.",data:tail14(data,"ruisbroek_afw_peil_gem"),color:"#0284c7",dashed:true}]},
-    {title:"Water level — Anderlecht lock (upstream / downstream)",legend:[{l:"Upstream",c:"#0d9488"},{l:"Downstream",c:"#0891b2"}],
+    {title:"Water level — Lock Anderlecht (upstream / downstream)",legend:[{l:"Lock Anderlecht upstream",c:"#0d9488"},{l:"Lock Anderlecht downstream",c:"#0891b2"}],
      ds:[{label:"Upstream",data:tail14(data,"flowbru_amont_dag"),color:"#0d9488",bold:true},
          {label:"Downstream",data:tail14(data,"flowbru_aval_dag"),color:"#0891b2"}]},
     {title:"Lock activity — Anderlecht (operations/day)",legend:[{l:"Lock operations (up or down)",c:"#f59e0b"}],bar:true,
