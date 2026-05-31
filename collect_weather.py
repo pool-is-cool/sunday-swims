@@ -48,15 +48,8 @@ FLOWBRU_CID    = "9D9E9DE1F0E437A6"
 
 # Flowbru station/channel IDs (uit gebruikersovereenkomst)
 FLOWBRU_STATIONS = [
-    {
-        "name":    "Pluvio Ecluse Anderlecht",
-        "sid":     "9DB48CE145EB1F26",
-        "channel": "ch2",
-        "aggr":    "sum_min",  # neerslag: raw waarden in mm/5min → som over de dag
-        "prefix":  "flowbru_neerslag",
-        "heeft_min": False,
-        "factor":  1.0,        # mm blijft mm
-    },
+    # Pluvio Ecluse Anderlecht: raw 5-min data wordt apart opgehaald
+    # via haal_flowbru_neerslag_op() en gesommeerd per dag.
     {
         "name":    "Canal Ecluse Anderlecht AMONT",
         "sid":     "9EF0952181A3B8AF",
@@ -688,6 +681,78 @@ def bereken_sluis_activiteit(start_datum: str, eind_datum: str) -> pd.DataFrame:
     print(f"  ✓ Sluis activiteit: {len(result)} dag(en), {totaal} cycli totaal.")
     return result
 
+
+def haal_flowbru_neerslag_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
+    """
+    Haalt ruwe 5-minuten neerslagdata op van de pluviometer aan de sluis
+    Anderlecht (P07, SID 9DB48CE145EB1F26, ch2) en sommeert per dag.
+    
+    De ruwe waarden zijn in mm/5min — directe som geeft dagelijkse mm.
+    """
+    if not FLOWBRU_USER or not FLOWBRU_PASS:
+        return pd.DataFrame()
+
+    print(f"  → Flowbru neerslag ophalen (5-min P07): {start_datum} → {eind_datum}...")
+    headers = flowbru_auth_header()
+    start_d = date.fromisoformat(start_datum)
+    eind_d  = date.fromisoformat(eind_datum)
+
+    url = (f"{FLOWBRU_BASE}/customers/{FLOWBRU_CID}"
+           f"/sites/9DB48CE145EB1F26/histdata0")
+    body = {
+        "select": ["ch2"],
+        "from":   flowbru_timestamp(start_d),
+        "until":  flowbru_timestamp(eind_d + timedelta(days=1)),
+    }
+
+    try:
+        r = requests.get(
+            url,
+            params={"json": json_module.dumps(body)},
+            headers=headers,
+            timeout=60,
+        )
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        print(f"  ! Flowbru neerslag ophalen mislukt: {e}")
+        return pd.DataFrame()
+
+    if not data or not isinstance(data, list):
+        print("  ! Geen P07 neerslagdata ontvangen.")
+        return pd.DataFrame()
+
+    rows = []
+    for entry in data:
+        if not isinstance(entry, list) or len(entry) < 2 or entry[1] is None:
+            continue
+        try:
+            ts_str = str(entry[0]).ljust(12, "0")
+            ts     = datetime.strptime(ts_str[:12], "%Y%m%d%H%M")
+            val    = float(entry[1])
+            rows.append({"datum": ts.date(), "mm": val})
+        except Exception:
+            continue
+
+    if not rows:
+        print("  ! Geen bruikbare P07 rijen.")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows)
+    df = df[(df["datum"] >= start_d) & (df["datum"] <= eind_d)]
+
+    if df.empty:
+        return pd.DataFrame()
+
+    # Som per dag — directe optelling van mm/5min waarden
+    result = (
+        df.groupby("datum")["mm"]
+        .sum().round(1).reset_index()
+        .rename(columns={"mm": "flowbru_neerslag_dag"})
+    )
+    print(f"  ✓ Flowbru neerslag: {len(result)} dag(en) verwerkt.")
+    return result
+
 # ─── HANDMATIGE METINGEN ─────────────────────────────────────────────────────
 
 def laad_metingen() -> pd.DataFrame:
@@ -881,7 +946,18 @@ def main():
                 lambda x: x.date() if hasattr(x, 'date') else x)
             nieuwe_df = nieuwe_df.merge(flowbru_df, on="datum", how="left")
 
-        # Stap 6b: Sluis activiteit ophalen (5-min sas cycli tellen)
+        # Stap 6b: Flowbru neerslag ophalen (5-min P07, som per dag)
+        neerslag_df = haal_flowbru_neerslag_op(start, eind)
+        if not neerslag_df.empty:
+            neerslag_df["datum"] = pd.to_datetime(neerslag_df["datum"]).apply(
+                lambda x: x.date() if hasattr(x, 'date') else x)
+            # Overschrijf de flowbru_neerslag_dag kolom die eerder via haal_flowbru_data_op
+            # werd aangemaakt (was leeg na verwijdering uit FLOWBRU_STATIONS)
+            if "flowbru_neerslag_dag" in nieuwe_df.columns:
+                nieuwe_df = nieuwe_df.drop(columns=["flowbru_neerslag_dag"])
+            nieuwe_df = nieuwe_df.merge(neerslag_df, on="datum", how="left")
+
+        # Stap 6c: Sluis activiteit ophalen (5-min sas cycli tellen)
         activiteit_df = bereken_sluis_activiteit(start, eind)
         if not activiteit_df.empty:
             activiteit_df["datum"] = pd.to_datetime(activiteit_df["datum"]).apply(
