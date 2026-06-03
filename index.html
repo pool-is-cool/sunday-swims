@@ -273,7 +273,7 @@
     <div class="sub-section-title">Current conditions — yesterday</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">KMI station Uccle — measured data, 1-day lag | Precipitation: Flowbru rain gauge at Anderlecht lock | UV index: Open-Meteo model</div>
     <div class="cards-grid" id="weather-cards-grid"></div>
-    <div class="sub-section-title">14-day history</div>
+    <div class="sub-section-title">28-day history</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">KMI station Uccle — measured data | Precipitation: Flowbru rain gauge at Anderlecht lock | UV index: Open-Meteo model</div>
     <div class="charts-grid" id="weather-charts-grid"></div>
   </div>
@@ -287,7 +287,7 @@
     <div class="sub-section-title">Current conditions — yesterday</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data, 1-day lag | Lock levels &amp; precipitation: Flowbru/Hydria stations N03 &amp; P07</div>
     <div class="cards-grid" id="canal-cards-grid"></div>
-    <div class="sub-section-title">14-day history</div>
+    <div class="sub-section-title">28-day history</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data | Lock levels, precipitation &amp; activity: Flowbru/Hydria stations N03 &amp; P07</div>
     <div class="charts-grid" id="canal-charts-grid"></div>
   </div>
@@ -312,7 +312,7 @@
       </div>
     </div>
     <div class="chart-card-full">
-      <div class="chart-title">Vessel passages — 14-day history</div>
+      <div class="chart-title">Vessel passages — 28-day history</div>
       <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span></div>
       <div class="chart-wrap-sm"><canvas id="ais-chart"></canvas></div>
       <div class="ais-dummy-note" style="margin-top:8px">⚠ Dummy data — real AIS integration pending</div>
@@ -363,10 +363,10 @@ const AIS_PASSAGES = [
 ];
 const AIS_NEXT_MINUTES = 23;
 
-// Generate 14-day dummy AIS per day
+// Generate 28-day dummy AIS per day
 function aisDummyDays() {
   const labels=[], values=[], isSunday=[];
-  for(let i=13;i>=0;i--){
+  for(let i=27;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
     const dow = d.getDay(); // 0=Sunday
     labels.push(d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
@@ -396,8 +396,8 @@ Chart.defaults.font.size = 10;
 
 function fmt(v,d=1){ return (v===null||v===undefined)?"—":Number(v).toFixed(d); }
 function last(arr,key){ for(let i=arr.length-1;i>=0;i--) if(arr[i][key]!=null) return arr[i][key]; return null; }
-function tail14(arr,key){ return arr.slice(-14).map(r=>r[key]??null); }
-function labels14(arr){ return arr.slice(-14).map(r=>new Date(r.datum).toLocaleDateString("en-GB",{day:"numeric",month:"short"})); }
+function tail14(arr,key){ return arr.slice(-28).map(r=>r[key]??null); }
+function labels14(arr){ return arr.slice(-28).map(r=>new Date(r.datum).toLocaleDateString("en-GB",{day:"numeric",month:"short"})); }
 function isToday(s){ return s===new Date().toISOString().slice(0,10); }
 function dayMonth(s){ return new Date(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
 function dayMonthYear(s){ return new Date(s).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }
