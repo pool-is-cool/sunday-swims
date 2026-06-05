@@ -168,15 +168,6 @@
   <div class="swim-section">
     <div class="swim-section-title" id="swim-title">🏊 Swimming conditions — today</div>
     <div class="swim-grid">
-      <!-- Webcam -->
-      <div class="swim-card">
-        <div class="swim-card-title">📷 Canal view</div>
-        <div class="webcam-placeholder">
-          <div style="font-size:2rem">📷</div>
-          <div>Webcam not yet available</div>
-        </div>
-        <div class="webcam-note">Future: live image every 5 min, faces blurred for privacy.</div>
-      </div>
       <!-- Water -->
       <div class="swim-card">
         <div class="swim-card-title">💧 Water situation <a href="#water-quality" class="swim-more-link">more info ↓</a></div>
@@ -742,7 +733,7 @@ function renderCanalCharts(data) {
     {title:"Water level — Lock Anderlecht (upstream / downstream)",legend:[{l:"Lock Anderlecht upstream",c:"#0d9488"},{l:"Lock Anderlecht downstream",c:"#0891b2"}],
      ds:[{label:"Upstream",data:tail14(data,"flowbru_amont_dag"),color:"#0d9488",bold:true},
          {label:"Downstream",data:tail14(data,"flowbru_aval_dag"),color:"#0891b2"}]},
-    {title:"Lock activity — Anderlecht (operations/day)",legend:[{l:"Lock operations (up or down)",c:"#f59e0b"}],bar:true,
+    {title:"Lock activity — Anderlecht (operations/day)",legend:[{l:"Lock operations (up or down)",c:"#f59e0b"},{l:"Sunday",c:"#1565c0"}],bar:true,sunday:true,
      ds:[{label:"Lock operations (up or down)",data:tail14(data,"sluis_activiteit_dag"),color:"#f59e0b",fill:true}]},
   ];
   document.getElementById("canal-charts-grid").innerHTML = defs.map((c,i)=>
@@ -752,8 +743,43 @@ function renderCanalCharts(data) {
   ).join("");
   const draw=()=>{
     const ok=defs.every((_,i)=>{const el=document.getElementById(`cchart-${i}`);return el&&el.offsetWidth>0;});
-    if(ok) defs.forEach((c,i)=>makeMultiChart(`cchart-${i}`,lbls,c.ds,c.dualAxis||false,false,c.bar||false));
-    else setTimeout(draw,100);
+    if(!ok){ setTimeout(draw,100); return; }
+    defs.forEach((c,i)=>{
+      if(c.sunday) {
+        // Sunday-highlighted bar chart for lock activity
+        const el = document.getElementById(`cchart-${i}`);
+        if(!el) return;
+        const last28 = data.slice(-28);
+        const sundays = last28.map(r => new Date(r.datum).getDay() === 0);
+        const vals    = last28.map(r => r["sluis_activiteit_dag"] ?? null);
+        const labels  = last28.map(r => new Date(r.datum).toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
+        const bgColors     = vals.map((_,j) => sundays[j] ? "rgba(21,101,192,0.75)" : "rgba(245,158,11,0.7)");
+        const borderColors = vals.map((_,j) => sundays[j] ? "#1565c0" : "#f59e0b");
+        new Chart(el.getContext("2d"), {
+          type:"bar",
+          data:{labels, datasets:[{
+            label:"Lock operations (up or down)",
+            data:vals,
+            backgroundColor:bgColors,
+            borderColor:borderColors,
+            borderWidth:1.5,
+            borderRadius:3,
+          }]},
+          options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false},tooltip:{
+              backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(0,0,0,0.1)",borderWidth:1,padding:10,
+              callbacks:{title: items => items[0].label + (sundays[items[0].dataIndex] ? " ☀ Sunday" : "")}
+            }},
+            scales:{
+              x:{grid:{display:false},ticks:{maxTicksLimit:10}},
+              y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:6}}
+            }
+          }
+        });
+      } else {
+        makeMultiChart(`cchart-${i}`,lbls,c.ds,c.dualAxis||false,false,c.bar||false);
+      }
+    });
   };
   setTimeout(draw,100);
 }
