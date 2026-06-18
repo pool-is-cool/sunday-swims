@@ -587,19 +587,31 @@ def haal_flowbru_data_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     return resultaat if resultaat is not None else pd.DataFrame()
 
 
-def bereken_sluis_activiteit(start_datum: str, eind_datum: str) -> pd.DataFrame:
+# Drempelwaarden voor sluisactiviteit-detectie
+SLUIS_NABIJHEID_M   = 0.30   # max afstand (m) tot amont/aval-niveau om als "vol"/"leeg" te tellen
+SLUIS_MAX_DUUR_MIN  = 30     # max duur (minuten) van een geldige vul/leeg-beweging
+SLUIS_MIN_DUUR_MIN  = 3      # min duur (minuten) — sluit ruis/spikes uit
+
+
+def bereken_sluis_activiteit(start_datum: str, eind_datum: str,
+                              amont_niveaus: dict = None,
+                              aval_niveaus: dict = None) -> pd.DataFrame:
     """
     Haalt 5-minuten sas-data op van de sluis Anderlecht (Flowbru) en telt
-    het aantal sluiscycli per dag als maat voor de activiteit.
+    het aantal echte sluisbewegingen per dag.
 
-    Een sluiscyclus = de sas vult of leegt zich volledig:
-      - Fill: niveau stijgt van ~aval naar ~amont niveau
-      - Empty: niveau daalt van ~amont naar ~aval niveau
+    Een geldige sluisbeweging (fill of empty) moet:
+      1. Starten dicht bij het ene niveau (aval of amont) en eindigen dicht
+         bij het andere niveau (binnen SLUIS_NABIJHEID_M), dus een VOLLEDIGE
+         doorgang — geen halfweg stoppende bewegingen.
+      2. Plaatsvinden binnen een realistische tijdspanne
+         (SLUIS_MIN_DUUR_MIN tot SLUIS_MAX_DUUR_MIN minuten) — sluit trage,
+         uren durende vul-bewegingen (lege sluis die zich vult zonder schip)
+         en korte ruis-spikes uit.
 
-    We detecteren cycli door signaalwisselingen te tellen in een
-    gesimplificeerd binair signaal: hoog (>= drempelwaarde) vs laag.
-    De drempelwaarde is het gemiddelde van de min en max van de dag.
-    Elke overgang hoog→laag of laag→hoog = 1 activiteit.
+    amont_niveaus/aval_niveaus: optionele dicts {datum: niveau_m} met de
+    dagelijkse amont/aval-niveaus. Indien niet gegeven, wordt de min/max
+    van de sas-data zelf als referentie gebruikt (minder nauwkeurig).
 
     Retourneert DataFrame met kolommen 'datum' en 'sluis_activiteit_dag'.
     """
@@ -637,7 +649,6 @@ def bereken_sluis_activiteit(start_datum: str, eind_datum: str) -> pd.DataFrame:
         print("  ! Geen sas 5-min data ontvangen.")
         return pd.DataFrame()
 
-    # Verwerk ruwe data naar DataFrame
     rows = []
     for entry in data:
         if not isinstance(entry, list) or len(entry) < 2 or entry[1] is None:
@@ -660,25 +671,64 @@ def bereken_sluis_activiteit(start_datum: str, eind_datum: str) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame()
 
-    # Tel cycli per dag
+    amont_niveaus = amont_niveaus or {}
+    aval_niveaus  = aval_niveaus or {}
+
     resultaten = []
     for dag, groep in df.groupby("datum"):
-        vals = groep.sort_values("ts")["sas"].values
+        groep = groep.sort_values("ts").reset_index(drop=True)
+        vals  = groep["sas"].values
+        tijden = groep["ts"].values
+
         if len(vals) < 4:
             resultaten.append({"datum": dag, "sluis_activiteit_dag": None})
             continue
 
-        # Drempelwaarde = middelpunt van dagrange
-        drempel = (vals.min() + vals.max()) / 2
-        # Binair signaal: 1 = hoog (sas vol), 0 = laag (sas leeg)
-        signaal = (vals >= drempel).astype(int)
-        # Tel overgangen (0→1 en 1→0), elk = één sluisbeweging
-        overgangen = int((signaal[1:] != signaal[:-1]).sum())
+        # Referentieniveaus: amont (hoog) en aval (laag) van die dag,
+        # of bij ontbreken: min/max van de sas-reeks zelf als benadering.
+        hoog_ref = amont_niveaus.get(dag, vals.max())
+        laag_ref = aval_niveaus.get(dag, vals.min())
+        if hoog_ref < laag_ref:
+            hoog_ref, laag_ref = laag_ref, hoog_ref
+
+        # Binair signaal: 1 = dicht bij amont (vol), 0 = dicht bij aval (leeg),
+        # NaN/onbeslist = ergens in het midden (telt niet als extreem bereikt)
+        signaal = []
+        for v in vals:
+            if abs(v - hoog_ref) <= SLUIS_NABIJHEID_M:
+                signaal.append(1)
+            elif abs(v - laag_ref) <= SLUIS_NABIJHEID_M:
+                signaal.append(0)
+            else:
+                signaal.append(None)
+
+        # Loop door de reeks: zoek opeenvolgende periodes met bevestigde staat
+        # (0 of 1), en tel een overgang als er tussen twee bevestigde periodes
+        # met verschillende staat een wissel plaatsvindt binnen de toegestane tijd.
+        bevestigde_idx = [i for i, s in enumerate(signaal) if s is not None]
+        overgangen = 0
+        for j in range(1, len(bevestigde_idx)):
+            i_prev = bevestigde_idx[j - 1]
+            i_curr = bevestigde_idx[j]
+            if signaal[i_prev] == signaal[i_curr]:
+                continue  # zelfde staat, geen overgang
+
+            # Bereken duur van de overgang in minuten
+            t_prev = pd.Timestamp(tijden[i_prev])
+            t_curr = pd.Timestamp(tijden[i_curr])
+            duur_min = (t_curr - t_prev).total_seconds() / 60.0
+
+            if SLUIS_MIN_DUUR_MIN <= duur_min <= SLUIS_MAX_DUUR_MIN:
+                overgangen += 1
+            # Buiten dit bereik: te traag (vullen zonder schip) of te snel
+            # (ruis) — telt niet mee.
+
         resultaten.append({"datum": dag, "sluis_activiteit_dag": overgangen})
 
     result = pd.DataFrame(resultaten)
     totaal = result["sluis_activiteit_dag"].sum()
-    print(f"  ✓ Sluis activiteit: {len(result)} dag(en), {totaal} cycli totaal.")
+    print(f"  ✓ Sluis activiteit: {len(result)} dag(en), {totaal} bewegingen totaal "
+          f"(nabijheid ≤{SLUIS_NABIJHEID_M}m, duur {SLUIS_MIN_DUUR_MIN}-{SLUIS_MAX_DUUR_MIN}min).")
     return result
 
 
@@ -957,8 +1007,21 @@ def main():
                 nieuwe_df = nieuwe_df.drop(columns=["flowbru_neerslag_dag"])
             nieuwe_df = nieuwe_df.merge(neerslag_df, on="datum", how="left")
 
-        # Stap 6c: Sluis activiteit ophalen (5-min sas cycli tellen)
-        activiteit_df = bereken_sluis_activiteit(start, eind)
+        # Stap 6c: Sluis activiteit ophalen (5-min sas bewegingen tellen)
+        # Gebruik de amont/aval-dagniveaus als referentie voor "vol"/"leeg"
+        amont_lookup = {}
+        aval_lookup  = {}
+        if "flowbru_amont_dag" in nieuwe_df.columns:
+            amont_lookup = (
+                nieuwe_df.dropna(subset=["flowbru_amont_dag"])
+                .set_index("datum")["flowbru_amont_dag"].to_dict()
+            )
+        if "flowbru_aval_dag" in nieuwe_df.columns:
+            aval_lookup = (
+                nieuwe_df.dropna(subset=["flowbru_aval_dag"])
+                .set_index("datum")["flowbru_aval_dag"].to_dict()
+            )
+        activiteit_df = bereken_sluis_activiteit(start, eind, amont_lookup, aval_lookup)
         if not activiteit_df.empty:
             activiteit_df["datum"] = pd.to_datetime(activiteit_df["datum"]).apply(
                 lambda x: x.date() if hasattr(x, 'date') else x)
