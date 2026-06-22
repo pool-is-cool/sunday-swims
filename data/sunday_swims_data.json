@@ -5664,5 +5664,104 @@
       "notities": "dummy data"
     }
   ],
-  "voorspelling": []
+  "voorspelling": [
+    {
+      "datum": "2026-06-22",
+      "temp_max_c": 32.4,
+      "temp_min_c": 22.1,
+      "temp_gemiddeld_c": 27.6,
+      "neerslag_mm": 0.0,
+      "neerslag_kans_pct": 0,
+      "windsnelheid_max_kmh": 13.3,
+      "windrichting_naam": "NO",
+      "uv_index_max": 6.95,
+      "zonneschijn_uur": 15.0,
+      "bewolking_pct": 41,
+      "weathercode": 3
+    },
+    {
+      "datum": "2026-06-23",
+      "temp_max_c": 33.6,
+      "temp_min_c": 22.7,
+      "temp_gemiddeld_c": 28.8,
+      "neerslag_mm": 0.0,
+      "neerslag_kans_pct": 6,
+      "windsnelheid_max_kmh": 13.7,
+      "windrichting_naam": "O",
+      "uv_index_max": 7.1,
+      "zonneschijn_uur": 14.9,
+      "bewolking_pct": 20,
+      "weathercode": 3
+    },
+    {
+      "datum": "2026-06-24",
+      "temp_max_c": 38.9,
+      "temp_min_c": 27.2,
+      "temp_gemiddeld_c": 33.2,
+      "neerslag_mm": 0.0,
+      "neerslag_kans_pct": 8,
+      "windsnelheid_max_kmh": 11.2,
+      "windrichting_naam": "Z",
+      "uv_index_max": 7.15,
+      "zonneschijn_uur": 15.1,
+      "bewolking_pct": 4,
+      "weathercode": 1
+    },
+    {
+      "datum": "2026-06-25",
+      "temp_max_c": 37.2,
+      "temp_min_c": 26.7,
+      "temp_gemiddeld_c": 32.6,
+      "neerslag_mm": 0.0,
+      "neerslag_kans_pct": 8,
+      "windsnelheid_max_kmh": 13.3,
+      "windrichting_naam": "O",
+      "uv_index_max": 6.6,
+      "zonneschijn_uur": 15.9,
+      "bewolking_pct": 58,
+      "weathercode": 3
+    },
+    {
+      "datum": "2026-06-26",
+      "temp_max_c": 37.5,
+      "temp_min_c": 28.2,
+      "temp_gemiddeld_c": 32.9,
+      "neerslag_mm": 0.0,
+      "neerslag_kans_pct": 30,
+      "windsnelheid_max_kmh": 12.8,
+      "windrichting_naam": "Z",
+      "uv_index_max": 7.15,
+      "zonneschijn_uur": 16.2,
+      "bewolking_pct": 43,
+      "weathercode": 3
+    },
+    {
+      "datum": "2026-06-27",
+      "temp_max_c": 33.0,
+      "temp_min_c": 24.5,
+      "temp_gemiddeld_c": 29.3,
+      "neerslag_mm": 1.2,
+      "neerslag_kans_pct": 31,
+      "windsnelheid_max_kmh": 10.6,
+      "windrichting_naam": "NW",
+      "uv_index_max": 4.0,
+      "zonneschijn_uur": 16.2,
+      "bewolking_pct": 49,
+      "weathercode": 51
+    },
+    {
+      "datum": "2026-06-28",
+      "temp_max_c": 33.1,
+      "temp_min_c": 22.1,
+      "temp_gemiddeld_c": 27.4,
+      "neerslag_mm": 0.0,
+      "neerslag_kans_pct": 39,
+      "windsnelheid_max_kmh": 11.6,
+      "windrichting_naam": "ZW",
+      "uv_index_max": 7.0,
+      "zonneschijn_uur": 14.9,
+      "bewolking_pct": 71,
+      "weathercode": 3
+    }
+  ]
 }
