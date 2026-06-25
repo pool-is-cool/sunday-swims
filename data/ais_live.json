@@ -1,28 +1,28 @@
 {
-  "updated": "2026-06-25T12:21:52.718991+00:00",
+  "updated": "2026-06-25T12:27:03.012568+00:00",
   "vessels": [
     {
       "mmsi": 244620992,
-      "lat": 50.865688,
-      "lon": 4.352405,
+      "lat": 50.865675,
+      "lon": 4.352335,
       "speed": 0,
-      "heading": 1603,
-      "direction": "S",
+      "heading": 1365,
+      "direction": "N",
       "eta_sec": null,
-      "last_seen": "2026-06-25T12:21:52.718890+00:00",
+      "last_seen": "2026-06-25T12:27:03.012467+00:00",
       "name": "SCHIPPERSGRACHT",
       "type": "Unknown",
       "length": 55
     },
     {
       "mmsi": 227097710,
-      "lat": 50.86654,
-      "lon": 4.353127,
+      "lat": 50.866537,
+      "lon": 4.35313,
       "speed": 0,
       "heading": 3600,
       "direction": "N",
       "eta_sec": null,
-      "last_seen": "2026-06-25T12:19:28.185708+00:00",
+      "last_seen": "2026-06-25T12:25:28.825801+00:00",
       "name": "MERCURE",
       "type": "Other",
       "length": 80

@@ -1,5 +1,16 @@
 [
   {
+    "mmsi": 227097710,
+    "name": "MERCURE",
+    "type": "Other",
+    "length": "80m",
+    "direction": "N",
+    "date": "2026-06-25",
+    "time": "12:22",
+    "lat": 50.866543,
+    "lon": 4.353128
+  },
+  {
     "mmsi": 244620992,
     "name": "Unknown",
     "type": "Unknown",
