@@ -1,41 +1,38 @@
 {
-  "updated": "2026-06-25T13:15:30.880016+00:00",
+  "updated": "2026-06-25T13:16:00.829955+00:00",
   "vessels": [
     {
+      "name": "KATIMA",
+      "type": "Passenger",
+      "length": 39,
+      "mmsi": 205276190,
+      "lat": 50.865663,
+      "lon": 4.35291,
+      "speed": 6.1,
+      "heading": 364,
+      "direction": "N",
+      "eta_sec": 2151,
+      "last_seen": "2026-06-25T13:16:00.829856+00:00"
+    },
+    {
       "mmsi": 244620992,
-      "lat": 50.865725,
-      "lon": 4.352418,
-      "speed": 0,
-      "heading": 1680,
-      "direction": "S",
+      "lat": 50.86583,
+      "lon": 4.35231,
+      "speed": 0.1,
+      "heading": 1812,
+      "direction": "N",
       "eta_sec": null,
-      "last_seen": "2026-06-25T12:55:31.918847+00:00",
-      "name": "SCHIPPERSGRACHT",
-      "type": "Unknown",
-      "length": 55
+      "last_seen": "2026-06-25T13:10:12.692829+00:00"
     },
     {
       "mmsi": 227097710,
-      "lat": 50.866332,
-      "lon": 4.352963,
+      "lat": 50.86633,
+      "lon": 4.352972,
       "speed": 0,
       "heading": 3600,
       "direction": "N",
       "eta_sec": null,
-      "last_seen": "2026-06-25T12:55:30.665687+00:00",
-      "name": "MERCURE",
-      "type": "Other",
-      "length": 80
-    },
-    {
-      "mmsi": 205276190,
-      "lat": 50.864938,
-      "lon": 4.352175,
-      "speed": 5.7,
-      "heading": 334,
-      "direction": "N",
-      "eta_sec": 2269,
-      "last_seen": "2026-06-25T13:15:30.879918+00:00"
+      "last_seen": "2026-06-25T13:13:31.146796+00:00"
     }
   ]
 }

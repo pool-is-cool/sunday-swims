@@ -1,5 +1,38 @@
 [
   {
+    "mmsi": 227097710,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "N",
+    "date": "2026-06-25",
+    "time": "13:10",
+    "lat": 50.86631,
+    "lon": 4.35295
+  },
+  {
+    "mmsi": 244620992,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "N",
+    "date": "2026-06-25",
+    "time": "13:10",
+    "lat": 50.86583,
+    "lon": 4.35231
+  },
+  {
+    "mmsi": 205276190,
+    "name": "KATIMA",
+    "type": "Passenger",
+    "length": "39m",
+    "direction": "N",
+    "date": "2026-06-25",
+    "time": "13:10",
+    "lat": 50.860213,
+    "lon": 4.34729
+  },
+  {
     "mmsi": 205276190,
     "name": "Unknown",
     "type": "Unknown",
