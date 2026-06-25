@@ -1,6 +1,19 @@
 {
-  "updated": "2026-06-25T13:04:02.905947+00:00",
+  "updated": "2026-06-25T13:10:00.266259+00:00",
   "vessels": [
+    {
+      "name": "KATIMA",
+      "type": "Passenger",
+      "length": 39,
+      "mmsi": 205276190,
+      "lat": 50.860213,
+      "lon": 4.347287,
+      "speed": 0,
+      "heading": 0,
+      "direction": "N",
+      "eta_sec": null,
+      "last_seen": "2026-06-25T13:10:00.266155+00:00"
+    },
     {
       "mmsi": 244620992,
       "lat": 50.86573,
@@ -10,6 +23,16 @@
       "direction": "N",
       "eta_sec": null,
       "last_seen": "2026-06-25T13:04:02.905814+00:00"
+    },
+    {
+      "mmsi": 227097710,
+      "lat": 50.866312,
+      "lon": 4.352945,
+      "speed": 0,
+      "heading": 3600,
+      "direction": "N",
+      "eta_sec": null,
+      "last_seen": "2026-06-25T13:07:30.666359+00:00"
     }
   ]
 }
