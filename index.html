@@ -1006,14 +1006,14 @@ function renderAIS() {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 18,
     }).addTo(m);
-    m.setView([50.8344, 4.3155], 14);
+    m.setView([50.815382, 4.299323], 15);
     const swimIcon = L.divIcon({
       className: "",
       html: `<div style="background:#1976d2;color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;">🏊 Swim zone</div>`,
       iconAnchor: [0,0]
     });
-    L.marker([50.8344, 4.3155], {icon: swimIcon}).addTo(m);
-    L.circle([50.8344, 4.3155], {radius:200, color:"#1976d2", fillColor:"#1976d228", fillOpacity:0.3, weight:2}).addTo(m);
+    L.marker([50.815382, 4.299323], {icon: swimIcon}).addTo(m);
+    L.circle([50.815382, 4.299323], {radius:300, color:"#1565c0", weight:2, opacity:0.7, fillColor:"#1565c0", fillOpacity:0.1}).addTo(m);
     return m;
   }
 

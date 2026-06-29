@@ -553,7 +553,7 @@ function renderSwimSnapshot(data, forecast, metingen) {
 
   // AIS
   const {cls,label}=aisColor(AIS_NEXT_MINUTES);
-  document.getElementById("swim-ais-content").innerHTML = `
+  if(document.getElementById("swim-ais-content")) document.getElementById("swim-ais-content").innerHTML = `
     <div class="ais-time-block ${cls}">
       <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
       <div class="ais-time">${AIS_NEXT_MINUTES} min</div>
@@ -813,7 +813,7 @@ function renderAIS() {
   function initMap() {
     const mapEl = document.getElementById("ais-map");
     if (!mapEl || mapEl._leaflet_id) return null;
-    const SWIM_LAT = 50.8153, SWIM_LON = 4.2992;
+    const SWIM_LAT = 50.815382, SWIM_LON = 4.299323;
     const m = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -827,7 +827,7 @@ function renderAIS() {
     });
     L.marker([SWIM_LAT, SWIM_LON], {icon:swimIcon}).addTo(m)
       .bindPopup("<strong>Sunday Swims</strong><br>Focus swimming zone");
-    L.circle([SWIM_LAT, SWIM_LON], {radius:400, color:"#1565c0", weight:2, opacity:0.5, fillColor:"#1565c0", fillOpacity:0.07}).addTo(m);
+    L.circle([SWIM_LAT, SWIM_LON], {radius:300, color:"#1565c0", weight:2, opacity:0.7, fillColor:"#1565c0", fillOpacity:0.1}).addTo(m);
     return m;
   }
 
