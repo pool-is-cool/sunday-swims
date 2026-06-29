@@ -995,25 +995,26 @@ function startAISLivePoll(map) {
 }
 
 function renderAIS() {
-  // Create Leaflet map
-  const mapEl = document.getElementById("ais-map");
+  // Create Leaflet map — deferred so DOM element is ready
   let map = null;
-  if (mapEl && !mapEl._leaflet_id) {
-    map = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
+  function initMap() {
+    const mapEl = document.getElementById("ais-map");
+    if (!mapEl) return null;
+    if (mapEl._leaflet_id) return null; // already initialised
+    const m = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 18,
-    }).addTo(map);
-    // Centre on swim zone
-    map.setView([50.8344, 4.3155], 14);
-    // Swim zone marker
+    }).addTo(m);
+    m.setView([50.8344, 4.3155], 14);
     const swimIcon = L.divIcon({
       className: "",
       html: `<div style="background:#1976d2;color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;">🏊 Swim zone</div>`,
       iconAnchor: [0,0]
     });
-    L.marker([50.8344, 4.3155], {icon: swimIcon}).addTo(map);
-    L.circle([50.8344, 4.3155], {radius:200, color:"#1976d2", fillColor:"#1976d228", fillOpacity:0.3, weight:2}).addTo(map);
+    L.marker([50.8344, 4.3155], {icon: swimIcon}).addTo(m);
+    L.circle([50.8344, 4.3155], {radius:200, color:"#1976d2", fillColor:"#1976d228", fillOpacity:0.3, weight:2}).addTo(m);
+    return m;
   }
 
   // 28-day history bar chart (still uses dummy data until historical AIS is stored)
@@ -1030,8 +1031,11 @@ function renderAIS() {
         scales:{x:{grid:{display:false}},y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}}}
     });
   },200);
-  // Start live polling
-  startAISLivePoll(map);
+  // Start live polling — init map first, then start polling
+  setTimeout(() => {
+    map = initMap();
+    startAISLivePoll(map);
+  }, 300);
 }
 
 // MAIN

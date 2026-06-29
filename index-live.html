@@ -809,126 +809,47 @@ function renderWaterQualityCharts(metingen) {
 
 // AIS
 function renderAIS() {
-  // ── Vessel passages table ────────────────────────────────────────────────
-  document.getElementById("ais-table").innerHTML =
-    `<thead><tr>
-      <th>Vessel</th><th>Type</th><th>Length</th><th>Dir.</th><th>Date</th><th>Time</th>
-    </tr></thead><tbody>` +
-    AIS_PASSAGES.map(p=>`<tr>
-      <td>${p.name}</td>
-      <td class="${vesselTypeClass(p.type)}">${p.type}</td>
-      <td>${p.length}</td>
-      <td>${dirBadge(p.direction)}</td>
-      <td>${p.date}</td>
-      <td>${p.time}</td>
-    </tr>`).join("")+`</tbody>`;
+  let map = null;
+  function initMap() {
+    const mapEl = document.getElementById("ais-map");
+    if (!mapEl || mapEl._leaflet_id) return null;
+    const SWIM_LAT = 50.8153, SWIM_LON = 4.2992;
+    const m = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(m);
+    m.setView([SWIM_LAT, SWIM_LON], 15);
+    const swimIcon = L.divIcon({
+      className:"",
+      html:`<div style="width:18px;height:18px;background:#1565c0;border:3px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
+      iconSize:[18,18], iconAnchor:[9,9]
+    });
+    L.marker([SWIM_LAT, SWIM_LON], {icon:swimIcon}).addTo(m)
+      .bindPopup("<strong>Sunday Swims</strong><br>Focus swimming zone");
+    L.circle([SWIM_LAT, SWIM_LON], {radius:400, color:"#1565c0", weight:2, opacity:0.5, fillColor:"#1565c0", fillOpacity:0.07}).addTo(m);
+    return m;
+  }
 
-  // ── 14-day bar chart with Sunday highlighting ────────────────────────────
+  // 28-day history bar chart
   const {labels,values,isSunday}=aisDummyDays();
-  const barColors = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
+  const barColors  = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
   const barBorders = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
   setTimeout(()=>{
     const el=document.getElementById("ais-chart"); if(!el) return;
     new Chart(el.getContext("2d"),{type:"bar",
-      data:{labels,datasets:[{
-        data:values,
-        backgroundColor:barColors,
-        borderColor:barBorders,
-        borderWidth:1.5,
-        borderRadius:4
-      }]},
+      data:{labels,datasets:[{data:values,backgroundColor:barColors,borderColor:barBorders,borderWidth:1.5,borderRadius:4}]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false},
-          tooltip:{
-            backgroundColor:"rgba(13,27,42,0.9)",
-            padding:10,
-            callbacks:{
-              label: ctx => {
-                const idx = ctx.dataIndex;
-                return isSunday[idx]
-                  ? `${ctx.raw} vessels (Sunday \u2014 navigation ban)`
-                  : `${ctx.raw} vessels`;
-              }
-            }
-          }
-        },
-        scales:{
-          x:{
-            grid:{display:false},
-            ticks:{
-              color:(ctx)=>{
-                const d=new Date(); d.setDate(d.getDate()-(13-ctx.index));
-                return d.getDay()===0?"#1565c0":"#546e7a";
-              },
-              font:(ctx)=>{
-                const d=new Date(); d.setDate(d.getDate()-(13-ctx.index));
-                return d.getDay()===0?{weight:"bold"}:{};
-              }
-            }
-          },
-          y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}
-        }
-      }
+        plugins:{legend:{display:false},tooltip:{backgroundColor:"rgba(13,27,42,0.9)",padding:10,
+          callbacks:{title: items => items[0].label + (isSunday[items[0].dataIndex] ? " ☀ Sunday (no commercial navigation)" : "")}}},
+        scales:{x:{grid:{display:false},ticks:{maxTicksLimit:10}},y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}}}
     });
   },200);
 
-  // ── Leaflet map ──────────────────────────────────────────────────────────
-  // Swim zone centre: 50 48 54.9 N  4 17 57.1 E
-  const SWIM_LAT = 50.8153;
-  const SWIM_LON = 4.2992;
-
-  setTimeout(()=>{
-    const mapEl = document.getElementById("ais-map");
-    if (!mapEl || mapEl._leaflet_id) return;
-
-    const map = L.map("ais-map", {
-      center: [SWIM_LAT, SWIM_LON],
-      zoom: 15,
-      zoomControl: true,
-      scrollWheelZoom: false
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19
-    }).addTo(map);
-
-    // Swim zone marker
-    const swimIcon = L.divIcon({
-      className:"",
-      html:`<div style="width:18px;height:18px;background:#1565c0;border:3px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
-      iconSize:[18,18],
-      iconAnchor:[9,9]
-    });
-    L.marker([SWIM_LAT, SWIM_LON], {icon:swimIcon})
-      .addTo(map)
-      .bindPopup("<strong>Sunday Swims</strong><br>Focus swimming zone");
-
-    // Approximate swim zone circle
-    L.circle([SWIM_LAT, SWIM_LON], {
-      radius: 400,
-      color: "#1565c0",
-      weight: 2,
-      opacity: 0.5,
-      fillColor: "#1565c0",
-      fillOpacity: 0.07
-    }).addTo(map);
-
-    // Vessel markers
-    AIS_PASSAGES.forEach(v => {
-      const col = v.type==="Tanker" ? "#c62828" : v.type==="Passenger" ? "#2e7d32" : "#1565c0";
-      const arrow = v.direction==="N" ? "\u21d1" : v.direction==="S" ? "\u21d3" : "\u21c4";
-      const vIcon = L.divIcon({
-        className:"",
-        html:`<div style="width:22px;height:22px;background:${col};border:2px solid white;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;line-height:1;">${arrow}</div>`,
-        iconSize:[22,22],
-        iconAnchor:[11,11]
-      });
-      L.marker([v.lat, v.lon], {icon:vIcon})
-        .addTo(map)
-        .bindPopup(`<strong>${v.name}</strong><br>${v.type} &middot; ${v.length}<br>${v.date} ${v.time}`);
-    });
+  // Init map and start live polling
+  setTimeout(() => {
+    map = initMap();
+    startAISLivePoll(map);
   }, 300);
 }
 
