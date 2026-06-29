@@ -994,7 +994,28 @@ function startAISLivePoll(map) {
   setInterval(poll, AIS_POLL_MS);
 }
 
-function renderAIS(map) {
+function renderAIS() {
+  // Create Leaflet map
+  const mapEl = document.getElementById("ais-map");
+  let map = null;
+  if (mapEl && !mapEl._leaflet_id) {
+    map = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(map);
+    // Centre on swim zone
+    map.setView([50.8344, 4.3155], 14);
+    // Swim zone marker
+    const swimIcon = L.divIcon({
+      className: "",
+      html: `<div style="background:#1976d2;color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;">🏊 Swim zone</div>`,
+      iconAnchor: [0,0]
+    });
+    L.marker([50.8344, 4.3155], {icon: swimIcon}).addTo(map);
+    L.circle([50.8344, 4.3155], {radius:200, color:"#1976d2", fillColor:"#1976d228", fillOpacity:0.3, weight:2}).addTo(map);
+  }
+
   // 28-day history bar chart (still uses dummy data until historical AIS is stored)
   const {labels,values,isSunday}=aisDummyDays();
   const barColors  = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
@@ -1034,7 +1055,7 @@ async function init() {
     renderWaterQualityCharts(metingen);
     renderWeatherCharts(data);
     renderCanalCharts(data);
-    renderAIS(map);
+    renderAIS();
     // Cyano chart
     setTimeout(()=>{
       const cyanoData = tail2months(metingen,"cyano_microcystins");
