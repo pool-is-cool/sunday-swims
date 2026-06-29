@@ -292,27 +292,27 @@
   <!-- 5. AIS -->
   <div id="ais">
     <div class="section-title">AIS vessel tracking — canal Anderlecht</div>
-    <div style="font-size:10px;color:#e65100;background:#fff8f5;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">⚠ Dummy data — real AIS integration pending</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Live data — AIS receiver Anderlecht, updated every 10 seconds</div>
     <div class="ais-explain">
-      <strong>How AIS works:</strong> Commercial vessels are required by law to broadcast an AIS (Automatic Identification System) signal containing their position, speed, heading, name and vessel type. This allows real-time tracking of large ships on the canal. The data shown here is collected from AIS receivers near the swimming zone.
+      <strong>How AIS works:</strong> Commercial vessels are required by law to broadcast an AIS (Automatic Identification System) signal containing their position, speed, heading, name and vessel type. This allows real-time tracking of large ships on the canal. The data shown here is collected from an AIS receiver installed near the swimming zone.
     </div>
     <div class="ais-section-grid">
       <div>
         <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Live vessel map — focus zone</div>
         <div id="ais-map"></div>
-        <div class="ais-dummy-note" style="margin-top:6px;">⚠ Dummy vessel positions — real AIS integration pending</div>
+        <div style="font-size:10px;color:var(--mid);margin-top:6px;" id="ais-map-updated"></div>
       </div>
       <div>
-        <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Recent vessel passages</div>
-        <table class="ais-table" id="ais-table"></table>
-        <div class="ais-dummy-note" style="margin-top:8px">⚠ Dummy data — real AIS integration pending</div>
+        <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Nearest vessel</div>
+        <div id="ais-nearest-panel"></div>
+        <div style="margin-top:16px;font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">All tracked vessels</div>
+        <table class="ais-table" id="ais-live-table"></table>
       </div>
     </div>
     <div class="chart-card-full">
       <div class="chart-title">Vessel passages — 28-day history</div>
-      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span></div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span><span class="legend-item"><span class="legend-dot" style="background:#1565c0"></span>Sunday</span></div>
       <div class="chart-wrap-sm"><canvas id="ais-chart"></canvas></div>
-      <div class="ais-dummy-note" style="margin-top:8px">⚠ Dummy data — real AIS integration pending</div>
     </div>
     <div class="ais-full-disclaimer">
       <strong>Important:</strong> Only larger commercial vessels equipped with AIS transponders can be tracked. Tracking may be inaccurate or delayed. Many other waterway users — pleasure crafts, rowing boats, kayaks, paddle boards — do not carry AIS and will not appear on this system. <strong>Always verify visually before entering the water. Personal visual verification is always necessary.</strong>
@@ -613,15 +613,10 @@ function renderSwimSnapshot(data, forecast, metingen) {
   `;
 
   // AIS
-  const {cls,label}=aisColor(AIS_NEXT_MINUTES);
+  // AIS swim tile — populated by live AIS poll (startAISLivePoll)
   document.getElementById("swim-ais-content").innerHTML = `
-    <div class="ais-time-block ${cls}">
-      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
-      <div class="ais-time">${AIS_NEXT_MINUTES} min</div>
-      <div style="font-size:11px;">until next tracked vessel</div>
-    </div>
-    <div class="ais-disclaimer">Only AIS-equipped vessels tracked. Pleasure craft, rowing boats and kayaks not visible. Always verify visually.</div>
-    <div class="ais-dummy-note">⚠ Dummy data</div>
+    <div id="swim-ais-live" style="font-size:12px;color:var(--mid);">⟳ Loading live AIS...</div>
+    <div class="ais-disclaimer" style="margin-top:8px;">Only AIS-equipped vessels tracked. Pleasure craft, rowing boats and kayaks not visible. Always verify visually.</div>
   `;
 }
 
@@ -869,128 +864,153 @@ function renderWaterQualityCharts(metingen) {
 }
 
 // AIS
-function renderAIS() {
-  // ── Vessel passages table ────────────────────────────────────────────────
-  document.getElementById("ais-table").innerHTML =
-    `<thead><tr>
-      <th>Vessel</th><th>Type</th><th>Length</th><th>Dir.</th><th>Date</th><th>Time</th>
-    </tr></thead><tbody>` +
-    AIS_PASSAGES.map(p=>`<tr>
-      <td>${p.name}</td>
-      <td class="${vesselTypeClass(p.type)}">${p.type}</td>
-      <td>${p.length}</td>
-      <td>${dirBadge(p.direction)}</td>
-      <td>${p.date}</td>
-      <td>${p.time}</td>
-    </tr>`).join("")+`</tbody>`;
+// ─── LIVE AIS ────────────────────────────────────────────────────────────────
+const AIS_ENDPOINT = "https://sunday-swims-ais.lingering-recipe-4347.workers.dev/live";
+const AIS_POLL_MS  = 10000; // 10 seconds
+let   aisLiveMarkers = {};  // mmsi → leaflet marker
 
-  // ── 14-day bar chart with Sunday highlighting ────────────────────────────
+function etaLabel(eta_sec) {
+  if (eta_sec === null || eta_sec === undefined) return "—";
+  const m = Math.round(eta_sec / 60);
+  if (m <= 0)  return "Now / passing";
+  if (m < 60)  return `${m} min`;
+  return `${Math.floor(m/60)}h ${m%60}min`;
+}
+
+function aisLiveColor(eta_sec) {
+  if (eta_sec === null) return {cls:"ais-green",  label:"No vessel nearby"};
+  const m = eta_sec / 60;
+  if (m > 10) return {cls:"ais-green",  label:"Next vessel"};
+  if (m > 5)  return {cls:"ais-yellow", label:"Approaching"};
+  if (m > 1)  return {cls:"ais-orange", label:"Close"};
+  return       {cls:"ais-red",   label:"Imminent / passing"};
+}
+
+function updateSwimAISTile(nearest) {
+  const el = document.getElementById("swim-ais-live");
+  if (!el) return;
+  if (!nearest) {
+    el.innerHTML = `<div class="ais-time-block ais-green" style="padding:10px 14px;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">No vessel detected nearby</div>
+    </div>`;
+    return;
+  }
+  const {cls, label} = aisLiveColor(nearest.eta_sec);
+  const eta = etaLabel(nearest.eta_sec);
+  const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
+  el.innerHTML = `<div class="ais-time-block ${cls}">
+    <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
+    <div class="ais-time">${eta}</div>
+    <div style="font-size:11px;">until <strong>${nearest.name || "Unknown"}</strong> (${dir})</div>
+  </div>`;
+}
+
+function updateNearestPanel(nearest) {
+  const el = document.getElementById("ais-nearest-panel");
+  if (!el) return;
+  if (!nearest) {
+    el.innerHTML = `<div style="color:var(--mid);font-size:12px;padding:12px 0;">No vessels detected in the vicinity.</div>`;
+    return;
+  }
+  const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
+  const {cls, label} = aisLiveColor(nearest.eta_sec);
+  el.innerHTML = `
+    <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${label} — ETA: ${etaLabel(nearest.eta_sec)}</div>
+      <div style="font-size:18px;font-weight:600;">${nearest.name || "Unknown vessel"}</div>
+      <div style="font-size:11px;margin-top:3px;">${nearest.type || "—"} · ${nearest.length ? nearest.length+"m" : "—"} · ${nearest.speed ? nearest.speed.toFixed(1)+" km/h" : "—"} · ${dir}</div>
+    </div>`;
+}
+
+function updateLiveTable(vessels_nearby) {
+  const tbl = document.getElementById("ais-live-table");
+  if (!tbl) return;
+  if (!vessels_nearby || vessels_nearby.length === 0) {
+    tbl.innerHTML = `<tr><td colspan="5" style="color:var(--mid);padding:12px 10px;font-size:12px;">No vessels currently tracked nearby.</td></tr>`;
+    return;
+  }
+  tbl.innerHTML =
+    `<thead><tr><th>Vessel</th><th>Type</th><th>Direction</th><th>Speed</th><th>ETA</th></tr></thead><tbody>` +
+    vessels_nearby.map(v => {
+      const dir = v.direction === "N" ? "↑ N" : v.direction === "S" ? "↓ S" : v.direction || "—";
+      return `<tr>
+        <td>${v.name || "Unknown"}</td>
+        <td class="${vesselTypeClass(v.type||"")}">${v.type||"—"}</td>
+        <td>${dir}</td>
+        <td>${v.speed ? v.speed.toFixed(1)+" km/h" : "—"}</td>
+        <td>${etaLabel(v.eta_sec)}</td>
+      </tr>`;
+    }).join("") + `</tbody>`;
+}
+
+function updateAISMapLive(vessels_all, map) {
+  if (!map) return;
+  const seen = new Set();
+  (vessels_all || []).forEach(v => {
+    if (!v.lat || !v.lon) return;
+    seen.add(String(v.mmsi));
+    const dir = v.direction === "N" ? "↑" : v.direction === "S" ? "↓" : "";
+    const popup = `<b>${v.name || "Unknown"}</b><br>${v.type||""} ${v.length ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}`;
+    if (aisLiveMarkers[v.mmsi]) {
+      aisLiveMarkers[v.mmsi].setLatLng([v.lat, v.lon]).setPopupContent(popup);
+    } else {
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="background:#1565c0;color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${v.name||"?"}</div>`,
+        iconAnchor: [0, 0]
+      });
+      aisLiveMarkers[v.mmsi] = L.marker([v.lat, v.lon], {icon})
+        .bindPopup(popup)
+        .addTo(map);
+    }
+  });
+  // Remove stale markers
+  Object.keys(aisLiveMarkers).forEach(mmsi => {
+    if (!seen.has(mmsi)) {
+      aisLiveMarkers[mmsi].remove();
+      delete aisLiveMarkers[mmsi];
+    }
+  });
+}
+
+function startAISLivePoll(map) {
+  async function poll() {
+    try {
+      const resp = await fetch(AIS_ENDPOINT, {cache: "no-store"});
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const d = await resp.json();
+      updateSwimAISTile(d.nearest);
+      updateNearestPanel(d.nearest);
+      updateLiveTable(d.vessels_nearby);
+      updateAISMapLive(d.vessels_all, map);
+      const updated = d.updated ? new Date(d.updated).toLocaleTimeString("en-GB") : "—";
+      const upEl = document.getElementById("ais-map-updated");
+      if (upEl) upEl.textContent = `Last updated: ${updated}`;
+    } catch(e) {
+      console.warn("AIS poll error:", e);
+    }
+  }
+  poll();
+  setInterval(poll, AIS_POLL_MS);
+}
+
+function renderAIS(map) {
+  // 28-day history bar chart (still uses dummy data until historical AIS is stored)
   const {labels,values,isSunday}=aisDummyDays();
-  const barColors = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
-  const barBorders = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
+  const barColors  = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
+  const borderClrs = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
   setTimeout(()=>{
     const el=document.getElementById("ais-chart"); if(!el) return;
     new Chart(el.getContext("2d"),{type:"bar",
-      data:{labels,datasets:[{
-        data:values,
-        backgroundColor:barColors,
-        borderColor:barBorders,
-        borderWidth:1.5,
-        borderRadius:4
-      }]},
+      data:{labels,datasets:[{data:values,backgroundColor:barColors,borderColor:borderClrs,borderWidth:1.5,borderRadius:4}]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false},
-          tooltip:{
-            backgroundColor:"rgba(13,27,42,0.9)",
-            padding:10,
-            callbacks:{
-              label: ctx => {
-                const idx = ctx.dataIndex;
-                return isSunday[idx]
-                  ? `${ctx.raw} vessels (Sunday \u2014 navigation ban)`
-                  : `${ctx.raw} vessels`;
-              }
-            }
-          }
-        },
-        scales:{
-          x:{
-            grid:{display:false},
-            ticks:{
-              color:(ctx)=>{
-                const d=new Date(); d.setDate(d.getDate()-(13-ctx.index));
-                return d.getDay()===0?"#1565c0":"#546e7a";
-              },
-              font:(ctx)=>{
-                const d=new Date(); d.setDate(d.getDate()-(13-ctx.index));
-                return d.getDay()===0?{weight:"bold"}:{};
-              }
-            }
-          },
-          y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}
-        }
-      }
+        plugins:{legend:{display:false},tooltip:{backgroundColor:"rgba(13,27,42,0.9)",padding:10,
+          callbacks:{title: items => items[0].label + (isSunday[items[0].dataIndex] ? " ☀ Sunday (no commercial navigation)" : "")}}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}}}
     });
   },200);
-
-  // ── Leaflet map ──────────────────────────────────────────────────────────
-  // Swim zone centre: 50 48 54.9 N  4 17 57.1 E
-  const SWIM_LAT = 50.8153;
-  const SWIM_LON = 4.2992;
-
-  setTimeout(()=>{
-    const mapEl = document.getElementById("ais-map");
-    if (!mapEl || mapEl._leaflet_id) return;
-
-    const map = L.map("ais-map", {
-      center: [SWIM_LAT, SWIM_LON],
-      zoom: 15,
-      zoomControl: true,
-      scrollWheelZoom: false
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19
-    }).addTo(map);
-
-    // Swim zone marker
-    const swimIcon = L.divIcon({
-      className:"",
-      html:`<div style="width:18px;height:18px;background:#1565c0;border:3px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
-      iconSize:[18,18],
-      iconAnchor:[9,9]
-    });
-    L.marker([SWIM_LAT, SWIM_LON], {icon:swimIcon})
-      .addTo(map)
-      .bindPopup("<strong>Sunday Swims</strong><br>Focus swimming zone");
-
-    // Approximate swim zone circle
-    L.circle([SWIM_LAT, SWIM_LON], {
-      radius: 400,
-      color: "#1565c0",
-      weight: 2,
-      opacity: 0.5,
-      fillColor: "#1565c0",
-      fillOpacity: 0.07
-    }).addTo(map);
-
-    // Vessel markers
-    AIS_PASSAGES.forEach(v => {
-      const col = v.type==="Tanker" ? "#c62828" : v.type==="Passenger" ? "#2e7d32" : "#1565c0";
-      const arrow = v.direction==="N" ? "\u21d1" : v.direction==="S" ? "\u21d3" : "\u21c4";
-      const vIcon = L.divIcon({
-        className:"",
-        html:`<div style="width:22px;height:22px;background:${col};border:2px solid white;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;line-height:1;">${arrow}</div>`,
-        iconSize:[22,22],
-        iconAnchor:[11,11]
-      });
-      L.marker([v.lat, v.lon], {icon:vIcon})
-        .addTo(map)
-        .bindPopup(`<strong>${v.name}</strong><br>${v.type} &middot; ${v.length}<br>${v.date} ${v.time}`);
-    });
-  }, 300);
+  // Start live polling
+  startAISLivePoll(map);
 }
 
 // MAIN
@@ -1014,7 +1034,7 @@ async function init() {
     renderWaterQualityCharts(metingen);
     renderWeatherCharts(data);
     renderCanalCharts(data);
-    renderAIS();
+    renderAIS(map);
     // Cyano chart
     setTimeout(()=>{
       const cyanoData = tail2months(metingen,"cyano_microcystins");

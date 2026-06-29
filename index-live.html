@@ -185,8 +185,8 @@
         <div style="font-size:12px;color:var(--mid);line-height:1.5;">Continuous measurement via Blueriiot Connect Plus sensor, to be installed at the canal-side monitoring station in Anderlecht.</div>
       </div>
       <div style="background:white;border-radius:8px;padding:14px;border:1px solid var(--border);">
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">🚢 Vessel tracking (AIS)</div>
-        <div style="font-size:12px;color:var(--mid);line-height:1.5;">Real-time AIS receiver (dAISy HAT on Raspberry Pi) tracking commercial vessels near the swimming zone. Hardware nearly ready for deployment.</div>
+        <div style="font-size:12px;font-weight:600;color:#2e7d32;margin-bottom:4px;">🚢 Vessel tracking (AIS) ✓ Live</div>
+        <div style="font-size:12px;color:var(--mid);line-height:1.5;">Real-time AIS receiver tracking commercial vessels near the swimming zone. Live data updated every 10 seconds.</div>
       </div>
       <div style="background:white;border-radius:8px;padding:14px;border:1px solid var(--border);">
         <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">🦠 Water quality</div>
@@ -226,6 +226,37 @@
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">MOW-HIC group 3323277 — measured, unvalidated data | Lock levels, precipitation &amp; activity: Flowbru/Hydria stations N03 &amp; P07</div>
     <div class="charts-grid" id="canal-charts-grid"></div>
   </div>
+
+  <!-- 5. AIS -->
+  <div id="ais">
+    <div class="section-title">AIS vessel tracking — canal Anderlecht</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Live data — AIS receiver Anderlecht, updated every 10 seconds</div>
+    <div class="ais-explain">
+      <strong>How AIS works:</strong> Commercial vessels are required by law to broadcast an AIS (Automatic Identification System) signal containing their position, speed, heading, name and vessel type. This allows real-time tracking of large ships on the canal. The data shown here is collected from an AIS receiver installed near the swimming zone.
+    </div>
+    <div class="ais-section-grid">
+      <div>
+        <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Live vessel map — focus zone</div>
+        <div id="ais-map"></div>
+        <div style="font-size:10px;color:var(--mid);margin-top:6px;" id="ais-map-updated"></div>
+      </div>
+      <div>
+        <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Nearest vessel</div>
+        <div id="ais-nearest-panel"></div>
+        <div style="margin-top:16px;font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">All tracked vessels</div>
+        <table class="ais-table" id="ais-live-table"></table>
+      </div>
+    </div>
+    <div class="chart-card-full">
+      <div class="chart-title">Vessel passages — 28-day history</div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span><span class="legend-item"><span class="legend-dot" style="background:#1565c0"></span>Sunday</span></div>
+      <div class="chart-wrap-sm"><canvas id="ais-chart"></canvas></div>
+    </div>
+    <div class="ais-full-disclaimer">
+      <strong>Important:</strong> Only larger commercial vessels equipped with AIS transponders can be tracked. Tracking may be inaccurate or delayed. Many other waterway users — pleasure crafts, rowing boats, kayaks, paddle boards — do not carry AIS and will not appear on this system. <strong>Always verify visually before entering the water. Personal visual verification is always necessary.</strong>
+    </div>
+  </div>
+
 
   <!-- STATUS — last before footer -->
   <div id="status-banner">⟳ &nbsp; Loading data...</div>
@@ -900,6 +931,8 @@ function renderAIS() {
     });
   }, 300);
 }
+
+
 
 // MAIN
 async function init() {
