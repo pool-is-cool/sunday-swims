@@ -874,6 +874,7 @@ async function init() {
     renderCanalCards(data);
     renderWeatherCharts(data);
     renderCanalCharts(data);
+    renderAIS();
     // Cyano chart
     setTimeout(()=>{
       const cyanoData = tail2months(metingen,"cyano_microcystins");
