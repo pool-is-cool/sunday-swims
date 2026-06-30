@@ -1,5 +1,16 @@
 [
   {
+    "mmsi": 269057842,
+    "name": "ITdUBCQIbAMnML @JAP",
+    "type": "Fishing",
+    "length": "?m",
+    "direction": "unknown",
+    "date": "2026-06-30",
+    "time": "11:24",
+    "lat": 50.849462,
+    "lon": 4.33429
+  },
+  {
     "mmsi": 244700978,
     "name": "Unknown",
     "type": "Unknown",
