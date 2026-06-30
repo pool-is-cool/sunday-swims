@@ -1,5 +1,16 @@
 [
   {
+    "mmsi": 205206490,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "unknown",
+    "date": "2026-06-30",
+    "time": "16:15",
+    "lat": 50.857065,
+    "lon": 4.344845
+  },
+  {
     "mmsi": 205396290,
     "name": "Unknown",
     "type": "Unknown",
