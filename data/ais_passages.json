@@ -1,5 +1,16 @@
 [
   {
+    "mmsi": 205568790,
+    "name": "MRPcbR FSeMM^M`@J@ P",
+    "type": "Special",
+    "length": "?m",
+    "direction": "N",
+    "date": "2026-06-30",
+    "time": "11:47",
+    "lat": 50.853353,
+    "lon": 4.341313
+  },
+  {
     "mmsi": 269057842,
     "name": "ITdUBCQIbAMnML @JAP",
     "type": "Fishing",
