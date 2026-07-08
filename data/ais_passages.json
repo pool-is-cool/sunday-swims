@@ -1,5 +1,16 @@
 [
   {
+    "mmsi": 244003286,
+    "name": "ITcUAF[FT@nL]L@@HA@P",
+    "type": "Fishing",
+    "length": "?m",
+    "direction": "N",
+    "date": "2026-07-08",
+    "time": "12:11",
+    "lat": 50.852052,
+    "lon": 4.340222
+  },
+  {
     "mmsi": 205316790,
     "name": "Unknown",
     "type": "Unknown",
