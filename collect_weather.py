@@ -885,20 +885,31 @@ def haal_blueriiot_watertemp_op() -> dict:
 
     print("  → Blueriiot watertemperatuur ophalen...")
     try:
-        pools = blueriiot_signed_get("/swimming_pool", creds)
-        print(f"    (debug) /swimming_pool response: {pools}")
+        pools_response = blueriiot_signed_get("/swimming_pool", creds)
+        print(f"    (debug) /swimming_pool response: {pools_response}")
+
+        # Response is gewrapt: {"data": [ {..., "swimming_pool": {"swimming_pool_id": ...}} ]}
+        pools = pools_response.get("data") if isinstance(pools_response, dict) else pools_response
         if not pools or not isinstance(pools, list):
             print("  ! Geen zwembaden/pools gevonden op Blueriiot-account.")
             return {}
 
         # Neem de eerste (en voor ons enige) pool — "Canal"
-        pool_id = pools[0].get("swimming_pool_id") or pools[0].get("id")
+        eerste = pools[0]
+        pool_id = (
+            eerste.get("swimming_pool", {}).get("swimming_pool_id")
+            or eerste.get("swimming_pool_id")
+            or eerste.get("id")
+        )
         if not pool_id:
-            print(f"  ! Kon geen pool_id vinden in: {pools[0]}")
+            print(f"  ! Kon geen pool_id vinden in: {eerste}")
             return {}
 
-        blue_devices = blueriiot_signed_get(
+        blue_response = blueriiot_signed_get(
             f"/swimming_pool/{pool_id}/blue", creds)
+        print(f"    (debug) /blue response: {blue_response}")
+
+        blue_devices = blue_response.get("data") if isinstance(blue_response, dict) else blue_response
         if not blue_devices or not isinstance(blue_devices, list):
             print("  ! Geen Blue-sensor gevonden op deze pool.")
             return {}
