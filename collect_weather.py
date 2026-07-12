@@ -886,6 +886,7 @@ def haal_blueriiot_watertemp_op() -> dict:
     print("  → Blueriiot watertemperatuur ophalen...")
     try:
         pools = blueriiot_signed_get("/swimming_pool", creds)
+        print(f"    (debug) /swimming_pool response: {pools}")
         if not pools or not isinstance(pools, list):
             print("  ! Geen zwembaden/pools gevonden op Blueriiot-account.")
             return {}
