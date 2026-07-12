@@ -176,13 +176,13 @@
       This dashboard monitors weather and canal conditions in Anderlecht, Brussels, as part of Pool is Cool's research into water quality on the southern section of the Canal Brussels-Charleroi. All data shown here is real and updated daily.
     </p>
     <p style="font-size:13px;line-height:1.75;color:var(--mid);margin-bottom:20px;">
-      The following functionalities are currently live: weather observations from KMI station Uccle, 7-day weather forecast from Open-Meteo, canal flow and water levels via MOW-HIC (Ruisbroek), and lock water levels, local precipitation and lock operations via Flowbru/Hydria (Anderlecht lock).
+      The following functionalities are currently live: weather observations from KMI station Uccle, 7-day weather forecast from Open-Meteo, canal flow and water levels via MOW-HIC (Ruisbroek), lock water levels, local precipitation and lock operations via Flowbru/Hydria (Anderlecht lock), real-time AIS vessel tracking, and water temperature from a Blueriiot sensor at the monitoring station.
     </p>
     <div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:12px;">In development — coming step by step</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
       <div style="background:white;border-radius:8px;padding:14px;border:1px solid var(--border);">
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">🌡 Water temperature</div>
-        <div style="font-size:12px;color:var(--mid);line-height:1.5;">Continuous measurement via Blueriiot Connect Plus sensor, to be installed at the canal-side monitoring station in Anderlecht.</div>
+        <div style="font-size:12px;font-weight:600;color:#2e7d32;margin-bottom:4px;">🌡 Water temperature ✓ Live</div>
+        <div style="font-size:12px;color:var(--mid);line-height:1.5;">Blueriiot Connect Plus sensor at the monitoring station. Early morning reading (~06:00) used to avoid sun-warming bias from the ship hull.</div>
       </div>
       <div style="background:white;border-radius:8px;padding:14px;border:1px solid var(--border);">
         <div style="font-size:12px;font-weight:600;color:#2e7d32;margin-bottom:4px;">🚢 Vessel tracking (AIS) ✓ Live</div>
@@ -211,6 +211,17 @@
     <div class="sub-section-title">28-day history</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">KMI station Uccle — measured data | Precipitation: Flowbru rain gauge at Anderlecht lock | UV index: Open-Meteo model</div>
     <div class="charts-grid" id="weather-charts-grid"></div>
+  </div>
+
+  <!-- WATER TEMPERATURE -->
+  <div id="watertemp-section">
+    <div class="section-title">Water temperature</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Blueriiot sensor at monitoring station — early morning reading (~06:00), avoids sun-warming bias from the ship hull</div>
+    <div class="chart-card-full">
+      <div class="chart-title">Water temperature (°C) — past 2 months</div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>Water temp. (°C)</span></div>
+      <div class="chart-wrap"><canvas id="watertemp-chart"></canvas></div>
+    </div>
   </div>
 
   <!-- 4. CANAL -->
@@ -875,80 +886,6 @@ async function init() {
     renderWeatherCharts(data);
     renderCanalCharts(data);
     renderAIS();
-    // Cyano chart
-    setTimeout(()=>{
-      const cyanoData = tail2months(metingen,"cyano_microcystins");
-      // All observation dates — green dot if observed, grey if not
-      const allObsRaw = tail2months(metingen,"cyano_observatie");
-      const obsYes = allObsRaw
-        .filter(p => p.y===1||p.y==="1"||String(p.y).toLowerCase()==="yes")
-        .map(p => ({x:p.x, y:0.5}));
-      const obsNo = allObsRaw
-        .filter(p => p.y!==null && p.y!==undefined && !(p.y===1||p.y==="1"||String(p.y).toLowerCase()==="yes"))
-        .map(p => ({x:p.x, y:0.5}));
-
-      // Build combined date labels
-      const allDates = [...new Set([...cyanoData,...obsYes,...obsNo].map(p=>p.x))].sort();
-      const labels = allDates.map(d=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
-
-      const el = document.getElementById("cyano-chart");
-      if(!el) return;
-      new Chart(el.getContext("2d"),{
-        type:"line",
-        data:{labels, datasets:[
-          // Microcystin dots — no connecting line
-          {label:"Microcystins (µg/l)",
-           data:allDates.map(d=>{const p=cyanoData.find(p=>p.x===d);return p?p.y:null;}),
-           borderColor:"#e65100",borderWidth:0,backgroundColor:"#e6510018",
-           pointRadius:6,pointBackgroundColor:"#e65100",pointBorderColor:"#e65100",pointBorderWidth:1.5,
-           pointHoverRadius:8,
-           tension:0,fill:false,spanGaps:false,showLine:false},
-          // Limit line
-          {label:"Limit 10 µg/l",
-           data:allDates.map(()=>10),
-           borderColor:"#c62828",borderWidth:1.5,borderDash:[5,4],
-           pointRadius:0,fill:false,spanGaps:true,tension:0,
-           backgroundColor:"transparent"},
-          // Green dots — cyanobacteria observed
-          {label:"Observed",
-           data:allDates.map(d=>{const p=obsYes.find(p=>p.x===d);return p?p.y:null;}),
-           borderColor:"transparent",
-           pointBackgroundColor:"#39ff14",
-           pointBorderColor:"#2d7a00",
-           pointBorderWidth:1.5,
-           pointRadius:8,pointHoverRadius:10,
-           fill:false,spanGaps:false,showLine:false,tension:0},
-          // Grey dots — not observed
-          {label:"Not observed",
-           data:allDates.map(d=>{const p=obsNo.find(p=>p.x===d);return p?p.y:null;}),
-           borderColor:"transparent",
-           pointBackgroundColor:"#94a3b8",
-           pointBorderColor:"#64748b",
-           pointBorderWidth:1.5,
-           pointRadius:8,pointHoverRadius:10,
-           fill:false,spanGaps:false,showLine:false,tension:0},
-        ]},
-        options:{responsive:true,maintainAspectRatio:false,
-          interaction:{mode:"index",intersect:false},
-          plugins:{
-            legend:{display:false},
-            tooltip:{backgroundColor:"rgba(13,27,42,0.9)",borderColor:"rgba(0,0,0,0.1)",borderWidth:1,padding:10,
-              callbacks:{label:ctx=>{
-                if(ctx.datasetIndex===2) return " Cyanobacteria: observed";
-                if(ctx.datasetIndex===3) return " Cyanobacteria: not observed";
-                if(ctx.datasetIndex===1) return " Limit: 10 µg/l";
-                return ` ${ctx.dataset.label}: ${ctx.raw} µg/l`;
-              }}}
-          },
-          scales:{
-            x:{grid:{color:"rgba(0,0,0,0.04)"},ticks:{maxTicksLimit:8}},
-            y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{maxTicksLimit:5},min:0,
-               title:{display:true,text:"µg/l",font:{size:10},color:"var(--mid)"}}
-          }
-        }
-      });
-    },200);
-
     // Water temp chart
     setTimeout(()=>{
       makeLineChart("watertemp-chart",
