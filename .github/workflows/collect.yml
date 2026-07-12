@@ -26,6 +26,8 @@ jobs:
           HIC_TOKEN: ${{ secrets.HIC_TOKEN }}
           FLOWBRU_USER: ${{ secrets.FLOWBRU_USER }}
           FLOWBRU_PASS: ${{ secrets.FLOWBRU_PASS }}
+          BLUERIIOT_USER: ${{ secrets.BLUERIIOT_USER }}
+          BLUERIIOT_PASS: ${{ secrets.BLUERIIOT_PASS }}
         run: python collect_weather.py
       - name: Commit and push updated data
         run: |
