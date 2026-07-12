@@ -852,19 +852,28 @@ def haal_blueriiot_credentials():
         return None
 
 
-def blueriiot_signed_get(path: str, creds: dict):
+def blueriiot_signed_get(path: str, creds: dict, params: dict = None):
     """Voert een GET-request uit op de Blueriiot API, correct
-    ondertekend met AWS SigV4 aan de hand van de tijdelijke credentials."""
+    ondertekend met AWS SigV4 aan de hand van de tijdelijke credentials.
+
+    Gebaseerd op de werkwijze in het officiële python-blueconnect pakket:
+    naast de gesigneerde headers moet ook 'X-Amz-Security-Token' apart
+    meegegeven worden — dit ontbrak in onze eerdere pogingen."""
     signer = AwsRequestSigner(
         region=BLUERIIOT_REGION,
         access_key_id=creds["access_key"],
         secret_access_key=creds["secret_key"],
         service="execute-api",
-        session_token=creds.get("session_token"),
     )
     url = f"{BLUERIIOT_BASE}{path}"
-    headers = signer.sign_with_headers("GET", url)
-    r = requests.get(url, headers=headers, timeout=30)
+    base_headers = {
+        "User-Agent": "BlueConnect/3.2.1",
+        "Accept": "*/*",
+    }
+    headers = base_headers.copy()
+    headers.update(signer.sign_with_headers("GET", url, base_headers))
+    headers["X-Amz-Security-Token"] = creds["session_token"]
+    r = requests.get(url, headers=headers, params=params or {}, timeout=30)
     r.raise_for_status()
     return r.json()
 
@@ -874,6 +883,10 @@ def haal_blueriiot_watertemp_op() -> dict:
     Haalt de laatste watertemperatuurmeting op van de Blueriiot-sensor
     in de sluis Anderlecht. Geeft een dict terug met 'datum' en
     'ss_watertemp_c', of een lege dict bij falen/geen data.
+
+    Endpoint bevestigd via het officiële python-blueconnect pakket:
+    swimming_pool/{pool_id}/blue/{blue_device_serial}/lastMeasurements
+    ?mode=blue_and_strip
 
     De sensor meet ongeveer om de 72 minuten, dus dit haalt telkens
     enkel de meest recente meting op (geen historiek/aggregatie nodig
@@ -886,9 +899,6 @@ def haal_blueriiot_watertemp_op() -> dict:
     print("  → Blueriiot watertemperatuur ophalen...")
     try:
         pools_response = blueriiot_signed_get("/swimming_pool", creds)
-        print(f"    (debug) /swimming_pool response: {pools_response}")
-
-        # Response is gewrapt: {"data": [ {..., "swimming_pool": {"swimming_pool_id": ...}} ]}
         pools = pools_response.get("data") if isinstance(pools_response, dict) else pools_response
         if not pools or not isinstance(pools, list):
             print("  ! Geen zwembaden/pools gevonden op Blueriiot-account.")
@@ -899,7 +909,6 @@ def haal_blueriiot_watertemp_op() -> dict:
         pool_id = (
             eerste.get("swimming_pool", {}).get("swimming_pool_id")
             or eerste.get("swimming_pool_id")
-            or eerste.get("id")
         )
         if not pool_id:
             print(f"  ! Kon geen pool_id vinden in: {eerste}")
@@ -907,48 +916,44 @@ def haal_blueriiot_watertemp_op() -> dict:
 
         blue_response = blueriiot_signed_get(
             f"/swimming_pool/{pool_id}/blue", creds)
-        print(f"    (debug) /blue response: {blue_response}")
-
         blue_devices = blue_response.get("data") if isinstance(blue_response, dict) else blue_response
         if not blue_devices or not isinstance(blue_devices, list):
             print("  ! Geen Blue-sensor gevonden op deze pool.")
             return {}
 
-        print(f"    (debug) blue_devices[0] keys: {list(blue_devices[0].keys())}")
-        blue_device_info = blue_devices[0].get("blue_device", {})
-        print(f"    (debug) blue_device keys: {list(blue_device_info.keys())}")
         blue_key = blue_devices[0].get("blue_device_serial")  # bv. "01FC3E02"
-        blue_sn  = blue_device_info.get("SN")                  # bv. "32214856250"
+        if not blue_key:
+            print(f"  ! Kon geen blue_device_serial vinden in: {blue_devices[0]}")
+            return {}
 
-        # Probeer verschillende endpoint-varianten voor de laatste meetwaarden
-        laatste = {}
-        kandidaat_paden = [
-            f"/swimming_pool/{pool_id}/blue/{blue_key}/measurement/last",
-            f"/swimming_pool/{pool_id}/blue/{blue_key}/measurements/last",
-            f"/blue/{blue_key}/lastMeasurement",
-            f"/blue/{blue_key}/measurements/last",
-            f"/swimming_pool/{pool_id}/lastMeasurement",
-            f"/swimming_pool/{pool_id}/measurements/last",
-        ]
-        for pad in kandidaat_paden:
-            try:
-                meas_response = blueriiot_signed_get(pad, creds)
-                print(f"    (debug) {pad} → {meas_response}")
-                data = (meas_response.get("data")
-                        if isinstance(meas_response, dict) else meas_response)
-                if data:
-                    laatste = data[0] if isinstance(data, list) else data
-                    break
-            except Exception as e:
-                print(f"    (debug) {pad} → faalde: {e}")
+        meas_response = blueriiot_signed_get(
+            f"/swimming_pool/{pool_id}/blue/{blue_key}/lastMeasurements",
+            creds,
+            params={"mode": "blue_and_strip"},
+        )
+        print(f"    (debug) lastMeasurements response: {meas_response}")
 
-        if not laatste:
-            laatste = blue_devices[0].get("last_measurement") or {}
-        temp = laatste.get("temperature") or laatste.get("temperature_celsius")
-        gemeten_op = laatste.get("measured_at") or laatste.get("timestamp")
+        metingen = meas_response.get("data") or []
+        if not metingen:
+            print("  ! Geen metingen gevonden in lastMeasurements response.")
+            return {}
+
+        # Zoek de temperatuurmeting in de lijst (name="temperature" o.i.d.)
+        temp_meting = next(
+            (m for m in metingen if "temp" in (m.get("name") or "").lower()),
+            None
+        )
+        if not temp_meting:
+            print(f"  ! Geen temperatuurmeting gevonden. Beschikbare metingen: "
+                  f"{[m.get('name') for m in metingen]}")
+            return {}
+
+        temp = temp_meting.get("value")
+        gemeten_op = (temp_meting.get("timestamp")
+                      or meas_response.get("last_blue_measure_timestamp"))
 
         if temp is None:
-            print("  ! Geen temperatuurwaarde in laatste meting.")
+            print("  ! Geen temperatuurwaarde in meting.")
             return {}
 
         datum = date.today()
