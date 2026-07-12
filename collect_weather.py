@@ -917,22 +917,30 @@ def haal_blueriiot_watertemp_op() -> dict:
         print(f"    (debug) blue_devices[0] keys: {list(blue_devices[0].keys())}")
         blue_device_info = blue_devices[0].get("blue_device", {})
         print(f"    (debug) blue_device keys: {list(blue_device_info.keys())}")
-        blue_serial = blue_device_info.get("SN")
+        blue_key = blue_devices[0].get("blue_device_serial")  # bv. "01FC3E02"
+        blue_sn  = blue_device_info.get("SN")                  # bv. "32214856250"
 
-        # Probeer een apart endpoint voor de laatste meetwaarden
+        # Probeer verschillende endpoint-varianten voor de laatste meetwaarden
         laatste = {}
-        if blue_serial:
+        kandidaat_paden = [
+            f"/swimming_pool/{pool_id}/blue/{blue_key}/measurement/last",
+            f"/swimming_pool/{pool_id}/blue/{blue_key}/measurements/last",
+            f"/blue/{blue_key}/lastMeasurement",
+            f"/blue/{blue_key}/measurements/last",
+            f"/swimming_pool/{pool_id}/lastMeasurement",
+            f"/swimming_pool/{pool_id}/measurements/last",
+        ]
+        for pad in kandidaat_paden:
             try:
-                meas_response = blueriiot_signed_get(
-                    f"/swimming_pool/{pool_id}/blue/{blue_serial}/lastMeasurement",
-                    creds)
-                print(f"    (debug) lastMeasurement response: {meas_response}")
-                laatste = (meas_response.get("data")
-                           if isinstance(meas_response, dict) else meas_response) or {}
-                if isinstance(laatste, list) and laatste:
-                    laatste = laatste[0]
+                meas_response = blueriiot_signed_get(pad, creds)
+                print(f"    (debug) {pad} → {meas_response}")
+                data = (meas_response.get("data")
+                        if isinstance(meas_response, dict) else meas_response)
+                if data:
+                    laatste = data[0] if isinstance(data, list) else data
+                    break
             except Exception as e:
-                print(f"    (debug) lastMeasurement endpoint faalde: {e}")
+                print(f"    (debug) {pad} → faalde: {e}")
 
         if not laatste:
             laatste = blue_devices[0].get("last_measurement") or {}
