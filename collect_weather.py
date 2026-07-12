@@ -858,7 +858,9 @@ def blueriiot_signed_get(path: str, creds: dict, params: dict = None):
 
     Gebaseerd op de werkwijze in het officiële python-blueconnect pakket:
     naast de gesigneerde headers moet ook 'X-Amz-Security-Token' apart
-    meegegeven worden — dit ontbrak in onze eerdere pogingen."""
+    meegegeven worden. Bovendien moet de query string al in de URL zitten
+    VOORDAT deze ondertekend wordt — anders komt de handtekening niet
+    overeen met de effectief verstuurde request (geeft 403 Forbidden)."""
     signer = AwsRequestSigner(
         region=BLUERIIOT_REGION,
         access_key_id=creds["access_key"],
@@ -866,6 +868,10 @@ def blueriiot_signed_get(path: str, creds: dict, params: dict = None):
         service="execute-api",
     )
     url = f"{BLUERIIOT_BASE}{path}"
+    if params:
+        query_string = "&".join(f"{k}={quote_plus(str(v))}" for k, v in params.items())
+        url = f"{url}?{query_string}"
+
     base_headers = {
         "User-Agent": "BlueConnect/3.2.1",
         "Accept": "*/*",
@@ -873,7 +879,7 @@ def blueriiot_signed_get(path: str, creds: dict, params: dict = None):
     headers = base_headers.copy()
     headers.update(signer.sign_with_headers("GET", url, base_headers))
     headers["X-Amz-Security-Token"] = creds["session_token"]
-    r = requests.get(url, headers=headers, params=params or {}, timeout=30)
+    r = requests.get(url, headers=headers, timeout=30)
     r.raise_for_status()
     return r.json()
 
