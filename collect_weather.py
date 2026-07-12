@@ -914,7 +914,28 @@ def haal_blueriiot_watertemp_op() -> dict:
             print("  ! Geen Blue-sensor gevonden op deze pool.")
             return {}
 
-        laatste = blue_devices[0].get("last_measurement") or {}
+        print(f"    (debug) blue_devices[0] keys: {list(blue_devices[0].keys())}")
+        blue_device_info = blue_devices[0].get("blue_device", {})
+        print(f"    (debug) blue_device keys: {list(blue_device_info.keys())}")
+        blue_serial = blue_device_info.get("SN")
+
+        # Probeer een apart endpoint voor de laatste meetwaarden
+        laatste = {}
+        if blue_serial:
+            try:
+                meas_response = blueriiot_signed_get(
+                    f"/swimming_pool/{pool_id}/blue/{blue_serial}/lastMeasurement",
+                    creds)
+                print(f"    (debug) lastMeasurement response: {meas_response}")
+                laatste = (meas_response.get("data")
+                           if isinstance(meas_response, dict) else meas_response) or {}
+                if isinstance(laatste, list) and laatste:
+                    laatste = laatste[0]
+            except Exception as e:
+                print(f"    (debug) lastMeasurement endpoint faalde: {e}")
+
+        if not laatste:
+            laatste = blue_devices[0].get("last_measurement") or {}
         temp = laatste.get("temperature") or laatste.get("temperature_celsius")
         gemeten_op = laatste.get("measured_at") or laatste.get("timestamp")
 
