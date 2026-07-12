@@ -822,6 +822,11 @@ BLUERIIOT_USER = os.environ.get("BLUERIIOT_USER", "")
 BLUERIIOT_PASS = os.environ.get("BLUERIIOT_PASS", "")
 BLUERIIOT_BASE = "https://api.riiotlabs.com/prod"
 BLUERIIOT_REGION = "eu-west-1"
+# Vroege-ochtendvenster (lokale tijd) waarin de watertemperatuurmeting
+# gebruikt wordt — koudste moment van de dag, voordat de scheepsromp
+# (waaraan de sensor bevestigd is) opwarmt in de zon.
+BLUERIIOT_OCHTEND_START = 4   # uur (inclusief)
+BLUERIIOT_OCHTEND_EIND  = 8   # uur (exclusief)
 
 
 def haal_blueriiot_credentials():
@@ -937,18 +942,23 @@ def haal_blueriiot_watertemp_op() -> dict:
             creds,
             params={"mode": "blue_and_strip"},
         )
-        print(f"    (debug) lastMeasurements response: {meas_response}")
+        # (debug print verwijderd — integratie bevestigd werkend)
 
         metingen = meas_response.get("data") or []
         if not metingen:
             print("  ! Geen metingen gevonden in lastMeasurements response.")
             return {}
 
-        # Zoek de temperatuurmeting in de lijst (name="temperature" o.i.d.)
-        temp_meting = next(
-            (m for m in metingen if "temp" in (m.get("name") or "").lower()),
-            None
-        )
+        def vind_meting(naam_bevat):
+            return next(
+                (m for m in metingen if naam_bevat in (m.get("name") or "").lower()),
+                None
+            )
+
+        temp_meting = vind_meting("temp")
+        ph_meting   = vind_meting("ph")
+        cond_meting = vind_meting("conductiv")
+
         if not temp_meting:
             print(f"  ! Geen temperatuurmeting gevonden. Beschikbare metingen: "
                   f"{[m.get('name') for m in metingen]}")
@@ -962,15 +972,33 @@ def haal_blueriiot_watertemp_op() -> dict:
             print("  ! Geen temperatuurwaarde in meting.")
             return {}
 
-        datum = date.today()
-        if gemeten_op:
-            try:
-                datum = pd.to_datetime(gemeten_op).date()
-            except Exception:
-                pass
+        if not gemeten_op:
+            print("  ! Geen tijdstip bekend voor meting, overgeslagen.")
+            return {}
 
-        print(f"  ✓ Blueriiot: {temp}°C (gemeten: {gemeten_op or 'onbekend tijdstip'})")
-        return {"datum": datum, "ss_watertemp_c": round(float(temp), 1)}
+        gemeten_dt = pd.to_datetime(gemeten_op)
+        # Omzetten naar lokale tijd (Brussel, UTC+1/+2) voor het uurfilter
+        gemeten_lokaal = gemeten_dt.tz_convert("Europe/Brussels") if gemeten_dt.tzinfo else gemeten_dt
+
+        # Enkel vroege-ochtendmetingen gebruiken (koudste water, voor zonopwarming
+        # van de scheepsromp waar de sensor aan bevestigd is). Venster: 4u-8u lokaal.
+        if not (BLUERIIOT_OCHTEND_START <= gemeten_lokaal.hour < BLUERIIOT_OCHTEND_EIND):
+            print(f"  → Blueriiot: laatste meting om {gemeten_lokaal.strftime('%H:%M')} "
+                  f"lokale tijd valt buiten het vroege-ochtendvenster "
+                  f"({BLUERIIOT_OCHTEND_START}u-{BLUERIIOT_OCHTEND_EIND}u) — overgeslagen.")
+            return {}
+
+        datum = gemeten_lokaal.date()
+
+        resultaat = {"datum": datum, "ss_watertemp_c": round(float(temp), 1)}
+        if ph_meting and ph_meting.get("value") is not None:
+            resultaat["ss_ph"] = round(float(ph_meting["value"]), 2)
+        if cond_meting and cond_meting.get("value") is not None:
+            resultaat["ss_conductivity"] = round(float(cond_meting["value"]), 0)
+
+        print(f"  ✓ Blueriiot: {temp}°C (vroege ochtend, gemeten: "
+              f"{gemeten_lokaal.strftime('%Y-%m-%d %H:%M')} lokale tijd)")
+        return resultaat
 
     except Exception as e:
         print(f"  ! Blueriiot ophalen mislukt: {e}")
