@@ -24,6 +24,7 @@ import base64
 from datetime import date, timedelta, timezone, datetime
 from pathlib import Path
 from urllib.parse import quote_plus
+from aws_request_signer import AwsRequestSigner
 
 # ─── INSTELLINGEN ────────────────────────────────────────────────────────────
 
@@ -803,6 +804,127 @@ def haal_flowbru_neerslag_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
     print(f"  ✓ Flowbru neerslag: {len(result)} dag(en) verwerkt.")
     return result
 
+# ─── BLUERIIOT (waterthermometer sluis Anderlecht) ──────────────────────────
+#
+# Onofficiële API, gereverse-engineered door de community (geen officiële
+# publieke documentatie van RiiotLabs/Blueriiot beschikbaar).
+# Gebaseerd op: https://github.com/marcelveldt/python-blueconnect
+#           en: https://github.com/DannyRuijters/domoticz_blueconnect
+#
+# Login (POST /prod/user/login) geeft een JWT-token EN tijdelijke AWS-
+# credentials (access_key, secret_key, session_token) terug. Vervolgens
+# moeten alle requests naar /prod/* cryptografisch ondertekend worden met
+# AWS Signature Version 4 (SigV4) — een simpele Bearer-token in de header
+# volstaat niet, dat geeft telkens een "Authorization header requires..."
+# fout terug van AWS API Gateway.
+
+BLUERIIOT_USER = os.environ.get("BLUERIIOT_USER", "")
+BLUERIIOT_PASS = os.environ.get("BLUERIIOT_PASS", "")
+BLUERIIOT_BASE = "https://api.riiotlabs.com/prod"
+BLUERIIOT_REGION = "eu-west-1"
+
+
+def haal_blueriiot_credentials():
+    """
+    Logt in bij de Blueriiot/RiiotLabs API en geeft een dict terug met
+    de tijdelijke AWS-credentials nodig voor het ondertekenen van
+    volgende requests (SigV4), of None bij falen.
+    """
+    if not BLUERIIOT_USER or not BLUERIIOT_PASS:
+        print("  → Geen Blueriiot credentials gevonden, overgeslagen.")
+        return None
+
+    try:
+        r = requests.post(
+            f"{BLUERIIOT_BASE}/user/login",
+            json={"email": BLUERIIOT_USER, "password": BLUERIIOT_PASS},
+            timeout=30,
+        )
+        r.raise_for_status()
+        data = r.json()
+        creds = data.get("credentials")
+        if not creds:
+            print("  ! Blueriiot login: geen credentials in response.")
+            return None
+        return creds
+    except Exception as e:
+        print(f"  ! Blueriiot login mislukt: {e}")
+        return None
+
+
+def blueriiot_signed_get(path: str, creds: dict):
+    """Voert een GET-request uit op de Blueriiot API, correct
+    ondertekend met AWS SigV4 aan de hand van de tijdelijke credentials."""
+    signer = AwsRequestSigner(
+        region=BLUERIIOT_REGION,
+        access_key_id=creds["access_key"],
+        secret_access_key=creds["secret_key"],
+        service="execute-api",
+        session_token=creds.get("session_token"),
+    )
+    url = f"{BLUERIIOT_BASE}{path}"
+    headers = signer.sign_with_headers("GET", url)
+    r = requests.get(url, headers=headers, timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+
+def haal_blueriiot_watertemp_op() -> dict:
+    """
+    Haalt de laatste watertemperatuurmeting op van de Blueriiot-sensor
+    in de sluis Anderlecht. Geeft een dict terug met 'datum' en
+    'ss_watertemp_c', of een lege dict bij falen/geen data.
+
+    De sensor meet ongeveer om de 72 minuten, dus dit haalt telkens
+    enkel de meest recente meting op (geen historiek/aggregatie nodig
+    zoals bij Flowbru/HIC).
+    """
+    creds = haal_blueriiot_credentials()
+    if not creds:
+        return {}
+
+    print("  → Blueriiot watertemperatuur ophalen...")
+    try:
+        pools = blueriiot_signed_get("/swimming_pool", creds)
+        if not pools or not isinstance(pools, list):
+            print("  ! Geen zwembaden/pools gevonden op Blueriiot-account.")
+            return {}
+
+        # Neem de eerste (en voor ons enige) pool — "Canal"
+        pool_id = pools[0].get("swimming_pool_id") or pools[0].get("id")
+        if not pool_id:
+            print(f"  ! Kon geen pool_id vinden in: {pools[0]}")
+            return {}
+
+        blue_devices = blueriiot_signed_get(
+            f"/swimming_pool/{pool_id}/blue", creds)
+        if not blue_devices or not isinstance(blue_devices, list):
+            print("  ! Geen Blue-sensor gevonden op deze pool.")
+            return {}
+
+        laatste = blue_devices[0].get("last_measurement") or {}
+        temp = laatste.get("temperature") or laatste.get("temperature_celsius")
+        gemeten_op = laatste.get("measured_at") or laatste.get("timestamp")
+
+        if temp is None:
+            print("  ! Geen temperatuurwaarde in laatste meting.")
+            return {}
+
+        datum = date.today()
+        if gemeten_op:
+            try:
+                datum = pd.to_datetime(gemeten_op).date()
+            except Exception:
+                pass
+
+        print(f"  ✓ Blueriiot: {temp}°C (gemeten: {gemeten_op or 'onbekend tijdstip'})")
+        return {"datum": datum, "ss_watertemp_c": round(float(temp), 1)}
+
+    except Exception as e:
+        print(f"  ! Blueriiot ophalen mislukt: {e}")
+        return {}
+
+
 # ─── HANDMATIGE METINGEN ─────────────────────────────────────────────────────
 
 def laad_metingen() -> pd.DataFrame:
@@ -1051,6 +1173,24 @@ def main():
             if k in gecombineerd.columns:
                 gecombineerd = gecombineerd.drop(columns=[k])
         gecombineerd = gecombineerd.merge(metingen, on="datum", how="left")
+
+    # Stap 9b: Blueriiot watertemperatuur ophalen (overschrijft ss_watertemp_c
+    # voor de datum van de laatste meting, indien beschikbaar — sensordata
+    # heeft voorrang op eventuele handmatige/dummy waarden voor die dag)
+    blue_meting = haal_blueriiot_watertemp_op()
+    if blue_meting:
+        blue_datum = blue_meting["datum"]
+        blue_temp  = blue_meting["ss_watertemp_c"]
+        if blue_datum in gecombineerd["datum"].values:
+            gecombineerd.loc[
+                gecombineerd["datum"] == blue_datum, "ss_watertemp_c"
+            ] = blue_temp
+        else:
+            nieuwe_rij = pd.DataFrame([{"datum": blue_datum,
+                                         "ss_watertemp_c": blue_temp}])
+            gecombineerd = pd.concat([gecombineerd, nieuwe_rij],
+                                      ignore_index=True)
+        gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
 
     # Stap 10: Exporteren
     exporteer_json(gecombineerd, metingen)
