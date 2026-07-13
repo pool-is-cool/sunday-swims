@@ -637,7 +637,6 @@ function renderForecast(forecast) {
 
 // WEATHER CARDS
 function renderWeatherCards(data) {
-  const latest=data[data.length-1];
   const cards=[
     {label:"Precipitation (lock)",key:"flowbru_neerslag_dag",    unit:"mm/day",dec:1},
     {label:"Precip. 72h (lock)",key:"flowbru_neerslag_72u_mm",unit:"mm",    dec:1},
@@ -652,7 +651,7 @@ function renderWeatherCards(data) {
     {label:"Pressure",       key:"luchtdruk_hpa",        unit:"hPa",   dec:1},
   ];
   document.getElementById("weather-cards-grid").innerHTML = cards.map(c=>{
-    const raw=latest[c.key];
+    const raw=last(data,c.key);  // laatste NIET-null waarde voor dit specifieke veld
     const val=(raw===null||raw===undefined)?"—":c.isText?(c.xform?c.xform(raw):raw):fmt(raw,c.dec);
     let trend="&nbsp;";
     if(!c.isText&&data.length>=8){
@@ -666,7 +665,6 @@ function renderWeatherCards(data) {
 
 // CANAL CARDS
 function renderCanalCards(data) {
-  const latest=data[data.length-1];
   const cards=[
     {label:"Canal Charleroi-Brussels (Lot–Ruisbroek), flow avg",key:"kanaal_afvoer_gem", unit:"m³/s", dec:2},
     {label:"Canal Charleroi-Brussels (Lot–Ruisbroek), flow min",key:"kanaal_afvoer_min", unit:"m³/s", dec:2},
@@ -678,7 +676,7 @@ function renderCanalCards(data) {
         {label:"Lock Anderlecht, operations (↑↓)",key:"sluis_activiteit_dag",unit:"ops/day",dec:0},
   ];
   document.getElementById("canal-cards-grid").innerHTML = cards.map(c=>{
-    const raw=latest[c.key];
+    const raw=last(data,c.key);  // laatste NIET-null waarde voor dit specifieke veld
     const val=(raw===null||raw===undefined)?"—":fmt(raw,c.dec);
     return `<div class="card"><div class="card-label">${c.label}</div><div class="card-value">${val}</div><div class="card-unit">${c.unit}</div><div class="card-trend">&nbsp;</div></div>`;
   }).join("");
