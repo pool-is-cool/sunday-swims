@@ -915,7 +915,7 @@ function updateNearestPanel(nearest, updated) {
   }
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   const {cls, label} = aisLiveColor(nearest.eta_sec);
-  const lastSeen = updated ? new Date(updated).toLocaleTimeString("en-GB") : "—";
+  const lastSeen = updated ? `${new Date(updated).toLocaleDateString("en-GB")} ${new Date(updated).toLocaleTimeString("en-GB")}` : "—";
   el.innerHTML = `
     <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
       <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${label} — ETA: ${etaLabel(nearest.eta_sec)}</div>
