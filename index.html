@@ -906,7 +906,7 @@ function updateSwimAISTile(nearest) {
   </div>`;
 }
 
-function updateNearestPanel(nearest) {
+function updateNearestPanel(nearest, updated) {
   const el = document.getElementById("ais-nearest-panel");
   if (!el) return;
   if (!nearest) {
@@ -915,11 +915,13 @@ function updateNearestPanel(nearest) {
   }
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   const {cls, label} = aisLiveColor(nearest.eta_sec);
+  const lastSeen = updated ? new Date(updated).toLocaleTimeString("en-GB") : "—";
   el.innerHTML = `
     <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
       <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${label} — ETA: ${etaLabel(nearest.eta_sec)}</div>
       <div style="font-size:18px;font-weight:600;">${nearest.name || "Unknown vessel"}</div>
       <div style="font-size:11px;margin-top:3px;">${nearest.type || "—"} · ${nearest.length ? nearest.length+"m" : "—"} · ${nearest.speed ? nearest.speed.toFixed(1)+" km/h" : "—"} · ${dir}</div>
+      <div style="font-size:10px;margin-top:6px;opacity:0.75;">Last message received: ${lastSeen}</div>
     </div>`;
 }
 
@@ -981,7 +983,7 @@ function startAISLivePoll(map) {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const d = await resp.json();
       updateSwimAISTile(d.nearest);
-      updateNearestPanel(d.nearest);
+      updateNearestPanel(d.nearest, d.updated);
       updateLiveTable(d.vessels_nearby);
       updateAISMapLive(d.vessels_all, map);
       const updated = d.updated ? new Date(d.updated).toLocaleTimeString("en-GB") : "—";
