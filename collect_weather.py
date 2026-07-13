@@ -990,7 +990,11 @@ def haal_blueriiot_watertemp_op() -> dict:
 
         datum = gemeten_lokaal.date()
 
-        resultaat = {"datum": datum, "ss_watertemp_c": round(float(temp), 1)}
+        resultaat = {
+            "datum": datum,
+            "tijd":  gemeten_lokaal.strftime("%H:%M"),
+            "ss_watertemp_c": round(float(temp), 1),
+        }
         if ph_meting and ph_meting.get("value") is not None:
             resultaat["ss_ph"] = round(float(ph_meting["value"]), 2)
         if cond_meting and cond_meting.get("value") is not None:
@@ -1129,8 +1133,14 @@ def bepaal_ontbrekende_datums(bestaande_df: pd.DataFrame):
     return str(volgende), str(gisteren)
 
 
-def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
-    """Exporteert de dataset naar data/sunday_swims_data.json."""
+def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None,
+                    watertemperatuur: dict = None):
+    """Exporteert de dataset naar data/sunday_swims_data.json.
+
+    'watertemperatuur' is een LOSSTAANDE, actuele meting (net als
+    'voorspelling') — onafhankelijk van de datumlogica van 'data'. Dit
+    voorkomt dat de weergave van de actuele watertemperatuur afhangt van
+    of de rest van de dagrij (weer/kanaal) al compleet is."""
     df = df.sort_values("datum").reset_index(drop=True)
     df["datum"] = df["datum"].astype(str)
 
@@ -1159,9 +1169,10 @@ def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None):
             "lat":  LATITUDE,
             "lon":  LONGITUDE,
         },
-        "data":         records,
-        "metingen":     metingen_records,
-        "voorspelling": voorspelling,
+        "data":             records,
+        "metingen":         metingen_records,
+        "voorspelling":     voorspelling,
+        "watertemperatuur": watertemperatuur,
     }
 
     with open(JSON_FILE, "w", encoding="utf-8") as f:
@@ -1277,13 +1288,31 @@ def main():
                 gecombineerd = gecombineerd.drop(columns=[k])
         gecombineerd = gecombineerd.merge(metingen, on="datum", how="left")
 
-    # Stap 9b: Blueriiot watertemperatuur ophalen (overschrijft ss_watertemp_c
-    # voor de datum van de laatste meting, indien beschikbaar — sensordata
-    # heeft voorrang op eventuele handmatige/dummy waarden voor die dag)
+    # Stap 9b: Blueriiot watertemperatuur ophalen.
+    # Twee dingen gebeuren met deze meting:
+    #   1. Ze wordt (zoals voorheen) in 'gecombineerd' gemerged op datum, zodat
+    #      de 2-maanden-historiekgrafiek van watertemperatuur (die uit 'data'
+    #      leest) blijft doorlopen zonder onderbreking — continuïteit met alle
+    #      eerder verzamelde data blijft behouden.
+    #   2. Ze wordt DAARNAAST ook als losstaand object opgeslagen (net als
+    #      'voorspelling'), zodat de website voor de ACTUELE temperatuurweergave
+    #      nooit afhankelijk is van of de rest van de dagrij (weer/kanaal) al
+    #      compleet is — dat loste eerder terugkerende weergavefouten op.
+    watertemperatuur_actueel = None
     blue_meting = haal_blueriiot_watertemp_op()
     if blue_meting:
         blue_datum = blue_meting["datum"]
         blue_temp  = blue_meting["ss_watertemp_c"]
+
+        watertemperatuur_actueel = {
+            "datum":    str(blue_datum),
+            "tijd":     blue_meting.get("tijd"),
+            "waarde_c": blue_temp,
+        }
+        if "ss_ph" in blue_meting:
+            watertemperatuur_actueel["ph"] = blue_meting["ss_ph"]
+        if "ss_conductivity" in blue_meting:
+            watertemperatuur_actueel["conductivity"] = blue_meting["ss_conductivity"]
 
         # Normaliseer beide kanten naar datetime.date vóór vergelijking —
         # gecombineerd["datum"] kan hier nog string, Timestamp of date zijn
@@ -1295,19 +1324,19 @@ def main():
         if match_mask.any():
             gecombineerd.loc[match_mask, "ss_watertemp_c"] = blue_temp
             print(f"  → Blueriiot temperatuur ({blue_temp}°C) toegevoegd aan "
-                  f"bestaande rij voor {blue_datum}.")
+                  f"bestaande rij voor {blue_datum} (voor historiekgrafiek).")
         else:
             nieuwe_rij = pd.DataFrame([{"datum": blue_datum,
                                          "ss_watertemp_c": blue_temp}])
             gecombineerd = pd.concat([gecombineerd, nieuwe_rij],
                                       ignore_index=True)
             print(f"  → Blueriiot temperatuur ({blue_temp}°C) als nieuwe rij "
-                  f"toegevoegd voor {blue_datum}.")
+                  f"toegevoegd voor {blue_datum} (voor historiekgrafiek).")
 
         gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
 
     # Stap 10: Exporteren
-    exporteer_json(gecombineerd, metingen)
+    exporteer_json(gecombineerd, metingen, watertemperatuur_actueel)
 
     print(f"\n  ✓ Klaar! Totaal: {len(gecombineerd)} dagen in dataset.\n")
 

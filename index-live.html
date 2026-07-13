@@ -217,6 +217,12 @@
   <div id="watertemp-section">
     <div class="section-title">Water temperature</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Blueriiot sensor at monitoring station — early morning reading (~06:00), avoids sun-warming bias from the ship hull</div>
+    <div class="card" style="max-width:220px;margin-bottom:16px;">
+      <div class="card-label">Current reading</div>
+      <div class="card-value" id="watertemp-current-value">—</div>
+      <div class="card-unit">°C</div>
+      <div class="card-trend" id="watertemp-current-time">&nbsp;</div>
+    </div>
     <div class="chart-card-full">
       <div class="chart-title">Water temperature (°C) — past 2 months</div>
       <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>Water temp. (°C)</span></div>
@@ -507,72 +513,22 @@ function makeMultiChart(canvasId, labels, datasets, dualAxis, dirAxis, isBar) {
   });
 }
 
-// SWIM SNAPSHOT
-function renderSwimSnapshot(data, forecast, metingen) {
-  // Set title with today's date
-  const todayDate = new Date();
-  const titleDate = todayDate.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const titleEl = document.getElementById("swim-title");
-  if (titleEl) titleEl.innerHTML = `🏊 Swimming conditions &mdash; ${titleDate}`;
-
-  // Weather
-  const today = forecast.find(f=>isToday(f.datum))||forecast[0];
-  const [icon]= today?(WMO[today.weathercode]||["🌡️"]):["🌡️"];
-  document.getElementById("swim-weather-content").innerHTML = today ? `
-    <div class="swim-row"><span class="swim-row-label">Conditions</span><span class="swim-row-val">${icon} ${(WMO[today.weathercode]||["","—"])[1]}</span></div>
-    <div class="swim-row"><span class="swim-row-label">Temperature</span><span class="swim-row-val">${fmt(today.temp_max_c,0)}° / ${fmt(today.temp_min_c,0)}°</span></div>
-    <div class="swim-row"><span class="swim-row-label">Precipitation</span><span class="swim-row-val">${fmt(today.neerslag_mm,1)} mm (${today.neerslag_kans_pct??"—"}%)</span></div>
-    <div class="swim-row"><span class="swim-row-label">Wind</span><span class="swim-row-val">${fmt(today.windsnelheid_max_kmh,0)} km/h ${windEn(today.windrichting_naam)}</span></div>
-    <div class="swim-row"><span class="swim-row-label">UV index</span><span class="swim-row-val">${fmt(today.uv_index_max,1)}</span></div>
-  ` : `<div style="color:var(--mid);font-size:12px">No forecast data</div>`;
-
-  // Water
-  const waterTemp = last(metingen,"ss_watertemp_c");
-  const ecoliLast = last(metingen,"ss_ecoli");
-  const eb = qualityBadge(ecoliLast,"ecoli");
-  let lastDate="—";
-  for(let i=metingen.length-1;i>=0;i--) if(metingen[i].ss_ecoli!=null){lastDate=dayMonthYear(metingen[i].datum);break;}
-  // Cyanobacteria latest observation
-  let cyanoVal = "No recent data", cyanoStyle = "color:var(--mid)";
-  for(let i=metingen.length-1;i>=0;i--) {
-    const obs = metingen[i].cyano_observatie;
-    if(obs!==null&&obs!==undefined) {
-      const d = dayMonthYear(metingen[i].datum);
-      const isObs = obs===1||obs==="1"||String(obs).toLowerCase()==="yes";
-      cyanoVal  = isObs ? `⚠ Observed (${d})` : `Not observed (${d})`;
-      cyanoStyle = isObs ? "color:#39ff14;font-weight:600;text-shadow:0 0 6px #39ff1460" : "color:var(--mid)";
-      break;
+// WATER TEMPERATURE — actuele meting (losstaand van 'data', net als 'voorspelling')
+function renderWatertempCurrent(watertemperatuur) {
+  const valEl  = document.getElementById("watertemp-current-value");
+  const timeEl = document.getElementById("watertemp-current-time");
+  if (!valEl) return;
+  if (watertemperatuur && watertemperatuur.waarde_c != null) {
+    valEl.textContent = fmt(watertemperatuur.waarde_c, 1);
+    if (timeEl) {
+      const d = watertemperatuur.datum ? dayMonthYear(watertemperatuur.datum) : "";
+      const t = watertemperatuur.tijd || "";
+      timeEl.textContent = `${d}${t ? ", " + t : ""}`;
     }
+  } else {
+    valEl.textContent = "—";
+    if (timeEl) timeEl.textContent = "No recent reading";
   }
-  const cyanoEl = document.getElementById("swim-cyano-val");
-  if(cyanoEl){ cyanoEl.textContent=cyanoVal; cyanoEl.style.cssText=cyanoStyle; }
-
-  const precip72 = last(data,"flowbru_neerslag_72u_mm");
-  const precip24 = last(data,"flowbru_neerslag_dag");
-  const pb = precipBadge(precip72);
-  const pb24 = precip24hBadge(precip24);
-  document.getElementById("swim-water-content").innerHTML = `
-    <div class="swim-row"><span class="swim-row-label">Water temp.</span><span class="swim-row-val">${waterTemp!==null?fmt(waterTemp,1)+" °C":"—"}</span></div>
-    <div class="swim-row"><span class="swim-row-label">E. coli forecast</span><span class="swim-row-val na">— <span style="font-size:10px">(model pending)</span></span></div>
-    <div class="swim-row"><span class="swim-row-label">E. coli (last lab)</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${ecoliLast!==null?fmt(ecoliLast,0)+" KVE":"—"}</span>${ecoliLast!==null?`<span class="quality-badge ${eb.cls}">${eb.label}</span>`:""}</div></div>
-    <div class="swim-row"><span class="swim-row-label">Last sample</span><span class="swim-row-val" style="font-size:11px">${lastDate}</span></div>
-    <div class="swim-row"><span class="swim-row-label">Precip. 24h</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${fmt(precip24,1)} mm</span><span class="quality-badge ${pb24.cls}">${pb24.label}</span></div></div>
-    <div class="swim-row"><span class="swim-row-label">Precip. 72h</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${fmt(precip72,1)} mm</span><span class="quality-badge ${pb.cls}">${pb.label}</span></div></div>
-    <div class="swim-row"><span class="swim-row-label">Cyanobacteria</span><span class="swim-row-val" id="swim-cyano-val">—</span></div>
-    <div style="margin-top:8px;font-size:10px;color:var(--mid);line-height:1.4;">Lab results have ~48h delay. Predictive model (Berlin/Copenhagen/Paris approach) planned for future phase.</div>
-  `;
-
-  // AIS
-  const {cls,label}=aisColor(AIS_NEXT_MINUTES);
-  if(document.getElementById("swim-ais-content")) document.getElementById("swim-ais-content").innerHTML = `
-    <div class="ais-time-block ${cls}">
-      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
-      <div class="ais-time">${AIS_NEXT_MINUTES} min</div>
-      <div style="font-size:11px;">until next tracked vessel</div>
-    </div>
-    <div class="ais-disclaimer">Only AIS-equipped vessels tracked. Pleasure craft, rowing boats and kayaks not visible. Always verify visually.</div>
-    <div class="ais-dummy-note">⚠ Dummy data</div>
-  `;
 }
 
 // FORECAST
@@ -874,6 +830,7 @@ async function init() {
     const data=json.data, forecast=json.voorspelling||[];
     if(!data||data.length===0) throw new Error("No data in file");
     const metingen=json.metingen&&json.metingen.length>0?json.metingen:data;
+    const watertemperatuur=json.watertemperatuur||null;
 
     document.getElementById("last-updated").textContent=`Generated: ${json.gegenereerd_op}`;
     document.getElementById("footer-date").textContent=`Last updated: ${json.gegenereerd_op}`;
@@ -884,6 +841,7 @@ async function init() {
     renderWeatherCharts(data);
     renderCanalCharts(data);
     renderAIS();
+    renderWatertempCurrent(watertemperatuur);
     // Water temp chart
     setTimeout(()=>{
       makeLineChart("watertemp-chart",

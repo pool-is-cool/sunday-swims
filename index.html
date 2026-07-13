@@ -558,7 +558,7 @@ function makeMultiChart(canvasId, labels, datasets, dualAxis, dirAxis, isBar) {
 }
 
 // SWIM SNAPSHOT
-function renderSwimSnapshot(data, forecast, metingen) {
+function renderSwimSnapshot(data, forecast, metingen, watertemperatuur) {
   // Set title with today's date
   const todayDate = new Date();
   const titleDate = todayDate.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -576,8 +576,11 @@ function renderSwimSnapshot(data, forecast, metingen) {
     <div class="swim-row"><span class="swim-row-label">UV index</span><span class="swim-row-val">${fmt(today.uv_index_max,1)}</span></div>
   ` : `<div style="color:var(--mid);font-size:12px">No forecast data</div>`;
 
-  // Water
-  const waterTemp = last(metingen,"ss_watertemp_c");
+  // Water — actuele temperatuur komt los van 'data'/'metingen' (net als voorspelling),
+  // zodat deze nooit afhangt van of de rest van de dagrij al compleet is.
+  const waterTemp     = watertemperatuur ? watertemperatuur.waarde_c : null;
+  const waterTempDatum = watertemperatuur ? watertemperatuur.datum : null;
+  const waterTempTijd  = watertemperatuur ? watertemperatuur.tijd : null;
   const ecoliLast = last(metingen,"ss_ecoli");
   const eb = qualityBadge(ecoliLast,"ecoli");
   let lastDate="—";
@@ -602,7 +605,7 @@ function renderSwimSnapshot(data, forecast, metingen) {
   const pb = precipBadge(precip72);
   const pb24 = precip24hBadge(precip24);
   document.getElementById("swim-water-content").innerHTML = `
-    <div class="swim-row"><span class="swim-row-label">Water temp.</span><span class="swim-row-val">${waterTemp!==null?fmt(waterTemp,1)+" °C":"—"}</span></div>
+    <div class="swim-row"><span class="swim-row-label">Water temp.</span><span class="swim-row-val">${waterTemp!==null?fmt(waterTemp,1)+" °C":"—"}${waterTempTijd?` <span style="font-size:9px;color:var(--mid);">(${waterTempTijd})</span>`:""}</span></div>
     <div class="swim-row"><span class="swim-row-label">E. coli forecast</span><span class="swim-row-val na">— <span style="font-size:10px">(model pending)</span></span></div>
     <div class="swim-row"><span class="swim-row-label">E. coli (last lab)</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${ecoliLast!==null?fmt(ecoliLast,0)+" KVE":"—"}</span>${ecoliLast!==null?`<span class="quality-badge ${eb.cls}">${eb.label}</span>`:""}</div></div>
     <div class="swim-row"><span class="swim-row-label">Last sample</span><span class="swim-row-val" style="font-size:11px">${lastDate}</span></div>
@@ -1046,11 +1049,12 @@ async function init() {
     const data=json.data, forecast=json.voorspelling||[];
     if(!data||data.length===0) throw new Error("No data in file");
     const metingen=json.metingen&&json.metingen.length>0?json.metingen:data;
+    const watertemperatuur=json.watertemperatuur||null; // losstaande actuele meting (zoals voorspelling)
 
     document.getElementById("last-updated").textContent=`Generated: ${json.gegenereerd_op}`;
     document.getElementById("footer-date").textContent=`Last updated: ${json.gegenereerd_op}`;
 
-    renderSwimSnapshot(data,forecast,metingen);
+    renderSwimSnapshot(data,forecast,metingen,watertemperatuur);
     if(forecast.length>0) renderForecast(forecast);
     renderWeatherCards(data);
     renderCanalCards(data);
