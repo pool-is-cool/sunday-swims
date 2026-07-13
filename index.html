@@ -203,7 +203,7 @@
     <div style="font-size:10px;color:#e65100;background:#fff8f5;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Water temperature: live Blueriiot sensor (early morning reading, ~06:00) at the monitoring station | E. coli, Enterococci, Cyanobacteria: dummy/test data — to be replaced by lab analyses</div>
     <div class="chart-card-full">
       <div class="chart-title">Water temperature (°C) — past 2 months</div>
-      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>Water temp. (°C)</span></div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>Automatic (Blueriiot, °C)</span><span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:3px;border:1px solid #ccc;"></span>Manual sample (°C)</span></div>
       <div class="chart-wrap"><canvas id="watertemp-chart"></canvas></div>
     </div>
     <div class="chart-card-full">
@@ -1138,10 +1138,13 @@ async function init() {
       });
     },200);
 
-    // Water temp chart
+    // Water temp chart — Blueriiot (automatic, line) + manual measurements (dots)
     setTimeout(()=>{
       makeLineChart("watertemp-chart",
-        [{label:"Water temp.",data:tail2months(metingen,"ss_watertemp_c"),color:"#0891b2",bold:true,showLine:true}],
+        [
+          {label:"Water temp. (Blueriiot, automatic)",data:tail2months(metingen,"ss_watertemp_blueriiot_c"),color:"#0891b2",bold:true,showLine:true},
+          {label:"Water temp. (manual sample)",data:tail2months(metingen,"ss_watertemp_c"),color:"#f97316",showLine:false},
+        ],
         {});
     },200);
 

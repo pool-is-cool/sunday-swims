@@ -1290,14 +1290,19 @@ def main():
 
     # Stap 9b: Blueriiot watertemperatuur ophalen.
     # Twee dingen gebeuren met deze meting:
-    #   1. Ze wordt (zoals voorheen) in 'gecombineerd' gemerged op datum, zodat
-    #      de 2-maanden-historiekgrafiek van watertemperatuur (die uit 'data'
-    #      leest) blijft doorlopen zonder onderbreking — continuïteit met alle
-    #      eerder verzamelde data blijft behouden.
+    #   1. Ze wordt (zoals voorheen) in 'gecombineerd' gemerged op datum — maar
+    #      in een APARTE kolom 'ss_watertemp_blueriiot_c', naast de bestaande
+    #      'ss_watertemp_c' (die gevuld wordt door handmatige metingen uit
+    #      metingen.csv). Zo bestaan beide bronnen naast elkaar op dezelfde
+    #      dag zonder dat de ene de andere overschrijft — nodig omdat de
+    #      Blueriiot-lezing (elke ochtend automatisch) en een eventuele
+    #      handmatige meting (samen met waterkwaliteitsstalen) onafhankelijk
+    #      van elkaar plaatsvinden en beide zichtbaar moeten blijven.
     #   2. Ze wordt DAARNAAST ook als losstaand object opgeslagen (net als
     #      'voorspelling'), zodat de website voor de ACTUELE temperatuurweergave
-    #      nooit afhankelijk is van of de rest van de dagrij (weer/kanaal) al
-    #      compleet is — dat loste eerder terugkerende weergavefouten op.
+    #      in de 'swimming conditions'-tegel altijd en enkel de Blueriiot-
+    #      meting toont, nooit afhankelijk van of de rest van de dagrij
+    #      (weer/kanaal) al compleet is.
     watertemperatuur_actueel = None
     blue_meting = haal_blueriiot_watertemp_op()
     if blue_meting:
@@ -1318,20 +1323,23 @@ def main():
         # gecombineerd["datum"] kan hier nog string, Timestamp of date zijn
         # afhankelijk van eerdere verwerkingsstappen; een directe 'in'-check
         # op gemengde types faalt stil en creëert dan een lege duplicaatrij.
+        if "ss_watertemp_blueriiot_c" not in gecombineerd.columns:
+            gecombineerd["ss_watertemp_blueriiot_c"] = None
+
         datum_genormaliseerd = pd.to_datetime(gecombineerd["datum"]).dt.date
 
         match_mask = datum_genormaliseerd == blue_datum
         if match_mask.any():
-            gecombineerd.loc[match_mask, "ss_watertemp_c"] = blue_temp
+            gecombineerd.loc[match_mask, "ss_watertemp_blueriiot_c"] = blue_temp
             print(f"  → Blueriiot temperatuur ({blue_temp}°C) toegevoegd aan "
-                  f"bestaande rij voor {blue_datum} (voor historiekgrafiek).")
+                  f"bestaande rij voor {blue_datum} (kolom ss_watertemp_blueriiot_c).")
         else:
             nieuwe_rij = pd.DataFrame([{"datum": blue_datum,
-                                         "ss_watertemp_c": blue_temp}])
+                                         "ss_watertemp_blueriiot_c": blue_temp}])
             gecombineerd = pd.concat([gecombineerd, nieuwe_rij],
                                       ignore_index=True)
             print(f"  → Blueriiot temperatuur ({blue_temp}°C) als nieuwe rij "
-                  f"toegevoegd voor {blue_datum} (voor historiekgrafiek).")
+                  f"toegevoegd voor {blue_datum} (kolom ss_watertemp_blueriiot_c).")
 
         gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
 
