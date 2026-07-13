@@ -1093,6 +1093,17 @@ def laad_bestaande_json() -> pd.DataFrame:
 
 
 def bepaal_ontbrekende_datums(bestaande_df: pd.DataFrame):
+    """
+    Bepaalt vanaf welke datum nieuwe weerdata opgehaald moet worden.
+
+    LET OP: kijkt niet enkel naar de laatst aanwezige datum-rij, maar naar
+    de laatste datum met daadwerkelijk ingevulde KMI-weerdata
+    (temp_gemiddeld_c). Reden: de Blueriiot-stap kan een datum toevoegen
+    die verder volledig leeg is (enkel ss_watertemp_c ingevuld). Als we dan
+    alleen naar 'aanwezige datum' zouden kijken, denkt het script dat die
+    dag al 'klaar' is en slaat de echte weer-/kanaaldata voor die dag
+    permanent over.
+    """
     vandaag   = date.today()
     gisteren  = vandaag - timedelta(days=1)
     max_terug = vandaag - timedelta(days=89)
@@ -1100,7 +1111,16 @@ def bepaal_ontbrekende_datums(bestaande_df: pd.DataFrame):
     if bestaande_df.empty:
         return str(max_terug), str(gisteren)
 
-    laatste  = bestaande_df["datum"].max()
+    if "temp_gemiddeld_c" in bestaande_df.columns:
+        volledige_rijen = bestaande_df[bestaande_df["temp_gemiddeld_c"].notna()]
+    else:
+        volledige_rijen = bestaande_df
+
+    if volledige_rijen.empty:
+        # Nog geen enkele dag met echte weerdata — begin van vooraf
+        return str(max_terug), str(gisteren)
+
+    laatste  = volledige_rijen["datum"].max()
     volgende = laatste + timedelta(days=1)
 
     if volgende > gisteren:
@@ -1230,10 +1250,13 @@ def main():
             nieuwe_df = nieuwe_df.merge(activiteit_df, on="datum", how="left")
 
     # Stap 7: Samenvoegen met bestaande data
+    # keep="last": bij een datum die in beide zit, wint nieuwe_df (opnieuw
+    # opgehaalde, volledige data) van bestaande_df (kan een onvolledige
+    # Blueriiot-only placeholderrij zijn van een eerdere run).
     if not bestaande_df.empty and not nieuwe_df.empty:
         gecombineerd = (
             pd.concat([bestaande_df, nieuwe_df], ignore_index=True)
-            .drop_duplicates(subset=["datum"])
+            .drop_duplicates(subset=["datum"], keep="last")
             .sort_values("datum")
             .reset_index(drop=True)
         )
@@ -1261,15 +1284,26 @@ def main():
     if blue_meting:
         blue_datum = blue_meting["datum"]
         blue_temp  = blue_meting["ss_watertemp_c"]
-        if blue_datum in gecombineerd["datum"].values:
-            gecombineerd.loc[
-                gecombineerd["datum"] == blue_datum, "ss_watertemp_c"
-            ] = blue_temp
+
+        # Normaliseer beide kanten naar datetime.date vóór vergelijking —
+        # gecombineerd["datum"] kan hier nog string, Timestamp of date zijn
+        # afhankelijk van eerdere verwerkingsstappen; een directe 'in'-check
+        # op gemengde types faalt stil en creëert dan een lege duplicaatrij.
+        datum_genormaliseerd = pd.to_datetime(gecombineerd["datum"]).dt.date
+
+        match_mask = datum_genormaliseerd == blue_datum
+        if match_mask.any():
+            gecombineerd.loc[match_mask, "ss_watertemp_c"] = blue_temp
+            print(f"  → Blueriiot temperatuur ({blue_temp}°C) toegevoegd aan "
+                  f"bestaande rij voor {blue_datum}.")
         else:
             nieuwe_rij = pd.DataFrame([{"datum": blue_datum,
                                          "ss_watertemp_c": blue_temp}])
             gecombineerd = pd.concat([gecombineerd, nieuwe_rij],
                                       ignore_index=True)
+            print(f"  → Blueriiot temperatuur ({blue_temp}°C) als nieuwe rij "
+                  f"toegevoegd voor {blue_datum}.")
+
         gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
 
     # Stap 10: Exporteren
