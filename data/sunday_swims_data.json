@@ -6763,44 +6763,44 @@
   "voorspelling": [
     {
       "datum": "2026-07-13",
-      "temp_max_c": 30.0,
+      "temp_max_c": 30.5,
       "temp_min_c": 18.1,
-      "temp_gemiddeld_c": 24.6,
+      "temp_gemiddeld_c": 24.8,
       "neerslag_mm": 0.0,
       "neerslag_kans_pct": 0,
       "windsnelheid_max_kmh": 19.8,
       "windrichting_naam": "NO",
       "uv_index_max": 6.45,
-      "zonneschijn_uur": 10.8,
-      "bewolking_pct": 62,
+      "zonneschijn_uur": 14.4,
+      "bewolking_pct": 53,
       "weathercode": 3
     },
     {
       "datum": "2026-07-14",
-      "temp_max_c": 32.5,
-      "temp_min_c": 21.5,
-      "temp_gemiddeld_c": 27.1,
+      "temp_max_c": 32.7,
+      "temp_min_c": 21.7,
+      "temp_gemiddeld_c": 26.9,
       "neerslag_mm": 0.0,
       "neerslag_kans_pct": 27,
       "windsnelheid_max_kmh": 18.4,
       "windrichting_naam": "NO",
       "uv_index_max": 6.85,
-      "zonneschijn_uur": 13.4,
-      "bewolking_pct": 27,
+      "zonneschijn_uur": 13.6,
+      "bewolking_pct": 28,
       "weathercode": 3
     },
     {
       "datum": "2026-07-15",
       "temp_max_c": 31.9,
-      "temp_min_c": 21.9,
-      "temp_gemiddeld_c": 27.2,
+      "temp_min_c": 22.4,
+      "temp_gemiddeld_c": 27.4,
       "neerslag_mm": 0.0,
       "neerslag_kans_pct": 8,
-      "windsnelheid_max_kmh": 17.6,
+      "windsnelheid_max_kmh": 16.1,
       "windrichting_naam": "NO",
       "uv_index_max": 5.5,
-      "zonneschijn_uur": 15.0,
-      "bewolking_pct": 6,
+      "zonneschijn_uur": 14.3,
+      "bewolking_pct": 10,
       "weathercode": 3
     },
     {
@@ -6859,5 +6859,6 @@
       "bewolking_pct": 15,
       "weathercode": 1
     }
-  ]
+  ],
+  "watertemperatuur": null
 }
