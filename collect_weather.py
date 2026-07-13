@@ -1334,12 +1334,16 @@ def main():
             print(f"  → Blueriiot temperatuur ({blue_temp}°C) toegevoegd aan "
                   f"bestaande rij voor {blue_datum} (kolom ss_watertemp_blueriiot_c).")
         else:
-            nieuwe_rij = pd.DataFrame([{"datum": blue_datum,
-                                         "ss_watertemp_blueriiot_c": blue_temp}])
-            gecombineerd = pd.concat([gecombineerd, nieuwe_rij],
-                                      ignore_index=True)
-            print(f"  → Blueriiot temperatuur ({blue_temp}°C) als nieuwe rij "
-                  f"toegevoegd voor {blue_datum} (kolom ss_watertemp_blueriiot_c).")
+            # GEEN nieuwe rij aanmaken voor 'vandaag' — dat zou een lege
+            # placeholder-rij in 'data' introduceren (enkel deze ene kolom
+            # ingevuld), waardoor grafieken een misleidend leeg laatste
+            # datapunt tonen. De actuele meting is al beschikbaar via het
+            # losstaande 'watertemperatuur'-object; in de historiekgrafiek
+            # verschijnt de waarde pas zodra de eigenlijke weer-/kanaaldata
+            # voor die datum ook effectief opgehaald is (morgen ten laatste).
+            print(f"  → Blueriiot temperatuur ({blue_temp}°C) voor {blue_datum} "
+                  f"nog niet toegevoegd aan historiek — datum bestaat nog niet "
+                  f"in de dataset (wordt morgen alsnog meegenomen).")
 
         gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
 
