@@ -6,6 +6,17 @@
     "length": "?m",
     "direction": "unknown",
     "date": "2026-07-14",
+    "time": "18:00",
+    "lat": 50.84582,
+    "lon": 4.32717
+  },
+  {
+    "mmsi": 244051287,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "unknown",
+    "date": "2026-07-14",
     "time": "17:33",
     "lat": 50.850555,
     "lon": 4.33785
