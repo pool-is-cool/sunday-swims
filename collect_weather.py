@@ -1077,6 +1077,24 @@ def haal_voorspelling_op() -> list:
 
 # ─── JSON ────────────────────────────────────────────────────────────────────
 
+def laad_bestaande_watertemperatuur() -> dict:
+    """
+    Laadt het bestaande 'watertemperatuur'-object uit de JSON (indien
+    aanwezig). Gebruikt als fallback wanneer een run geen nieuwe
+    vroege-ochtendmeting van Blueriiot vindt — zodat een run buiten het
+    ochtendvenster (bv. een extra/onverwachte trigger om 10u) niet de
+    geldige ochtendmeting overschrijft met een lege waarde.
+    """
+    if not JSON_FILE.exists():
+        return None
+    try:
+        with open(JSON_FILE, encoding="utf-8") as f:
+            bestaand = json.load(f)
+        return bestaand.get("watertemperatuur")
+    except Exception:
+        return None
+
+
 def laad_bestaande_json() -> pd.DataFrame:
     """Laadt bestaande data uit JSON als die al bestaat."""
     if not JSON_FILE.exists():
@@ -1346,6 +1364,18 @@ def main():
                   f"in de dataset (wordt morgen alsnog meegenomen).")
 
         gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
+    else:
+        # Geen (nieuwe) vroege-ochtendmeting gevonden op dit moment — bv. een
+        # extra/onverwachte run buiten het 4u-8u venster. Behoud de vorige
+        # geldige meting uit de JSON in plaats van deze te overschrijven met
+        # niets; anders verdwijnt een geldige ochtendmeting zodra het script
+        # later op de dag nogmaals draait.
+        watertemperatuur_actueel = laad_bestaande_watertemperatuur()
+        if watertemperatuur_actueel:
+            print(f"  → Geen nieuwe Blueriiot-meting binnen ochtendvenster; "
+                  f"vorige meting behouden ({watertemperatuur_actueel.get('waarde_c')}°C "
+                  f"van {watertemperatuur_actueel.get('datum')} "
+                  f"{watertemperatuur_actueel.get('tijd', '')}).")
 
     # Stap 10: Exporteren
     exporteer_json(gecombineerd, metingen, watertemperatuur_actueel)
