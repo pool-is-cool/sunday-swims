@@ -84,6 +84,7 @@ SCRIPT_DIR   = Path(__file__).parent
 DATA_DIR     = SCRIPT_DIR / "data"
 JSON_FILE    = DATA_DIR / "sunday_swims_data.json"
 METINGEN_CSV = DATA_DIR / "metingen.csv"
+BLUERIIOT_LOG_CSV = DATA_DIR / "blueriiot_log.csv"
 
 DATA_DIR.mkdir(exist_ok=True)
 
@@ -1051,7 +1052,7 @@ def haal_voorspelling_op() -> list:
     }
 
     print("  → Weersvoorspelling ophalen via Open-Meteo (7 dagen)...")
-    r = requests.get(url, params=params, timeout=30)
+    r = requests.get(url, params=params, timeout=60)
     r.raise_for_status()
     d = r.json()
 
@@ -1093,6 +1094,50 @@ def laad_bestaande_watertemperatuur() -> dict:
         return bestaand.get("watertemperatuur")
     except Exception:
         return None
+
+
+def log_blueriiot_meting(blue_meting: dict):
+    """
+    Schrijft elke geldige Blueriiot-ochtendmeting weg naar een persistent
+    logbestand (data/blueriiot_log.csv), ÉÉN rij per datum.
+
+    Nodig omdat de meting elke ochtend een datum heeft die op het moment
+    van de run nog niet als rij bestaat in de hoofddataset (die enkel
+    'gisteren en eerder' bevat). Zonder dit logbestand zou de meting van
+    vandaag domweg verloren gaan zodra morgen een nieuwe meting binnenkomt
+    — er was dan geen enkel moment waarop de waarde ooit in de geschiedenis
+    terechtkwam. Dit logbestand vormt de volledige, onafhankelijke
+    geschiedenis van alle Blueriiot-ochtendmetingen, die vervolgens bij elke
+    run in de hoofddataset gemerged wordt voor elke datum die al bestaat.
+    """
+    if not blue_meting:
+        return
+
+    datum = str(blue_meting["datum"])
+    temp  = blue_meting["ss_watertemp_c"]
+
+    if BLUERIIOT_LOG_CSV.exists():
+        log_df = pd.read_csv(BLUERIIOT_LOG_CSV)
+    else:
+        log_df = pd.DataFrame(columns=["datum", "ss_watertemp_blueriiot_c"])
+
+    log_df["datum"] = log_df["datum"].astype(str)
+    log_df = log_df[log_df["datum"] != datum]  # oude waarde voor deze datum vervangen
+    nieuwe_rij = pd.DataFrame([{"datum": datum, "ss_watertemp_blueriiot_c": temp}])
+    log_df = pd.concat([log_df, nieuwe_rij], ignore_index=True)
+    log_df = log_df.sort_values("datum").reset_index(drop=True)
+    log_df.to_csv(BLUERIIOT_LOG_CSV, index=False)
+    print(f"  → Blueriiot-log bijgewerkt: {datum} = {temp}°C "
+          f"({len(log_df)} metingen totaal in log).")
+
+
+def laad_blueriiot_log() -> pd.DataFrame:
+    """Laadt het volledige, persistente Blueriiot-logbestand."""
+    if not BLUERIIOT_LOG_CSV.exists():
+        return pd.DataFrame(columns=["datum", "ss_watertemp_blueriiot_c"])
+    log_df = pd.read_csv(BLUERIIOT_LOG_CSV)
+    log_df["datum"] = pd.to_datetime(log_df["datum"]).dt.date
+    return log_df
 
 
 def laad_bestaande_json() -> pd.DataFrame:
@@ -1306,76 +1351,65 @@ def main():
                 gecombineerd = gecombineerd.drop(columns=[k])
         gecombineerd = gecombineerd.merge(metingen, on="datum", how="left")
 
-    # Stap 9b: Blueriiot watertemperatuur ophalen.
-    # Twee dingen gebeuren met deze meting:
-    #   1. Ze wordt (zoals voorheen) in 'gecombineerd' gemerged op datum — maar
-    #      in een APARTE kolom 'ss_watertemp_blueriiot_c', naast de bestaande
-    #      'ss_watertemp_c' (die gevuld wordt door handmatige metingen uit
-    #      metingen.csv). Zo bestaan beide bronnen naast elkaar op dezelfde
-    #      dag zonder dat de ene de andere overschrijft — nodig omdat de
-    #      Blueriiot-lezing (elke ochtend automatisch) en een eventuele
-    #      handmatige meting (samen met waterkwaliteitsstalen) onafhankelijk
-    #      van elkaar plaatsvinden en beide zichtbaar moeten blijven.
-    #   2. Ze wordt DAARNAAST ook als losstaand object opgeslagen (net als
-    #      'voorspelling'), zodat de website voor de ACTUELE temperatuurweergave
-    #      in de 'swimming conditions'-tegel altijd en enkel de Blueriiot-
-    #      meting toont, nooit afhankelijk van of de rest van de dagrij
-    #      (weer/kanaal) al compleet is.
+    # Stap 9b: Blueriiot watertemperatuur ophalen en verwerken.
+    #
+    # Drie dingen gebeuren met elke geldige (vroege-ochtend) meting:
+    #   1. Ze wordt weggeschreven naar een PERSISTENT logbestand
+    #      (data/blueriiot_log.csv) — één rij per datum, nooit overschreven
+    #      door een run die niets nieuws vindt. Dit is nodig omdat de meting
+    #      van "vandaag" op het moment van de run nog geen bijbehorende rij
+    #      heeft in 'gecombineerd' (die stopt bij "gisteren"). Zonder dit
+    #      logbestand zou de meting van vandaag domweg verloren gaan zodra
+    #      morgen een nieuwe meting binnenkomt.
+    #   2. Bij ELKE run wordt het VOLLEDIGE log gemerged in 'gecombineerd',
+    #      in een aparte kolom 'ss_watertemp_blueriiot_c' naast de bestaande
+    #      'ss_watertemp_c' (gevuld door handmatige metingen). Zo krijgt elke
+    #      datum die ooit een geldige ochtendmeting had, die meting alsnog
+    #      zodra de rij zelf bestaat — ook met een dag vertraging blijft geen
+    #      enkele meting permanent verloren gaan.
+    #   3. De ACTUELE (meest recente) meting wordt daarnaast als losstaand
+    #      object opgeslagen (net als 'voorspelling'), zodat de 'swimming
+    #      conditions'-tegel altijd en enkel de laatste Blueriiot-meting
+    #      toont, ongeacht of de rest van de dagrij al compleet is.
     watertemperatuur_actueel = None
     blue_meting = haal_blueriiot_watertemp_op()
     if blue_meting:
-        blue_datum = blue_meting["datum"]
-        blue_temp  = blue_meting["ss_watertemp_c"]
+        log_blueriiot_meting(blue_meting)
 
         watertemperatuur_actueel = {
-            "datum":    str(blue_datum),
+            "datum":    str(blue_meting["datum"]),
             "tijd":     blue_meting.get("tijd"),
-            "waarde_c": blue_temp,
+            "waarde_c": blue_meting["ss_watertemp_c"],
         }
         if "ss_ph" in blue_meting:
             watertemperatuur_actueel["ph"] = blue_meting["ss_ph"]
         if "ss_conductivity" in blue_meting:
             watertemperatuur_actueel["conductivity"] = blue_meting["ss_conductivity"]
-
-        # Normaliseer beide kanten naar datetime.date vóór vergelijking —
-        # gecombineerd["datum"] kan hier nog string, Timestamp of date zijn
-        # afhankelijk van eerdere verwerkingsstappen; een directe 'in'-check
-        # op gemengde types faalt stil en creëert dan een lege duplicaatrij.
-        if "ss_watertemp_blueriiot_c" not in gecombineerd.columns:
-            gecombineerd["ss_watertemp_blueriiot_c"] = None
-
-        datum_genormaliseerd = pd.to_datetime(gecombineerd["datum"]).dt.date
-
-        match_mask = datum_genormaliseerd == blue_datum
-        if match_mask.any():
-            gecombineerd.loc[match_mask, "ss_watertemp_blueriiot_c"] = blue_temp
-            print(f"  → Blueriiot temperatuur ({blue_temp}°C) toegevoegd aan "
-                  f"bestaande rij voor {blue_datum} (kolom ss_watertemp_blueriiot_c).")
-        else:
-            # GEEN nieuwe rij aanmaken voor 'vandaag' — dat zou een lege
-            # placeholder-rij in 'data' introduceren (enkel deze ene kolom
-            # ingevuld), waardoor grafieken een misleidend leeg laatste
-            # datapunt tonen. De actuele meting is al beschikbaar via het
-            # losstaande 'watertemperatuur'-object; in de historiekgrafiek
-            # verschijnt de waarde pas zodra de eigenlijke weer-/kanaaldata
-            # voor die datum ook effectief opgehaald is (morgen ten laatste).
-            print(f"  → Blueriiot temperatuur ({blue_temp}°C) voor {blue_datum} "
-                  f"nog niet toegevoegd aan historiek — datum bestaat nog niet "
-                  f"in de dataset (wordt morgen alsnog meegenomen).")
-
-        gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
     else:
         # Geen (nieuwe) vroege-ochtendmeting gevonden op dit moment — bv. een
         # extra/onverwachte run buiten het 4u-8u venster. Behoud de vorige
         # geldige meting uit de JSON in plaats van deze te overschrijven met
-        # niets; anders verdwijnt een geldige ochtendmeting zodra het script
-        # later op de dag nogmaals draait.
+        # niets.
         watertemperatuur_actueel = laad_bestaande_watertemperatuur()
         if watertemperatuur_actueel:
             print(f"  → Geen nieuwe Blueriiot-meting binnen ochtendvenster; "
                   f"vorige meting behouden ({watertemperatuur_actueel.get('waarde_c')}°C "
                   f"van {watertemperatuur_actueel.get('datum')} "
                   f"{watertemperatuur_actueel.get('tijd', '')}).")
+
+    # Volledige Blueriiot-log mergen in de hoofddataset — dit haalt ALLE
+    # ooit gelogde metingen op, ook die van dagen geleden die toen nog geen
+    # bijbehorende rij hadden maar dat inmiddels wel hebben.
+    blue_log = laad_blueriiot_log()
+    if not blue_log.empty:
+        if "ss_watertemp_blueriiot_c" in gecombineerd.columns:
+            gecombineerd = gecombineerd.drop(columns=["ss_watertemp_blueriiot_c"])
+        gecombineerd = gecombineerd.merge(blue_log, on="datum", how="left")
+        aantal_matches = gecombineerd["ss_watertemp_blueriiot_c"].notna().sum()
+        print(f"  → Blueriiot-log gemerged: {aantal_matches} dag(en) met "
+              f"watertemperatuur in de hoofddataset.")
+
+    gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
 
     # Stap 10: Exporteren
     exporteer_json(gecombineerd, metingen, watertemperatuur_actueel)
