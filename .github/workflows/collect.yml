@@ -31,6 +31,6 @@ jobs:
         run: |
           git config user.name  "Sunday Swims Bot"
           git config user.email "bot@sundayswims"
-          git add data/sunday_swims_data.json
+          git add data/sunday_swims_data.json data/blueriiot_log.csv
           git diff --cached --quiet || git commit -m "data: update $(date +'%Y-%m-%d')"
           git push
