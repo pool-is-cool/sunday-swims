@@ -1099,7 +1099,8 @@ def laad_bestaande_watertemperatuur() -> dict:
 def log_blueriiot_meting(blue_meting: dict):
     """
     Schrijft elke geldige Blueriiot-ochtendmeting weg naar een persistent
-    logbestand (data/blueriiot_log.csv), ÉÉN rij per datum.
+    logbestand (data/blueriiot_log.csv), ÉÉN rij per datum — inclusief
+    watertemperatuur, pH en conductivity (indien beschikbaar).
 
     Nodig omdat de meting elke ochtend een datum heeft die op het moment
     van de run nog niet als rij bestaat in de hoofddataset (die enkel
@@ -1115,27 +1116,48 @@ def log_blueriiot_meting(blue_meting: dict):
 
     datum = str(blue_meting["datum"])
     temp  = blue_meting["ss_watertemp_c"]
+    ph    = blue_meting.get("ss_ph")
+    cond  = blue_meting.get("ss_conductivity")
+
+    kolommen = ["datum", "ss_watertemp_blueriiot_c", "ss_ph_blueriiot",
+                "ss_conductivity_blueriiot"]
 
     if BLUERIIOT_LOG_CSV.exists():
         log_df = pd.read_csv(BLUERIIOT_LOG_CSV)
+        # Ontbrekende kolommen toevoegen (bv. bij upgrade van een ouder logbestand
+        # dat enkel watertemperatuur bevatte, zonder pH/conductivity)
+        for k in kolommen:
+            if k not in log_df.columns:
+                log_df[k] = None
     else:
-        log_df = pd.DataFrame(columns=["datum", "ss_watertemp_blueriiot_c"])
+        log_df = pd.DataFrame(columns=kolommen)
 
     log_df["datum"] = log_df["datum"].astype(str)
     log_df = log_df[log_df["datum"] != datum]  # oude waarde voor deze datum vervangen
-    nieuwe_rij = pd.DataFrame([{"datum": datum, "ss_watertemp_blueriiot_c": temp}])
+    nieuwe_rij = pd.DataFrame([{
+        "datum": datum,
+        "ss_watertemp_blueriiot_c": temp,
+        "ss_ph_blueriiot": ph,
+        "ss_conductivity_blueriiot": cond,
+    }])
     log_df = pd.concat([log_df, nieuwe_rij], ignore_index=True)
     log_df = log_df.sort_values("datum").reset_index(drop=True)
     log_df.to_csv(BLUERIIOT_LOG_CSV, index=False)
-    print(f"  → Blueriiot-log bijgewerkt: {datum} = {temp}°C "
-          f"({len(log_df)} metingen totaal in log).")
+    print(f"  → Blueriiot-log bijgewerkt: {datum} = {temp}°C, pH {ph}, "
+          f"conductivity {cond} ({len(log_df)} metingen totaal in log).")
 
 
 def laad_blueriiot_log() -> pd.DataFrame:
-    """Laadt het volledige, persistente Blueriiot-logbestand."""
+    """Laadt het volledige, persistente Blueriiot-logbestand
+    (watertemperatuur, pH en conductivity)."""
+    kolommen = ["datum", "ss_watertemp_blueriiot_c", "ss_ph_blueriiot",
+                "ss_conductivity_blueriiot"]
     if not BLUERIIOT_LOG_CSV.exists():
-        return pd.DataFrame(columns=["datum", "ss_watertemp_blueriiot_c"])
+        return pd.DataFrame(columns=kolommen)
     log_df = pd.read_csv(BLUERIIOT_LOG_CSV)
+    for k in kolommen:
+        if k not in log_df.columns:
+            log_df[k] = None
     log_df["datum"] = pd.to_datetime(log_df["datum"]).dt.date
     return log_df
 
@@ -1402,12 +1424,15 @@ def main():
     # bijbehorende rij hadden maar dat inmiddels wel hebben.
     blue_log = laad_blueriiot_log()
     if not blue_log.empty:
-        if "ss_watertemp_blueriiot_c" in gecombineerd.columns:
-            gecombineerd = gecombineerd.drop(columns=["ss_watertemp_blueriiot_c"])
+        blueriiot_kolommen = ["ss_watertemp_blueriiot_c", "ss_ph_blueriiot",
+                              "ss_conductivity_blueriiot"]
+        te_droppen = [k for k in blueriiot_kolommen if k in gecombineerd.columns]
+        if te_droppen:
+            gecombineerd = gecombineerd.drop(columns=te_droppen)
         gecombineerd = gecombineerd.merge(blue_log, on="datum", how="left")
         aantal_matches = gecombineerd["ss_watertemp_blueriiot_c"].notna().sum()
         print(f"  → Blueriiot-log gemerged: {aantal_matches} dag(en) met "
-              f"watertemperatuur in de hoofddataset.")
+              f"watertemperatuur (+ pH/conductivity) in de hoofddataset.")
 
     gecombineerd = gecombineerd.sort_values("datum").reset_index(drop=True)
 
