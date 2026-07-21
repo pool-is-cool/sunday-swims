@@ -1,5 +1,5 @@
 {
-  "gegenereerd_op": "2026-07-20",
+  "gegenereerd_op": "2026-07-21",
   "locatie": {
     "naam": "Kanaal Brussel-Charleroi, Anderlecht",
     "lat": 50.8403,
@@ -39,7 +39,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -54,7 +53,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-04",
@@ -89,7 +89,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -104,7 +103,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-05",
@@ -139,7 +139,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -154,7 +153,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-06",
@@ -189,7 +189,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -204,7 +203,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-07",
@@ -239,7 +239,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -254,7 +253,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-08",
@@ -289,7 +289,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -304,7 +303,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-09",
@@ -339,7 +339,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -354,7 +353,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-10",
@@ -389,7 +389,6 @@
       "neerslag_72u_mm": 8.8,
       "flowbru_neerslag_48u_mm": 6.7,
       "flowbru_neerslag_72u_mm": 6.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -404,7 +403,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-11",
@@ -439,7 +439,6 @@
       "neerslag_72u_mm": 14.9,
       "flowbru_neerslag_48u_mm": 11.8,
       "flowbru_neerslag_72u_mm": 11.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -454,7 +453,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-12",
@@ -489,7 +489,6 @@
       "neerslag_72u_mm": 14.9,
       "flowbru_neerslag_48u_mm": 5.1,
       "flowbru_neerslag_72u_mm": 11.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -504,7 +503,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-13",
@@ -539,7 +539,6 @@
       "neerslag_72u_mm": 18.4,
       "flowbru_neerslag_48u_mm": 12.0,
       "flowbru_neerslag_72u_mm": 17.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -554,7 +553,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-14",
@@ -589,7 +589,6 @@
       "neerslag_72u_mm": 25.0,
       "flowbru_neerslag_48u_mm": 22.5,
       "flowbru_neerslag_72u_mm": 22.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -604,7 +603,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-15",
@@ -639,7 +639,6 @@
       "neerslag_72u_mm": 25.0,
       "flowbru_neerslag_48u_mm": 10.5,
       "flowbru_neerslag_72u_mm": 22.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -654,7 +653,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-16",
@@ -689,7 +689,6 @@
       "neerslag_72u_mm": 14.6,
       "flowbru_neerslag_48u_mm": 0.5,
       "flowbru_neerslag_72u_mm": 11.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -704,7 +703,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-17",
@@ -739,7 +739,6 @@
       "neerslag_72u_mm": 1.9,
       "flowbru_neerslag_48u_mm": 0.5,
       "flowbru_neerslag_72u_mm": 0.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -754,7 +753,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-18",
@@ -789,7 +789,6 @@
       "neerslag_72u_mm": 1.9,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -804,7 +803,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-19",
@@ -839,7 +839,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -854,7 +853,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-20",
@@ -889,7 +889,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -904,7 +903,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-21",
@@ -939,7 +939,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -954,7 +953,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-22",
@@ -989,7 +989,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1004,7 +1003,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-23",
@@ -1039,7 +1039,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1054,7 +1053,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-24",
@@ -1089,7 +1089,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1104,7 +1103,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-25",
@@ -1139,7 +1139,6 @@
       "neerslag_72u_mm": 6.5,
       "flowbru_neerslag_48u_mm": 6.2,
       "flowbru_neerslag_72u_mm": 6.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1154,7 +1153,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-26",
@@ -1189,7 +1189,6 @@
       "neerslag_72u_mm": 11.8,
       "flowbru_neerslag_48u_mm": 9.5,
       "flowbru_neerslag_72u_mm": 9.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1204,7 +1203,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-27",
@@ -1239,7 +1239,6 @@
       "neerslag_72u_mm": 12.0,
       "flowbru_neerslag_48u_mm": 3.8,
       "flowbru_neerslag_72u_mm": 10.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1254,7 +1253,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-28",
@@ -1289,7 +1289,6 @@
       "neerslag_72u_mm": 12.3,
       "flowbru_neerslag_48u_mm": 7.2,
       "flowbru_neerslag_72u_mm": 10.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1304,7 +1303,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-29",
@@ -1339,7 +1339,6 @@
       "neerslag_72u_mm": 9.2,
       "flowbru_neerslag_48u_mm": 7.5,
       "flowbru_neerslag_72u_mm": 8.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1354,7 +1353,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-30",
@@ -1389,7 +1389,6 @@
       "neerslag_72u_mm": 13.8,
       "flowbru_neerslag_48u_mm": 3.9,
       "flowbru_neerslag_72u_mm": 10.6,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1404,7 +1403,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-03-31",
@@ -1439,7 +1439,6 @@
       "neerslag_72u_mm": 7.0,
       "flowbru_neerslag_48u_mm": 3.1,
       "flowbru_neerslag_72u_mm": 3.9,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1454,7 +1453,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-01",
@@ -1489,7 +1489,6 @@
       "neerslag_72u_mm": 5.0,
       "flowbru_neerslag_48u_mm": 0.2,
       "flowbru_neerslag_72u_mm": 3.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1504,7 +1503,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-02",
@@ -1539,7 +1539,6 @@
       "neerslag_72u_mm": 1.9,
       "flowbru_neerslag_48u_mm": 1.5,
       "flowbru_neerslag_72u_mm": 1.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1554,7 +1553,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-03",
@@ -1589,7 +1589,6 @@
       "neerslag_72u_mm": 1.9,
       "flowbru_neerslag_48u_mm": 1.3,
       "flowbru_neerslag_72u_mm": 1.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1604,7 +1603,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-04",
@@ -1639,7 +1639,6 @@
       "neerslag_72u_mm": 1.8,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 1.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1654,7 +1653,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-05",
@@ -1689,7 +1689,6 @@
       "neerslag_72u_mm": 1.8,
       "flowbru_neerslag_48u_mm": 1.2,
       "flowbru_neerslag_72u_mm": 1.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1704,7 +1703,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-06",
@@ -1739,7 +1739,6 @@
       "neerslag_72u_mm": 1.8,
       "flowbru_neerslag_48u_mm": 1.2,
       "flowbru_neerslag_72u_mm": 1.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1754,7 +1753,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-07",
@@ -1789,7 +1789,6 @@
       "neerslag_72u_mm": 1.7,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 1.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1804,7 +1803,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-08",
@@ -1839,7 +1839,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1854,7 +1853,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-09",
@@ -1889,7 +1889,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1904,7 +1903,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-10",
@@ -1939,7 +1939,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 146.5,
       "flowbru_neerslag_72u_mm": 146.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -1954,7 +1953,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-11",
@@ -1989,7 +1989,6 @@
       "neerslag_72u_mm": 1.5,
       "flowbru_neerslag_48u_mm": 147.4,
       "flowbru_neerslag_72u_mm": 147.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2004,7 +2003,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-12",
@@ -2039,7 +2039,6 @@
       "neerslag_72u_mm": 1.5,
       "flowbru_neerslag_48u_mm": 0.9,
       "flowbru_neerslag_72u_mm": 147.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2054,7 +2053,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-13",
@@ -2089,7 +2089,6 @@
       "neerslag_72u_mm": 1.5,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.9,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2104,7 +2103,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-14",
@@ -2139,7 +2139,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2154,7 +2153,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-15",
@@ -2189,7 +2189,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.1,
       "flowbru_neerslag_72u_mm": 0.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2204,7 +2203,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-16",
@@ -2239,7 +2239,6 @@
       "neerslag_72u_mm": 0.6,
       "flowbru_neerslag_48u_mm": 0.3,
       "flowbru_neerslag_72u_mm": 0.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2254,7 +2253,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-17",
@@ -2289,7 +2289,6 @@
       "neerslag_72u_mm": 0.6,
       "flowbru_neerslag_48u_mm": 0.2,
       "flowbru_neerslag_72u_mm": 0.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2304,7 +2303,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-18",
@@ -2339,7 +2339,6 @@
       "neerslag_72u_mm": 3.3,
       "flowbru_neerslag_48u_mm": 4.2,
       "flowbru_neerslag_72u_mm": 4.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2354,7 +2353,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-19",
@@ -2389,7 +2389,6 @@
       "neerslag_72u_mm": 3.3,
       "flowbru_neerslag_48u_mm": 4.2,
       "flowbru_neerslag_72u_mm": 4.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2404,7 +2403,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-20",
@@ -2439,7 +2439,6 @@
       "neerslag_72u_mm": 3.3,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 4.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2454,7 +2453,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-21",
@@ -2489,7 +2489,6 @@
       "neerslag_72u_mm": 0.6,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2504,7 +2503,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-22",
@@ -2539,7 +2539,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2554,7 +2553,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-23",
@@ -2589,7 +2589,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2604,7 +2603,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-24",
@@ -2639,7 +2639,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2654,7 +2653,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-25",
@@ -2689,7 +2689,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.1,
       "flowbru_neerslag_72u_mm": 0.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2704,7 +2703,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-26",
@@ -2739,7 +2739,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.1,
       "flowbru_neerslag_72u_mm": 0.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2754,7 +2753,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-27",
@@ -2789,7 +2789,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2804,7 +2803,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-28",
@@ -2839,7 +2839,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2854,7 +2853,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-29",
@@ -2889,7 +2889,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2904,7 +2903,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-04-30",
@@ -2939,7 +2939,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -2954,7 +2953,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-01",
@@ -2989,7 +2989,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3004,7 +3003,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-02",
@@ -3039,7 +3039,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 2.4,
       "flowbru_neerslag_72u_mm": 2.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3054,7 +3053,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-03",
@@ -3089,7 +3089,6 @@
       "neerslag_72u_mm": 14.4,
       "flowbru_neerslag_48u_mm": 19.1,
       "flowbru_neerslag_72u_mm": 19.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3104,7 +3103,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-04",
@@ -3139,7 +3139,6 @@
       "neerslag_72u_mm": 16.9,
       "flowbru_neerslag_48u_mm": 22.3,
       "flowbru_neerslag_72u_mm": 24.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3154,7 +3153,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-05",
@@ -3189,7 +3189,6 @@
       "neerslag_72u_mm": 19.7,
       "flowbru_neerslag_48u_mm": 9.3,
       "flowbru_neerslag_72u_mm": 26.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3204,7 +3203,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-06",
@@ -3239,7 +3239,6 @@
       "neerslag_72u_mm": 12.2,
       "flowbru_neerslag_48u_mm": 4.3,
       "flowbru_neerslag_72u_mm": 9.9,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3254,7 +3253,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-07",
@@ -3289,7 +3289,6 @@
       "neerslag_72u_mm": 9.7,
       "flowbru_neerslag_48u_mm": 0.6,
       "flowbru_neerslag_72u_mm": 4.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3304,7 +3303,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-08",
@@ -3339,7 +3339,6 @@
       "neerslag_72u_mm": 6.9,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.6,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3354,7 +3353,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-09",
@@ -3389,7 +3389,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3404,7 +3403,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-10",
@@ -3439,7 +3439,6 @@
       "neerslag_72u_mm": 0.1,
       "flowbru_neerslag_48u_mm": 6.9,
       "flowbru_neerslag_72u_mm": 6.9,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3454,7 +3453,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-11",
@@ -3489,7 +3489,6 @@
       "neerslag_72u_mm": 12.9,
       "flowbru_neerslag_48u_mm": 10.5,
       "flowbru_neerslag_72u_mm": 10.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3504,7 +3503,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-12",
@@ -3539,7 +3539,6 @@
       "neerslag_72u_mm": 13.0,
       "flowbru_neerslag_48u_mm": 3.6,
       "flowbru_neerslag_72u_mm": 10.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3554,7 +3553,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-13",
@@ -3589,7 +3589,6 @@
       "neerslag_72u_mm": 17.9,
       "flowbru_neerslag_48u_mm": 3.7,
       "flowbru_neerslag_72u_mm": 7.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3604,7 +3603,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-14",
@@ -3639,7 +3639,6 @@
       "neerslag_72u_mm": 11.9,
       "flowbru_neerslag_48u_mm": 15.6,
       "flowbru_neerslag_72u_mm": 15.6,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3654,7 +3653,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-15",
@@ -3689,7 +3689,6 @@
       "neerslag_72u_mm": 12.9,
       "flowbru_neerslag_48u_mm": 13.0,
       "flowbru_neerslag_72u_mm": 16.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3704,7 +3703,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-16",
@@ -3739,7 +3739,6 @@
       "neerslag_72u_mm": 7.9,
       "flowbru_neerslag_48u_mm": 1.1,
       "flowbru_neerslag_72u_mm": 13.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3754,7 +3753,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-17",
@@ -3789,7 +3789,6 @@
       "neerslag_72u_mm": 6.7,
       "flowbru_neerslag_48u_mm": 12.1,
       "flowbru_neerslag_72u_mm": 13.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3804,7 +3803,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-18",
@@ -3839,7 +3839,6 @@
       "neerslag_72u_mm": 7.5,
       "flowbru_neerslag_48u_mm": 12.3,
       "flowbru_neerslag_72u_mm": 12.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3854,7 +3853,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-19",
@@ -3889,7 +3889,6 @@
       "neerslag_72u_mm": 8.3,
       "flowbru_neerslag_48u_mm": 3.3,
       "flowbru_neerslag_72u_mm": 15.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3904,7 +3903,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-20",
@@ -3939,7 +3939,6 @@
       "neerslag_72u_mm": 11.6,
       "flowbru_neerslag_48u_mm": 6.8,
       "flowbru_neerslag_72u_mm": 7.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -3954,7 +3953,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-21",
@@ -3989,7 +3989,6 @@
       "neerslag_72u_mm": 9.7,
       "flowbru_neerslag_48u_mm": 3.7,
       "flowbru_neerslag_72u_mm": 6.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4004,7 +4003,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-22",
@@ -4039,7 +4039,6 @@
       "neerslag_72u_mm": 8.9,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 3.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4054,7 +4053,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-23",
@@ -4089,7 +4089,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4104,7 +4103,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-24",
@@ -4139,7 +4139,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4154,7 +4153,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-25",
@@ -4189,7 +4189,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4204,7 +4203,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-26",
@@ -4239,7 +4239,6 @@
       "neerslag_72u_mm": 0.1,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4254,7 +4253,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-27",
@@ -4289,7 +4289,6 @@
       "neerslag_72u_mm": 0.1,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4304,7 +4303,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-28",
@@ -4339,7 +4339,6 @@
       "neerslag_72u_mm": 0.1,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4354,7 +4353,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-29",
@@ -4389,7 +4389,6 @@
       "neerslag_72u_mm": 0.0,
       "flowbru_neerslag_48u_mm": 0.1,
       "flowbru_neerslag_72u_mm": 0.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4404,7 +4403,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-30",
@@ -4439,7 +4439,6 @@
       "neerslag_72u_mm": 7.1,
       "flowbru_neerslag_48u_mm": 17.5,
       "flowbru_neerslag_72u_mm": 17.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4454,7 +4453,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-05-31",
@@ -4489,7 +4489,6 @@
       "neerslag_72u_mm": 9.5,
       "flowbru_neerslag_48u_mm": 17.5,
       "flowbru_neerslag_72u_mm": 17.6,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4504,7 +4503,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-01",
@@ -4539,7 +4539,6 @@
       "neerslag_72u_mm": 9.5,
       "flowbru_neerslag_48u_mm": 0.1,
       "flowbru_neerslag_72u_mm": 17.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4554,7 +4553,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-02",
@@ -4589,7 +4589,6 @@
       "neerslag_72u_mm": 10.8,
       "flowbru_neerslag_48u_mm": 13.9,
       "flowbru_neerslag_72u_mm": 14.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4604,7 +4603,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-03",
@@ -4639,7 +4639,6 @@
       "neerslag_72u_mm": 15.4,
       "flowbru_neerslag_48u_mm": 23.2,
       "flowbru_neerslag_72u_mm": 23.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4654,7 +4653,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-04",
@@ -4689,7 +4689,6 @@
       "neerslag_72u_mm": 20.8,
       "flowbru_neerslag_48u_mm": 10.9,
       "flowbru_neerslag_72u_mm": 24.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4704,7 +4703,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-05",
@@ -4739,7 +4739,6 @@
       "neerslag_72u_mm": 20.0,
       "flowbru_neerslag_48u_mm": 5.4,
       "flowbru_neerslag_72u_mm": 14.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4754,7 +4753,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-06",
@@ -4789,7 +4789,6 @@
       "neerslag_72u_mm": 24.4,
       "flowbru_neerslag_48u_mm": 6.6,
       "flowbru_neerslag_72u_mm": 8.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4804,7 +4803,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-07",
@@ -4839,7 +4839,6 @@
       "neerslag_72u_mm": 19.2,
       "flowbru_neerslag_48u_mm": 2.8,
       "flowbru_neerslag_72u_mm": 6.6,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4854,7 +4853,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-08",
@@ -4889,7 +4889,6 @@
       "neerslag_72u_mm": 15.0,
       "flowbru_neerslag_48u_mm": 4.0,
       "flowbru_neerslag_72u_mm": 6.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4904,7 +4903,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-09",
@@ -4939,7 +4939,6 @@
       "neerslag_72u_mm": 8.2,
       "flowbru_neerslag_48u_mm": 10.5,
       "flowbru_neerslag_72u_mm": 10.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -4954,7 +4953,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-10",
@@ -4989,7 +4989,6 @@
       "neerslag_72u_mm": 9.3,
       "flowbru_neerslag_48u_mm": 7.9,
       "flowbru_neerslag_72u_mm": 11.9,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5004,7 +5003,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-11",
@@ -5039,7 +5039,6 @@
       "neerslag_72u_mm": 9.6,
       "flowbru_neerslag_48u_mm": 9.5,
       "flowbru_neerslag_72u_mm": 16.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5054,7 +5053,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-12",
@@ -5089,7 +5089,6 @@
       "neerslag_72u_mm": 14.6,
       "flowbru_neerslag_48u_mm": 10.7,
       "flowbru_neerslag_72u_mm": 12.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5104,7 +5103,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-13",
@@ -5139,7 +5139,6 @@
       "neerslag_72u_mm": 13.3,
       "flowbru_neerslag_48u_mm": 2.6,
       "flowbru_neerslag_72u_mm": 10.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5154,7 +5153,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-14",
@@ -5189,7 +5189,6 @@
       "neerslag_72u_mm": 9.6,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 2.6,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5204,7 +5203,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-15",
@@ -5239,7 +5239,6 @@
       "neerslag_72u_mm": 0.3,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5254,7 +5253,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-16",
@@ -5289,7 +5289,6 @@
       "neerslag_72u_mm": 0.3,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5304,7 +5303,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-17",
@@ -5339,7 +5339,6 @@
       "neerslag_72u_mm": 0.3,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5354,7 +5353,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-18",
@@ -5389,7 +5389,6 @@
       "neerslag_72u_mm": 0.2,
       "flowbru_neerslag_48u_mm": 12.2,
       "flowbru_neerslag_72u_mm": 12.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5404,7 +5403,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-19",
@@ -5439,7 +5439,6 @@
       "neerslag_72u_mm": 6.7,
       "flowbru_neerslag_48u_mm": 12.2,
       "flowbru_neerslag_72u_mm": 12.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5454,7 +5453,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-20",
@@ -5489,7 +5489,6 @@
       "neerslag_72u_mm": 6.9,
       "flowbru_neerslag_48u_mm": 5.6,
       "flowbru_neerslag_72u_mm": 17.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5504,7 +5503,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-21",
@@ -5539,7 +5539,6 @@
       "neerslag_72u_mm": 13.4,
       "flowbru_neerslag_48u_mm": 7.5,
       "flowbru_neerslag_72u_mm": 7.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5554,7 +5553,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-22",
@@ -5589,7 +5589,6 @@
       "neerslag_72u_mm": 6.9,
       "flowbru_neerslag_48u_mm": 1.9,
       "flowbru_neerslag_72u_mm": 7.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5604,7 +5603,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-23",
@@ -5639,7 +5639,6 @@
       "neerslag_72u_mm": 6.7,
       "flowbru_neerslag_48u_mm": 0.2,
       "flowbru_neerslag_72u_mm": 2.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5654,7 +5653,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-24",
@@ -5689,7 +5689,6 @@
       "neerslag_72u_mm": 0.4,
       "flowbru_neerslag_48u_mm": 0.2,
       "flowbru_neerslag_72u_mm": 0.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5704,7 +5703,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-25",
@@ -5739,7 +5739,6 @@
       "neerslag_72u_mm": 0.4,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5754,7 +5753,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-26",
@@ -5789,7 +5789,6 @@
       "neerslag_72u_mm": 0.4,
       "flowbru_neerslag_48u_mm": 0.1,
       "flowbru_neerslag_72u_mm": 0.1,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5804,7 +5803,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-27",
@@ -5839,7 +5839,6 @@
       "neerslag_72u_mm": 0.2,
       "flowbru_neerslag_48u_mm": 34.4,
       "flowbru_neerslag_72u_mm": 34.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5854,7 +5853,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-28",
@@ -5889,7 +5889,6 @@
       "neerslag_72u_mm": 36.8,
       "flowbru_neerslag_48u_mm": 34.7,
       "flowbru_neerslag_72u_mm": 34.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5904,7 +5903,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-29",
@@ -5939,7 +5939,6 @@
       "neerslag_72u_mm": 37.9,
       "flowbru_neerslag_48u_mm": 1.2,
       "flowbru_neerslag_72u_mm": 35.5,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -5954,7 +5953,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-06-30",
@@ -5989,7 +5989,6 @@
       "neerslag_72u_mm": 37.7,
       "flowbru_neerslag_48u_mm": 0.8,
       "flowbru_neerslag_72u_mm": 1.2,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6004,7 +6003,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-01",
@@ -6039,7 +6039,6 @@
       "neerslag_72u_mm": 1.1,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.8,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6054,7 +6053,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-02",
@@ -6089,7 +6089,6 @@
       "neerslag_72u_mm": 1.3,
       "flowbru_neerslag_48u_mm": 0.7,
       "flowbru_neerslag_72u_mm": 0.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6104,7 +6103,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-03",
@@ -6139,7 +6139,6 @@
       "neerslag_72u_mm": 1.4,
       "flowbru_neerslag_48u_mm": 0.7,
       "flowbru_neerslag_72u_mm": 0.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6154,7 +6153,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-04",
@@ -6189,7 +6189,6 @@
       "neerslag_72u_mm": 2.1,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.7,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6204,7 +6203,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-05",
@@ -6239,7 +6239,6 @@
       "neerslag_72u_mm": 1.5,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6254,7 +6253,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-06",
@@ -6289,7 +6289,6 @@
       "neerslag_72u_mm": 1.9,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6304,7 +6303,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-07",
@@ -6339,7 +6339,6 @@
       "neerslag_72u_mm": 1.2,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6354,7 +6353,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-08",
@@ -6389,7 +6389,6 @@
       "neerslag_72u_mm": 0.5,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6404,7 +6403,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-09",
@@ -6439,7 +6439,6 @@
       "neerslag_72u_mm": 0.6,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6454,7 +6453,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-10",
@@ -6489,7 +6489,6 @@
       "neerslag_72u_mm": 0.7,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6504,7 +6503,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-11",
@@ -6539,7 +6539,6 @@
       "neerslag_72u_mm": 1.1,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6554,7 +6553,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-12",
@@ -6589,7 +6589,6 @@
       "neerslag_72u_mm": 0.8,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6604,7 +6603,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-13",
@@ -6639,7 +6639,6 @@
       "neerslag_72u_mm": 0.7,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6654,7 +6653,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-14",
@@ -6689,7 +6689,6 @@
       "neerslag_72u_mm": 0.8,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6704,7 +6703,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-15",
@@ -6739,7 +6739,6 @@
       "neerslag_72u_mm": 0.5,
       "flowbru_neerslag_48u_mm": 0.0,
       "flowbru_neerslag_72u_mm": 0.0,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6754,7 +6753,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-16",
@@ -6789,7 +6789,6 @@
       "neerslag_72u_mm": 0.5,
       "flowbru_neerslag_48u_mm": 0.3,
       "flowbru_neerslag_72u_mm": 0.3,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6804,7 +6803,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-17",
@@ -6839,7 +6839,6 @@
       "neerslag_72u_mm": 0.4,
       "flowbru_neerslag_48u_mm": 0.4,
       "flowbru_neerslag_72u_mm": 0.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6854,7 +6853,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-18",
@@ -6889,7 +6889,6 @@
       "neerslag_72u_mm": 1.0,
       "flowbru_neerslag_48u_mm": 0.1,
       "flowbru_neerslag_72u_mm": 0.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6904,7 +6903,8 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     },
     {
       "datum": "2026-07-19",
@@ -6939,7 +6939,6 @@
       "neerslag_72u_mm": 1.9,
       "flowbru_neerslag_48u_mm": 0.3,
       "flowbru_neerslag_72u_mm": 0.4,
-      "ss_watertemp_blueriiot_c": null,
       "ss_watertemp_c": null,
       "ss_ecoli": null,
       "ss_enterococcen": null,
@@ -6954,7 +6953,58 @@
       "ref3_watertemp_c": null,
       "ref3_ecoli": null,
       "ref3_enterococcen": null,
-      "notities": null
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
+    },
+    {
+      "datum": "2026-07-20",
+      "neerslag_mm": 0.0,
+      "temp_min_c": 11.9,
+      "temp_max_c": 21.9,
+      "temp_gemiddeld_c": 16.9,
+      "windsnelheid_max_kmh": 10.7,
+      "windrichting_graden": 332.3,
+      "vochtigheid_pct": 61.4,
+      "luchtdruk_hpa": 1024.6,
+      "bewolking_pct": 70.8,
+      "zonneschijn_uur": 6.07,
+      "windrichting_naam": "NW",
+      "uv_index_max": 6.3,
+      "kanaal_peil_gem": 25.73,
+      "kanaal_peil_max": 25.75,
+      "kanaal_afvoer_gem": 0.985,
+      "kanaal_afvoer_max": 9.17,
+      "kanaal_afvoer_min": -2.64,
+      "ruisbroek_opw_peil_gem": 25.725,
+      "ruisbroek_opw_peil_max": 25.83,
+      "ruisbroek_afw_peil_gem": 22.0,
+      "ruisbroek_afw_peil_max": 22.11,
+      "flowbru_amont_dag": 22.014,
+      "flowbru_aval_dag": 18.22,
+      "flowbru_sas_dag": 22.233,
+      "flowbru_neerslag_dag": 0.0,
+      "sluis_activiteit_dag": 0.0,
+      "neerslag_24u_mm": 0.0,
+      "neerslag_48u_mm": 0.9,
+      "neerslag_72u_mm": 1.5,
+      "flowbru_neerslag_48u_mm": 0.3,
+      "flowbru_neerslag_72u_mm": 0.3,
+      "ss_watertemp_c": null,
+      "ss_ecoli": null,
+      "ss_enterococcen": null,
+      "cyano_observatie": null,
+      "cyano_microcystins": null,
+      "ref1_watertemp_c": null,
+      "ref1_ecoli": null,
+      "ref1_enterococcen": null,
+      "ref2_watertemp_c": null,
+      "ref2_ecoli": null,
+      "ref2_enterococcen": null,
+      "ref3_watertemp_c": null,
+      "ref3_ecoli": null,
+      "ref3_enterococcen": null,
+      "notities": null,
+      "ss_watertemp_blueriiot_c": null
     }
   ],
   "metingen": [
@@ -6995,111 +7045,12 @@
       "notities": "for BIG JUMP 2025"
     }
   ],
-  "voorspelling": [
-    {
-      "datum": "2026-07-20",
-      "temp_max_c": 23.3,
-      "temp_min_c": 14.3,
-      "temp_gemiddeld_c": 18.8,
-      "neerslag_mm": 0.0,
-      "neerslag_kans_pct": 14,
-      "windsnelheid_max_kmh": 18.7,
-      "windrichting_naam": "N",
-      "uv_index_max": 6.55,
-      "zonneschijn_uur": 11.6,
-      "bewolking_pct": 52,
-      "weathercode": 3
-    },
-    {
-      "datum": "2026-07-21",
-      "temp_max_c": 25.5,
-      "temp_min_c": 15.0,
-      "temp_gemiddeld_c": 19.5,
-      "neerslag_mm": 0.0,
-      "neerslag_kans_pct": 0,
-      "windsnelheid_max_kmh": 17.3,
-      "windrichting_naam": "N",
-      "uv_index_max": 6.7,
-      "zonneschijn_uur": 12.6,
-      "bewolking_pct": 14,
-      "weathercode": 3
-    },
-    {
-      "datum": "2026-07-22",
-      "temp_max_c": 22.0,
-      "temp_min_c": 17.0,
-      "temp_gemiddeld_c": 18.9,
-      "neerslag_mm": 0.0,
-      "neerslag_kans_pct": 13,
-      "windsnelheid_max_kmh": 15.1,
-      "windrichting_naam": "NW",
-      "uv_index_max": 3.5,
-      "zonneschijn_uur": 3.8,
-      "bewolking_pct": 77,
-      "weathercode": 3
-    },
-    {
-      "datum": "2026-07-23",
-      "temp_max_c": 22.9,
-      "temp_min_c": 13.5,
-      "temp_gemiddeld_c": 17.8,
-      "neerslag_mm": 0.3,
-      "neerslag_kans_pct": 10,
-      "windsnelheid_max_kmh": 14.0,
-      "windrichting_naam": "NW",
-      "uv_index_max": 6.3,
-      "zonneschijn_uur": 13.0,
-      "bewolking_pct": 53,
-      "weathercode": 51
-    },
-    {
-      "datum": "2026-07-24",
-      "temp_max_c": 23.7,
-      "temp_min_c": 13.5,
-      "temp_gemiddeld_c": 18.8,
-      "neerslag_mm": 0.0,
-      "neerslag_kans_pct": 4,
-      "windsnelheid_max_kmh": 8.1,
-      "windrichting_naam": "NO",
-      "uv_index_max": 6.1,
-      "zonneschijn_uur": 15.5,
-      "bewolking_pct": 44,
-      "weathercode": 3
-    },
-    {
-      "datum": "2026-07-25",
-      "temp_max_c": 26.4,
-      "temp_min_c": 16.3,
-      "temp_gemiddeld_c": 21.7,
-      "neerslag_mm": 0.0,
-      "neerslag_kans_pct": 16,
-      "windsnelheid_max_kmh": 11.7,
-      "windrichting_naam": "NW",
-      "uv_index_max": 5.7,
-      "zonneschijn_uur": 13.5,
-      "bewolking_pct": 67,
-      "weathercode": 3
-    },
-    {
-      "datum": "2026-07-26",
-      "temp_max_c": 21.4,
-      "temp_min_c": 17.3,
-      "temp_gemiddeld_c": 19.1,
-      "neerslag_mm": 3.6,
-      "neerslag_kans_pct": 45,
-      "windsnelheid_max_kmh": 11.2,
-      "windrichting_naam": "ZW",
-      "uv_index_max": 2.95,
-      "zonneschijn_uur": 12.9,
-      "bewolking_pct": 59,
-      "weathercode": 53
-    }
-  ],
+  "voorspelling": [],
   "watertemperatuur": {
-    "datum": "2026-07-20",
-    "tijd": "04:58",
-    "waarde_c": 23.6,
+    "datum": "2026-07-21",
+    "tijd": "05:04",
+    "waarde_c": 23.0,
     "ph": 8.0,
-    "conductivity": 632.0
+    "conductivity": 604.0
   }
 }
