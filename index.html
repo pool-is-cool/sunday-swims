@@ -1142,7 +1142,7 @@ async function init() {
     setTimeout(()=>{
       makeLineChart("watertemp-chart",
         [
-          {label:"Water temp. (Blueriiot, automatic)",data:tail2months(metingen,"ss_watertemp_blueriiot_c"),color:"#0891b2",bold:true,showLine:true},
+          {label:"Water temp. (Blueriiot, automatic)",data:tail2months(data,"ss_watertemp_blueriiot_c"),color:"#0891b2",bold:true,showLine:true},
           {label:"Water temp. (manual sample)",data:tail2months(metingen,"ss_watertemp_c"),color:"#f97316",showLine:false},
         ],
         {});
