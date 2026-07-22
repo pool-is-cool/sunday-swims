@@ -1,5 +1,27 @@
 [
   {
+    "mmsi": 244660628,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "S",
+    "date": "2026-07-22",
+    "time": "06:39",
+    "lat": 50.787537,
+    "lon": 4.291307
+  },
+  {
+    "mmsi": 205268590,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "N",
+    "date": "2026-07-22",
+    "time": "06:38",
+    "lat": 50.864325,
+    "lon": 4.35151
+  },
+  {
     "mmsi": 205581390,
     "name": "Unknown",
     "type": "Unknown",
@@ -5476,27 +5498,5 @@
     "time": "05:43",
     "lat": 50.861335,
     "lon": 4.348983
-  },
-  {
-    "mmsi": 205396290,
-    "name": "Unknown",
-    "type": "Unknown",
-    "length": "?m",
-    "direction": "unknown",
-    "date": "2026-07-09",
-    "time": "04:41",
-    "lat": 50.86133,
-    "lon": 4.349017
-  },
-  {
-    "mmsi": 205579690,
-    "name": "Unknown",
-    "type": "Unknown",
-    "length": "?m",
-    "direction": "unknown",
-    "date": "2026-07-09",
-    "time": "04:23",
-    "lat": 50.849823,
-    "lon": 4.335273
   }
 ]
