@@ -1,3 +1,4 @@
-datum,ss_watertemp_blueriiot_c
-2026-07-20,23.6
-2026-07-21,23.0
+datum,ss_watertemp_blueriiot_c,ss_ph_blueriiot,ss_conductivity_blueriiot
+2026-07-20,23.6,,
+2026-07-21,23.0,,
+2026-07-22,22.9,8.0,643.0
