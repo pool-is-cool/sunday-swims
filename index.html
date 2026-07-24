@@ -440,9 +440,19 @@ function makeLineChart(canvasId, datasets, opts={}) {
   const el = document.getElementById(canvasId);
   if (!el) return;
 
-  // Convert {x: date-string, y: value} to category axis
-  // Collect all unique dates across datasets, sorted
-  const allDates = [...new Set(datasets.flatMap(ds => ds.data.map(p => p.x)))].sort();
+  // Vaste tijdlijn van de afgelopen 60 dagen — NIET enkel de data die
+  // effectief metingen heeft. Zo blijft de x-as altijd "de afgelopen 60
+  // dagen" tonen, ook bij weinig/sporadische metingen, in plaats van de
+  // grafiek uit te rekken over slechts de paar dagen met data.
+  const DAGEN = 60;
+  const vandaag = new Date();
+  vandaag.setHours(0,0,0,0);
+  const allDates = [];
+  for (let i = DAGEN - 1; i >= 0; i--) {
+    const d = new Date(vandaag);
+    d.setDate(d.getDate() - i);
+    allDates.push(d.toISOString().slice(0,10));
+  }
   const labels = allDates.map(d => new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
 
   // Build threshold lines as extra datasets (dashed horizontal lines)
