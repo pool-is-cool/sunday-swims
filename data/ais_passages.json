@@ -6,6 +6,28 @@
     "length": "?m",
     "direction": "unknown",
     "date": "2026-07-26",
+    "time": "08:14",
+    "lat": 50.895152,
+    "lon": 4.39978
+  },
+  {
+    "mmsi": 244110693,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "S",
+    "date": "2026-07-26",
+    "time": "08:14",
+    "lat": 50.895822,
+    "lon": 4.401273
+  },
+  {
+    "mmsi": 269057079,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "unknown",
+    "date": "2026-07-26",
     "time": "07:14",
     "lat": 50.89515,
     "lon": 4.399777
@@ -5476,27 +5498,5 @@
     "time": "01:18",
     "lat": 50.871197,
     "lon": 4.35864
-  },
-  {
-    "mmsi": 244140937,
-    "name": "Unknown",
-    "type": "Unknown",
-    "length": "?m",
-    "direction": "S",
-    "date": "2026-07-12",
-    "time": "00:27",
-    "lat": 50.871187,
-    "lon": 4.35864
-  },
-  {
-    "mmsi": 205396290,
-    "name": "Unknown",
-    "type": "Unknown",
-    "length": "?m",
-    "direction": "unknown",
-    "date": "2026-07-11",
-    "time": "23:45",
-    "lat": 50.86138,
-    "lon": 4.348985
   }
 ]
