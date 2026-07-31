@@ -6,6 +6,17 @@
     "length": "?m",
     "direction": "N",
     "date": "2026-07-31",
+    "time": "03:59",
+    "lat": 50.889977,
+    "lon": 4.394415
+  },
+  {
+    "mmsi": 244690071,
+    "name": "Unknown",
+    "type": "Unknown",
+    "length": "?m",
+    "direction": "N",
+    "date": "2026-07-31",
     "time": "03:17",
     "lat": 50.890003,
     "lon": 4.394405
@@ -5487,16 +5498,5 @@
     "time": "04:25",
     "lat": 50.861367,
     "lon": 4.349027
-  },
-  {
-    "mmsi": 227096370,
-    "name": "Unknown",
-    "type": "Unknown",
-    "length": "?m",
-    "direction": "unknown",
-    "date": "2026-07-15",
-    "time": "03:49",
-    "lat": 50.786325,
-    "lon": 4.290098
   }
 ]
