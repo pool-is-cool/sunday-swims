@@ -773,7 +773,39 @@ function renderWaterQualityCharts(metingen) {
 }
 
 // AIS
-function renderAIS() {
+const AIS_PASSAGES_URL = "/sunday-swims/data/ais_passages.json";
+
+async function haalAISPassagesOp() {
+  try {
+    const resp = await fetch(AIS_PASSAGES_URL, {cache: "no-cache"});
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.json();
+  } catch(e) {
+    console.warn("AIS passages fetch error:", e);
+    return [];
+  }
+}
+
+function groepeerPassagesPerDag(passages, dagen) {
+  const vandaag = new Date(); vandaag.setHours(0,0,0,0);
+  const labels = [], values = [], isSunday = [];
+  const telling = {};
+  (passages || []).forEach(p => {
+    if (!p.date) return;
+    telling[p.date] = (telling[p.date] || 0) + 1;
+  });
+  for (let i = dagen - 1; i >= 0; i--) {
+    const d = new Date(vandaag);
+    d.setDate(d.getDate() - i);
+    const iso = d.toISOString().slice(0,10);
+    labels.push(d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
+    values.push(telling[iso] || 0);
+    isSunday.push(d.getDay() === 0);
+  }
+  return {labels, values, isSunday};
+}
+
+async function renderAIS() {
   let map = null;
   function initMap() {
     const mapEl = document.getElementById("ais-map");
@@ -796,8 +828,9 @@ function renderAIS() {
     return m;
   }
 
-  // 28-day history bar chart
-  const {labels,values,isSunday}=aisDummyDays();
+  // 28-day history bar chart — real vessel passages from data/ais_passages.json
+  const passages = await haalAISPassagesOp();
+  const {labels,values,isSunday} = groepeerPassagesPerDag(passages, 28);
   const barColors  = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
   const barBorders = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
   setTimeout(()=>{
@@ -807,7 +840,7 @@ function renderAIS() {
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{backgroundColor:"rgba(13,27,42,0.9)",padding:10,
           callbacks:{title: items => items[0].label + (isSunday[items[0].dataIndex] ? " ☀ Sunday (no commercial navigation)" : "")}}},
-        scales:{x:{grid:{display:false},ticks:{maxTicksLimit:10}},y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}}}
+        scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}}}
     });
   },200);
 
