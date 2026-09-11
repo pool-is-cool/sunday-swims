@@ -923,6 +923,31 @@ function etaLabel(eta_sec) {
   return `${Math.floor(m/60)}h ${m%60}min`;
 }
 
+const SWIM_ZONE_LAT = 50.815382;
+const SWIM_ZONE_LON = 4.299323;
+
+function berekenAfstandM(lat, lon) {
+  // Haversine-formule — afstand in meter tot het centrum van de zwemzone.
+  if (lat == null || lon == null) return null;
+  const R = 6371000; // aardstraal in meter
+  const toRad = deg => deg * Math.PI / 180;
+  const dLat = toRad(lat - SWIM_ZONE_LAT);
+  const dLon = toRad(lon - SWIM_ZONE_LON);
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(toRad(SWIM_ZONE_LAT)) * Math.cos(toRad(lat)) *
+            Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function vesselDistanceM(v) {
+  // Gebruik distance_m van de pipeline indien beschikbaar (bv. voor 'nearest'),
+  // anders zelf berekenen op basis van lat/lon.
+  if (!v) return null;
+  if (v.distance_m !== null && v.distance_m !== undefined) return v.distance_m;
+  return berekenAfstandM(v.lat, v.lon);
+}
+
 function vesselName(v) {
   if (!v) return "Unknown vessel";
   const naam = v.name;
@@ -957,7 +982,7 @@ function updateSwimAISTile(nearest) {
   }
   const {cls, label} = aisLiveColor(nearest.eta_sec);
   const eta = etaLabel(nearest.eta_sec);
-  const dist = distanceLabel(nearest.distance_m);
+  const dist = distanceLabel(vesselDistanceM(nearest));
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   el.innerHTML = `<div class="ais-time-block ${cls}">
     <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
@@ -975,7 +1000,7 @@ function updateNearestPanel(nearest, updated) {
   }
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   const {cls, label} = aisLiveColor(nearest.eta_sec);
-  const dist = distanceLabel(nearest.distance_m);
+  const dist = distanceLabel(vesselDistanceM(nearest));
   const lastSeen = updated ? `${new Date(updated).toLocaleDateString("en-GB")} ${new Date(updated).toLocaleTimeString("en-GB")}` : "—";
   el.innerHTML = `
     <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
@@ -994,14 +1019,16 @@ function updateLiveTable(vessels_nearby) {
     return;
   }
   tbl.innerHTML =
-    `<thead><tr><th>Vessel</th><th>Type</th><th>Direction</th><th>Speed</th><th>ETA</th></tr></thead><tbody>` +
+    `<thead><tr><th>Vessel</th><th>Type</th><th>Direction</th><th>Speed</th><th>Distance</th><th>ETA</th></tr></thead><tbody>` +
     vessels_nearby.map(v => {
       const dir = v.direction === "N" ? "↑ N" : v.direction === "S" ? "↓ S" : v.direction || "—";
+      const dist = distanceLabel(vesselDistanceM(v));
       return `<tr>
         <td>${vesselName(v)}</td>
         <td class="${vesselTypeClass(v.type||"")}">${v.type||"—"}</td>
         <td>${dir}</td>
         <td>${v.speed ? v.speed.toFixed(1)+" km/h" : "—"}</td>
+        <td>${dist || "—"}</td>
         <td>${etaLabel(v.eta_sec)}</td>
       </tr>`;
     }).join("") + `</tbody>`;
@@ -1014,7 +1041,8 @@ function updateAISMapLive(vessels_all, map) {
     if (!v.lat || !v.lon) return;
     seen.add(String(v.mmsi));
     const dir = v.direction === "N" ? "↑" : v.direction === "S" ? "↓" : "";
-    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}`;
+    const dist = distanceLabel(vesselDistanceM(v));
+    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}${dist ? `<br>${dist}` : ""}`;
     if (aisLiveMarkers[v.mmsi]) {
       aisLiveMarkers[v.mmsi].setLatLng([v.lat, v.lon]).setPopupContent(popup);
     } else {
