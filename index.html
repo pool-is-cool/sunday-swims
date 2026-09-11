@@ -923,6 +923,14 @@ function etaLabel(eta_sec) {
   return `${Math.floor(m/60)}h ${m%60}min`;
 }
 
+function vesselName(v) {
+  if (!v) return "Unknown vessel";
+  const naam = v.name;
+  if (naam && naam !== "Unknown") return naam;
+  if (v.mmsi) return `MMSI ${v.mmsi}`;
+  return "Unknown vessel";
+}
+
 function distanceLabel(distance_m) {
   if (distance_m === null || distance_m === undefined) return null;
   if (distance_m >= 1000) return `${(distance_m/1000).toFixed(1)} km away`;
@@ -954,7 +962,7 @@ function updateSwimAISTile(nearest) {
   el.innerHTML = `<div class="ais-time-block ${cls}">
     <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
     <div class="ais-time">${eta}${dist ? ` — ${dist}` : ""}</div>
-    <div style="font-size:11px;">until <strong>${nearest.name || "Unknown"}</strong> (${dir})</div>
+    <div style="font-size:11px;">until <strong>${vesselName(nearest)}</strong> (${dir})</div>
   </div>`;
 }
 
@@ -972,7 +980,7 @@ function updateNearestPanel(nearest, updated) {
   el.innerHTML = `
     <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
       <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${label} — ETA: ${etaLabel(nearest.eta_sec)}${dist ? ` — ${dist}` : ""}</div>
-      <div style="font-size:18px;font-weight:600;">${nearest.name || "Unknown vessel"}</div>
+      <div style="font-size:18px;font-weight:600;">${vesselName(nearest)}</div>
       <div style="font-size:11px;margin-top:3px;">${nearest.type || "—"} · ${nearest.length ? nearest.length+"m" : "—"} · ${nearest.speed ? nearest.speed.toFixed(1)+" km/h" : "—"} · ${dir}</div>
       <div style="font-size:10px;margin-top:6px;opacity:0.75;">Last message received: ${lastSeen}</div>
     </div>`;
@@ -990,7 +998,7 @@ function updateLiveTable(vessels_nearby) {
     vessels_nearby.map(v => {
       const dir = v.direction === "N" ? "↑ N" : v.direction === "S" ? "↓ S" : v.direction || "—";
       return `<tr>
-        <td>${v.name || "Unknown"}</td>
+        <td>${vesselName(v)}</td>
         <td class="${vesselTypeClass(v.type||"")}">${v.type||"—"}</td>
         <td>${dir}</td>
         <td>${v.speed ? v.speed.toFixed(1)+" km/h" : "—"}</td>
@@ -1006,13 +1014,13 @@ function updateAISMapLive(vessels_all, map) {
     if (!v.lat || !v.lon) return;
     seen.add(String(v.mmsi));
     const dir = v.direction === "N" ? "↑" : v.direction === "S" ? "↓" : "";
-    const popup = `<b>${v.name || "Unknown"}</b><br>${v.type||""} ${v.length ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}`;
+    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}`;
     if (aisLiveMarkers[v.mmsi]) {
       aisLiveMarkers[v.mmsi].setLatLng([v.lat, v.lon]).setPopupContent(popup);
     } else {
       const icon = L.divIcon({
         className: "",
-        html: `<div style="background:#1565c0;color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${v.name||"?"}</div>`,
+        html: `<div style="background:#1565c0;color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${vesselName(v)}</div>`,
         iconAnchor: [0, 0]
       });
       aisLiveMarkers[v.mmsi] = L.marker([v.lat, v.lon], {icon})
