@@ -1205,17 +1205,14 @@ async function renderAIS() {
     if (!mapEl) return null;
     if (mapEl._leaflet_id) return null; // already initialised
     const m = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
-    // CartoDB Voyager basiskaart (wegen/water/land, zonder labels) met
-    // daarbovenop de lichtere "OnlyLabels"-laag van Voyager, voor de
-    // Voyager-stijl met subtielere tekstlabels.
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png", {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
-      maxZoom: 19,
-      subdomains: "abcd",
+    // Esri Light Gray Canvas — gratis, geen API key nodig. Minimalistische,
+    // lichte stijl vergelijkbaar met CartoDB Voyager/Positron.
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+      attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors',
+      maxZoom: 16,
     }).addTo(m);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19,
-      subdomains: "abcd",
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 16,
       pane: "overlayPane",
     }).addTo(m);
     m.setView([50.815382, 4.299323], 15);
