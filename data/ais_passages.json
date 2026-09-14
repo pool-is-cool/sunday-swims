@@ -1,5 +1,19 @@
 [
   {
+    "mmsi": 227094770,
+    "name": "WARTA",
+    "type": "Motor Vessel",
+    "length": "?m",
+    "callsign": "FM3789",
+    "destination": "ANTOING",
+    "direction": "N",
+    "date": "2026-09-14",
+    "time": "09:20",
+    "lat": 50.8153,
+    "lon": 4.299533,
+    "cross_dist_m": 23
+  },
+  {
     "mmsi": 244060788,
     "name": "LYDIA",
     "type": "Motor Vessel",
@@ -5493,16 +5507,5 @@
     "time": "10:33",
     "lat": 50.892042,
     "lon": 4.396802
-  },
-  {
-    "mmsi": 244690366,
-    "name": "Unknown",
-    "type": "Unknown",
-    "length": "?m",
-    "direction": "unknown",
-    "date": "2026-08-24",
-    "time": "10:10",
-    "lat": 50.844948,
-    "lon": 4.325583
   }
 ]
