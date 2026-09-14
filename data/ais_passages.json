@@ -1,5 +1,19 @@
 [
   {
+    "mmsi": 205281890,
+    "name": "VOYE DO CIR",
+    "type": "Motor Vessel",
+    "length": "39m",
+    "callsign": "OT2818",
+    "destination": "0",
+    "direction": "N",
+    "date": "2026-09-14",
+    "time": "09:47",
+    "lat": 50.815335,
+    "lon": 4.299455,
+    "cross_dist_m": 16
+  },
+  {
     "mmsi": 227094770,
     "name": "WARTA",
     "type": "Motor Vessel",
@@ -5496,16 +5510,5 @@
     "time": "11:17",
     "lat": 50.89335,
     "lon": 4.39829
-  },
-  {
-    "mmsi": 244750314,
-    "name": "Unknown",
-    "type": "Unknown",
-    "length": "?m",
-    "direction": "unknown",
-    "date": "2026-08-24",
-    "time": "10:33",
-    "lat": 50.892042,
-    "lon": 4.396802
   }
 ]
