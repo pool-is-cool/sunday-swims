@@ -303,9 +303,9 @@
         <div style="font-size:10px;color:var(--mid);margin-top:6px;" id="ais-map-updated"></div>
       </div>
       <div>
-        <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Nearest vessel</div>
+        <div style="font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">Nearest approaching vessel</div>
         <div id="ais-nearest-panel"></div>
-        <div style="margin-top:16px;font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">All tracked vessels</div>
+        <div style="margin-top:16px;font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:10px;">All tracked vessels in vicinity</div>
         <table class="ais-table" id="ais-live-table"></table>
       </div>
     </div>
@@ -879,6 +879,7 @@ function renderWaterQualityCharts(metingen) {
 const AIS_ENDPOINT = "https://sunday-swims-ais.lingering-recipe-4347.workers.dev/live";
 const AIS_POLL_MS  = 10000; // 10 seconds
 let   aisLiveMarkers = {};  // mmsi → leaflet marker
+let   aisDistanceHistory = {}; // mmsi → laatste 2 distance_m-waarden, voor veiligheidscheck
 
 const AIS_PASSAGES_URL = "/sunday-swims/data/ais_passages.json";
 
@@ -959,6 +960,48 @@ function vesselDistanceM(v) {
   return berekenAfstandM(v.lat, v.lon);
 }
 
+function updateDistanceHistory(v) {
+  // Houdt de laatste 2 distance_m-metingen per schip bij, zodat we zelf
+  // kunnen nagaan of het schip echt dichterbij komt — als vangnet voor het
+  // geval de pipeline een schip nog als 'approaching'/'nearest' toont
+  // terwijl het in werkelijkheid al voorbij is en zich verwijdert.
+  if (!v || !v.mmsi) return;
+  const d = vesselDistanceM(v);
+  if (d === null) return;
+  const hist = aisDistanceHistory[v.mmsi] || [];
+  hist.push(d);
+  if (hist.length > 3) hist.shift();
+  aisDistanceHistory[v.mmsi] = hist;
+}
+
+function isGenuinelyApproaching(v) {
+  // true  = benaderd als echt naderend
+  // false = benaderd als NIET naderend (verwijdert zich of rijdt weg)
+  // null  = onvoldoende info om te beoordelen — vertrouw de pipeline
+  if (!v || !v.mmsi) return null;
+
+  // Harde regel op basis van vaarrichting + positie t.o.v. de zwemzone
+  // (het kanaal loopt hier grofweg noord-zuid, dus breedtegraad is een
+  // betrouwbare maat voor 'noord/zuid van de zwemzone'):
+  //   - noordwaarts varend EN al ten noorden van de zwemzone  → verwijdert zich
+  //   - zuidwaarts varend  EN al ten zuiden van de zwemzone   → verwijdert zich
+  // Een noordwaarts schip dat nog ten zuiden van de zwemzone is, nadert wel
+  // degelijk nog (komt van beneden/stroomafwaarts) — enkel de combinatie van
+  // richting + al-voorbij-de-zwemzone-zijn betekent 'verwijdert zich'.
+  if (v.lat !== null && v.lat !== undefined) {
+    if (v.direction === "N" && v.lat > SWIM_ZONE_LAT) return false;
+    if (v.direction === "S" && v.lat < SWIM_ZONE_LAT) return false;
+  }
+
+  // Voor overige gevallen: aantoonbare afstandsverandering als indicatie.
+  const hist = aisDistanceHistory[v.mmsi];
+  if (!hist || hist.length < 2) return null;
+  const eerste = hist[0], laatste = hist[hist.length - 1];
+  if (laatste < eerste - 15) return true;   // duidelijk dichterbij (marge tegen ruis)
+  if (laatste > eerste + 15) return false;  // duidelijk verder weg
+  return null; // te weinig verschil om te oordelen
+}
+
 function vesselName(v) {
   if (!v) return "Unknown vessel";
   const naam = v.name;
@@ -991,16 +1034,31 @@ function updateSwimAISTile(nearest) {
     </div>`;
     return;
   }
+  // Vangnet: als de gemeten afstand aantoonbaar toeneemt, vertrouwen we
+  // 'nearest'/lock_state niet blindelings en tonen we het schip neutraal
+  // in plaats van als een naderend schip.
+  if (isGenuinelyApproaching(nearest) === false) {
+    const dist = distanceLabel(vesselDistanceM(nearest));
+    el.innerHTML = `<div class="ais-time-block ais-green">
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">Moving away</div>
+      <div class="ais-time">${dist || ""}</div>
+      <div style="font-size:11px;"><strong>${vesselName(nearest)}</strong> has passed</div>
+    </div>`;
+    return;
+  }
   const lockLabel = lockStateLabel(nearest.lock_state);
   const waiting = nearest.lock_state === "IN_LOCK_WAITING";
+  const beforeLock = nearest.lock_state === "NORTH_OF_LOCK"; // zuidwaarts, sluistijd onzeker
   const {cls, label} = waiting
     ? {cls:"ais-yellow", label:"In lock — waiting"}
+    : beforeLock
+    ? {cls:"ais-yellow", label:"Before lock"}
     : aisLiveColor(nearest.eta_sec);
-  const eta = waiting ? "" : etaLabel(nearest.eta_sec);
+  const eta = (waiting || beforeLock) ? "" : etaLabel(nearest.eta_sec);
   const dist = distanceLabel(vesselDistanceM(nearest));
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   el.innerHTML = `<div class="ais-time-block ${cls}">
-    <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${lockLabel && !waiting ? lockLabel : label}</div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${lockLabel && !waiting && !beforeLock ? lockLabel : label}</div>
     <div class="ais-time">${eta}${eta && dist ? ` — ${dist}` : dist || ""}</div>
     <div style="font-size:11px;">until <strong>${vesselName(nearest)}</strong> (${dir})</div>
   </div>`;
@@ -1013,21 +1071,34 @@ function updateNearestPanel(nearest, updated) {
     el.innerHTML = `<div style="color:var(--mid);font-size:12px;padding:12px 0;">No vessels approaching.</div>`;
     return;
   }
+  const lastSeen = updated ? `${new Date(updated).toLocaleDateString("en-GB")} ${new Date(updated).toLocaleTimeString("en-GB")}` : "—";
+  if (isGenuinelyApproaching(nearest) === false) {
+    const dist = distanceLabel(vesselDistanceM(nearest));
+    el.innerHTML = `
+      <div class="ais-time-block ais-green" style="margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Moving away${dist ? ` — ${dist}` : ""}</div>
+        <div style="font-size:18px;font-weight:600;">${vesselName(nearest)}</div>
+        <div style="font-size:11px;margin-top:3px;">Has passed the swim zone</div>
+        <div style="font-size:10px;margin-top:6px;opacity:0.75;">Last message received: ${lastSeen}</div>
+      </div>`;
+    return;
+  }
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   const lockLabel = lockStateLabel(nearest.lock_state);
   const waiting = nearest.lock_state === "IN_LOCK_WAITING";
+  const beforeLock = nearest.lock_state === "NORTH_OF_LOCK"; // zuidwaarts, sluistijd onzeker
   const {cls, label} = waiting
     ? {cls:"ais-yellow", label:"In lock — waiting"}
+    : beforeLock
+    ? {cls:"ais-yellow", label:"Before lock"}
     : aisLiveColor(nearest.eta_sec);
   const dist = distanceLabel(vesselDistanceM(nearest));
-  const etaPart = waiting ? "" : ` — ETA: ${etaLabel(nearest.eta_sec)}`;
-  const lastSeen = updated ? `${new Date(updated).toLocaleDateString("en-GB")} ${new Date(updated).toLocaleTimeString("en-GB")}` : "—";
+  const etaPart = (waiting || beforeLock) ? "" : ` — ETA: ${etaLabel(nearest.eta_sec)}`;
   el.innerHTML = `
     <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
-      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${lockLabel && !waiting ? lockLabel : label}${etaPart}${dist ? ` — ${dist}` : ""}</div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${lockLabel && !waiting && !beforeLock ? lockLabel : label}${etaPart}${dist ? ` — ${dist}` : ""}</div>
       <div style="font-size:18px;font-weight:600;">${vesselName(nearest)}</div>
-      <div style="font-size:11px;margin-top:3px;">${nearest.type || "—"} · ${nearest.length ? nearest.length+"m" : "—"} · ${nearest.speed ? nearest.speed.toFixed(1)+" km/h" : "—"} · ${dir}</div>
-      ${nearest.destination ? `<div style="font-size:11px;margin-top:2px;color:var(--mid);">To: ${nearest.destination}</div>` : ""}
+      <div style="font-size:11px;margin-top:3px;">${nearest.type || "—"} · ${nearest.length || "—"} · ${nearest.speed ? nearest.speed.toFixed(1)+" km/h" : "—"} · ${dir}</div>
       <div style="font-size:10px;margin-top:6px;opacity:0.75;">Last message received: ${lastSeen}</div>
     </div>`;
 }
@@ -1068,9 +1139,18 @@ function updateAISMapLive(vessels_all, map) {
     const markerColor = v.direction === "N" ? "#1565c0" : v.direction === "S" ? "#c62828" : "#757575";
     const dist = distanceLabel(vesselDistanceM(v));
     const lockLabel = lockStateLabel(v.lock_state);
-    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}${dist ? `<br>${dist}` : ""}${v.destination ? `<br>To: ${v.destination}` : ""}${lockLabel ? `<br>${lockLabel}` : ""}`;
+    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}${dist ? `<br>${dist}` : ""}${lockLabel ? `<br>${lockLabel}` : ""}`;
     if (aisLiveMarkers[v.mmsi]) {
       aisLiveMarkers[v.mmsi].setLatLng([v.lat, v.lon]).setPopupContent(popup);
+      // Label-icoon ook vernieuwen — de naam kan intussen bekend geworden
+      // zijn (bv. na ontvangst van een AIS type-5 bericht), terwijl het
+      // icoon initieel met enkel het MMSI-nummer werd aangemaakt.
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="background:${markerColor};color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${vesselName(v)}</div>`,
+        iconAnchor: [0, 0]
+      });
+      aisLiveMarkers[v.mmsi].setIcon(icon);
     } else {
       const icon = L.divIcon({
         className: "",
@@ -1097,6 +1177,11 @@ function startAISLivePoll(map) {
       const resp = await fetch(AIS_ENDPOINT, {cache: "no-store"});
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const d = await resp.json();
+      // Vangnet: houd afstandshistoriek bij voor alle gekende schepen, zodat
+      // we kunnen nagaan of 'nearest' echt nadert of zich in werkelijkheid
+      // al verwijdert.
+      (d.vessels_all || []).forEach(updateDistanceHistory);
+      if (d.nearest) updateDistanceHistory(d.nearest);
       updateSwimAISTile(d.nearest);
       updateNearestPanel(d.nearest, d.updated);
       updateLiveTable(d.vessels_nearby);
@@ -1120,9 +1205,18 @@ async function renderAIS() {
     if (!mapEl) return null;
     if (mapEl._leaflet_id) return null; // already initialised
     const m = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 18,
+    // CartoDB Voyager basiskaart (wegen/water/land, zonder labels) met
+    // daarbovenop de lichtere "OnlyLabels"-laag van Voyager, voor de
+    // Voyager-stijl met subtielere tekstlabels.
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png", {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
+      maxZoom: 19,
+      subdomains: "abcd",
+    }).addTo(m);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19,
+      subdomains: "abcd",
+      pane: "overlayPane",
     }).addTo(m);
     m.setView([50.815382, 4.299323], 15);
     const swimIcon = L.divIcon({
