@@ -1205,15 +1205,9 @@ async function renderAIS() {
     if (!mapEl) return null;
     if (mapEl._leaflet_id) return null; // already initialised
     const m = L.map("ais-map", { zoomControl:true, scrollWheelZoom:false });
-    // Esri Light Gray Canvas — gratis, geen API key nodig. Minimalistische,
-    // lichte stijl vergelijkbaar met CartoDB Voyager/Positron.
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-      attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors',
-      maxZoom: 16,
-    }).addTo(m);
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
-      maxZoom: 16,
-      pane: "overlayPane",
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
     }).addTo(m);
     m.setView([50.815382, 4.299323], 15);
 
