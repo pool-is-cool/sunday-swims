@@ -915,6 +915,17 @@ function groepeerPassagesPerDag(passages, dagen) {
   return {labels, values, isSunday};
 }
 
+function lockStateLabel(lock_state) {
+  switch (lock_state) {
+    case "NORTH_OF_LOCK":  return "Before lock";
+    case "IN_LOCK_WAITING": return "In lock — waiting";
+    case "IN_LOCK_MOVING": return "Leaving lock";
+    case "SOUTH_OF_LOCK":  return null; // normale ETA-weergave, geen extra label
+    case "NONE":
+    default: return null;
+  }
+}
+
 function etaLabel(eta_sec) {
   if (eta_sec === null || eta_sec === undefined) return "—";
   const m = Math.round(eta_sec / 60);
@@ -958,8 +969,8 @@ function vesselName(v) {
 
 function distanceLabel(distance_m) {
   if (distance_m === null || distance_m === undefined) return null;
-  if (distance_m >= 1000) return `${(distance_m/1000).toFixed(1)} km away`;
-  return `${Math.round(distance_m)} m away`;
+  if (distance_m >= 1000) return `${(distance_m/1000).toFixed(1)} km`;
+  return `${Math.round(distance_m)} m`;
 }
 
 function aisLiveColor(eta_sec) {
@@ -980,13 +991,17 @@ function updateSwimAISTile(nearest) {
     </div>`;
     return;
   }
-  const {cls, label} = aisLiveColor(nearest.eta_sec);
-  const eta = etaLabel(nearest.eta_sec);
+  const lockLabel = lockStateLabel(nearest.lock_state);
+  const waiting = nearest.lock_state === "IN_LOCK_WAITING";
+  const {cls, label} = waiting
+    ? {cls:"ais-yellow", label:"In lock — waiting"}
+    : aisLiveColor(nearest.eta_sec);
+  const eta = waiting ? "" : etaLabel(nearest.eta_sec);
   const dist = distanceLabel(vesselDistanceM(nearest));
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   el.innerHTML = `<div class="ais-time-block ${cls}">
-    <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${label}</div>
-    <div class="ais-time">${eta}${dist ? ` — ${dist}` : ""}</div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${lockLabel && !waiting ? lockLabel : label}</div>
+    <div class="ais-time">${eta}${eta && dist ? ` — ${dist}` : dist || ""}</div>
     <div style="font-size:11px;">until <strong>${vesselName(nearest)}</strong> (${dir})</div>
   </div>`;
 }
@@ -999,14 +1014,20 @@ function updateNearestPanel(nearest, updated) {
     return;
   }
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
-  const {cls, label} = aisLiveColor(nearest.eta_sec);
+  const lockLabel = lockStateLabel(nearest.lock_state);
+  const waiting = nearest.lock_state === "IN_LOCK_WAITING";
+  const {cls, label} = waiting
+    ? {cls:"ais-yellow", label:"In lock — waiting"}
+    : aisLiveColor(nearest.eta_sec);
   const dist = distanceLabel(vesselDistanceM(nearest));
+  const etaPart = waiting ? "" : ` — ETA: ${etaLabel(nearest.eta_sec)}`;
   const lastSeen = updated ? `${new Date(updated).toLocaleDateString("en-GB")} ${new Date(updated).toLocaleTimeString("en-GB")}` : "—";
   el.innerHTML = `
     <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
-      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${label} — ETA: ${etaLabel(nearest.eta_sec)}${dist ? ` — ${dist}` : ""}</div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${lockLabel && !waiting ? lockLabel : label}${etaPart}${dist ? ` — ${dist}` : ""}</div>
       <div style="font-size:18px;font-weight:600;">${vesselName(nearest)}</div>
       <div style="font-size:11px;margin-top:3px;">${nearest.type || "—"} · ${nearest.length ? nearest.length+"m" : "—"} · ${nearest.speed ? nearest.speed.toFixed(1)+" km/h" : "—"} · ${dir}</div>
+      ${nearest.destination ? `<div style="font-size:11px;margin-top:2px;color:var(--mid);">To: ${nearest.destination}</div>` : ""}
       <div style="font-size:10px;margin-top:6px;opacity:0.75;">Last message received: ${lastSeen}</div>
     </div>`;
 }
@@ -1019,17 +1040,19 @@ function updateLiveTable(vessels_nearby) {
     return;
   }
   tbl.innerHTML =
-    `<thead><tr><th>Vessel</th><th>Type</th><th>Direction</th><th>Speed</th><th>Distance</th><th>ETA</th></tr></thead><tbody>` +
+    `<thead><tr><th>Vessel</th><th>Type</th><th>Direction</th><th>Speed</th><th>Distance</th><th>Status</th></tr></thead><tbody>` +
     vessels_nearby.map(v => {
       const dir = v.direction === "N" ? "↑ N" : v.direction === "S" ? "↓ S" : v.direction || "—";
       const dist = distanceLabel(vesselDistanceM(v));
+      const lockLabel = lockStateLabel(v.lock_state);
+      const status = lockLabel || etaLabel(v.eta_sec);
       return `<tr>
         <td>${vesselName(v)}</td>
         <td class="${vesselTypeClass(v.type||"")}">${v.type||"—"}</td>
         <td>${dir}</td>
         <td>${v.speed ? v.speed.toFixed(1)+" km/h" : "—"}</td>
         <td>${dist || "—"}</td>
-        <td>${etaLabel(v.eta_sec)}</td>
+        <td>${status}</td>
       </tr>`;
     }).join("") + `</tbody>`;
 }
@@ -1041,14 +1064,17 @@ function updateAISMapLive(vessels_all, map) {
     if (!v.lat || !v.lon) return;
     seen.add(String(v.mmsi));
     const dir = v.direction === "N" ? "↑" : v.direction === "S" ? "↓" : "";
+    // Kleur op basis van richting: blauw = noordwaarts, rood = zuidwaarts, grijs = onbekend
+    const markerColor = v.direction === "N" ? "#1565c0" : v.direction === "S" ? "#c62828" : "#757575";
     const dist = distanceLabel(vesselDistanceM(v));
-    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}${dist ? `<br>${dist}` : ""}`;
+    const lockLabel = lockStateLabel(v.lock_state);
+    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length+"m" : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}${dist ? `<br>${dist}` : ""}${v.destination ? `<br>To: ${v.destination}` : ""}${lockLabel ? `<br>${lockLabel}` : ""}`;
     if (aisLiveMarkers[v.mmsi]) {
       aisLiveMarkers[v.mmsi].setLatLng([v.lat, v.lon]).setPopupContent(popup);
     } else {
       const icon = L.divIcon({
         className: "",
-        html: `<div style="background:#1565c0;color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${vesselName(v)}</div>`,
+        html: `<div style="background:${markerColor};color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${vesselName(v)}</div>`,
         iconAnchor: [0, 0]
       });
       aisLiveMarkers[v.mmsi] = L.marker([v.lat, v.lon], {icon})
