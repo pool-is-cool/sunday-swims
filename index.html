@@ -1134,32 +1134,42 @@ function updateAISMapLive(vessels_all, map) {
   (vessels_all || []).forEach(v => {
     if (!v.lat || !v.lon) return;
     seen.add(String(v.mmsi));
-    const dir = v.direction === "N" ? "↑" : v.direction === "S" ? "↓" : "";
-    // Kleur op basis van richting: blauw = noordwaarts, rood = zuidwaarts, grijs = onbekend
-    const markerColor = v.direction === "N" ? "#1565c0" : v.direction === "S" ? "#c62828" : "#757575";
     const dist = distanceLabel(vesselDistanceM(v));
     const lockLabel = lockStateLabel(v.lock_state);
-    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length : ""}<br>${dir} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}${dist ? `<br>${dist}` : ""}${lockLabel ? `<br>${lockLabel}` : ""}`;
+    const dirTxt = v.direction === "N" ? "↑" : v.direction === "S" ? "↓" : "";
+    const popup = `<b>${vesselName(v)}</b><br>${v.type&&v.type!=="Unknown"?v.type:""} ${v.length&&v.length!=="?m" ? v.length : ""}<br>${dirTxt} ${v.speed ? v.speed.toFixed(1)+" km/h" : ""}${dist ? `<br>${dist}` : ""}${lockLabel ? `<br>${lockLabel}` : ""}`;
+
+    // Rotatiehoek: gebruik cog (course over ground) indien beschikbaar,
+    // anders een schatting op basis van vaarrichting (N/S langsheen het kanaal).
+    const rotatie = (v.cog !== null && v.cog !== undefined)
+      ? v.cog
+      : (v.direction === "N" ? 0 : v.direction === "S" ? 180 : 0);
+
+    // Scheepsvorm zoals op MarineTraffic: een afgeronde pijlpunt/druppelvorm,
+    // wijzend naar boven (0°) en vervolgens geroteerd. Eén uniforme kleur
+    // voor alle types — geen onderscheid meer per vaarrichting.
+    const html = `
+      <div style="position:relative;width:0;height:0;">
+        <svg width="22" height="22" viewBox="-11 -11 22 22"
+             style="position:absolute;left:-11px;top:-11px;transform:rotate(${rotatie}deg);overflow:visible;">
+          <path d="M 0 -9 C 5 -4, 6 4, 3 9 L -3 9 C -6 4, -5 -4, 0 -9 Z"
+                fill="#1565c0" stroke="white" stroke-width="1.2"/>
+        </svg>
+        <div style="position:absolute;left:14px;top:-7px;white-space:nowrap;
+                    font-size:10px;font-weight:700;color:white;
+                    text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000;">
+          ${vesselName(v)}
+        </div>
+      </div>`;
+
     if (aisLiveMarkers[v.mmsi]) {
       aisLiveMarkers[v.mmsi].setLatLng([v.lat, v.lon]).setPopupContent(popup);
-      // Label-icoon ook vernieuwen — de naam kan intussen bekend geworden
-      // zijn (bv. na ontvangst van een AIS type-5 bericht), terwijl het
-      // icoon initieel met enkel het MMSI-nummer werd aangemaakt.
-      const icon = L.divIcon({
-        className: "",
-        html: `<div style="background:${markerColor};color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${vesselName(v)}</div>`,
-        iconAnchor: [0, 0]
-      });
-      aisLiveMarkers[v.mmsi].setIcon(icon);
+      // Icoon ook vernieuwen — naam/rotatie kunnen ondertussen gewijzigd zijn.
+      aisLiveMarkers[v.mmsi].setIcon(L.divIcon({ className:"", html, iconAnchor:[0,0] }));
     } else {
-      const icon = L.divIcon({
-        className: "",
-        html: `<div style="background:${markerColor};color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">${dir} ${vesselName(v)}</div>`,
-        iconAnchor: [0, 0]
-      });
-      aisLiveMarkers[v.mmsi] = L.marker([v.lat, v.lon], {icon})
-        .bindPopup(popup)
-        .addTo(map);
+      aisLiveMarkers[v.mmsi] = L.marker([v.lat, v.lon], {
+        icon: L.divIcon({ className:"", html, iconAnchor:[0,0] })
+      }).bindPopup(popup).addTo(map);
     }
   });
   // Remove stale markers
