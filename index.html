@@ -984,12 +984,21 @@ async function renderTodayVessels() {
     }).join("") + `</tbody>`;
 }
 
+function etaGepauzeerd(lock_state) {
+  // ETA is niet betekenisvol zolang het schip nog niet definitief naar
+  // buiten vaart: voor de sluis, aan het binnenvaren, of stilliggend wachtend.
+  return lock_state === "NORTH_OF_LOCK" ||
+         lock_state === "IN_LOCK_ENTERING" ||
+         lock_state === "IN_LOCK_WAITING";
+}
+
 function lockStateLabel(lock_state) {
   switch (lock_state) {
-    case "NORTH_OF_LOCK":  return "Before lock";
-    case "IN_LOCK_WAITING": return "In lock — waiting";
-    case "IN_LOCK_MOVING": return "Leaving lock";
-    case "SOUTH_OF_LOCK":  return null; // normale ETA-weergave, geen extra label
+    case "NORTH_OF_LOCK":    return "Before lock";
+    case "IN_LOCK_ENTERING": return "In lock";
+    case "IN_LOCK_WAITING":  return "In lock — waiting";
+    case "IN_LOCK_LEAVING":  return "Leaving lock";
+    case "SOUTH_OF_LOCK":    return null; // normale ETA-weergave, geen extra label
     case "NONE":
     default: return null;
   }
@@ -1134,18 +1143,15 @@ function updateSwimAISTile(nearest) {
     return;
   }
   const lockLabel = lockStateLabel(nearest.lock_state);
-  const waiting = nearest.lock_state === "IN_LOCK_WAITING";
-  const beforeLock = nearest.lock_state === "NORTH_OF_LOCK"; // zuidwaarts, sluistijd onzeker
-  const {cls, label} = waiting
-    ? {cls:"ais-yellow", label:"In lock — waiting"}
-    : beforeLock
-    ? {cls:"ais-yellow", label:"Before lock"}
+  const etaPauze = etaGepauzeerd(nearest.lock_state);
+  const {cls, label} = etaPauze
+    ? {cls:"ais-yellow", label: lockLabel || "Approaching"}
     : aisLiveColor(nearest.eta_sec);
-  const eta = (waiting || beforeLock) ? "" : etaLabel(nearest.eta_sec);
+  const eta = etaPauze ? "" : etaLabel(nearest.eta_sec);
   const dist = distanceLabel(vesselDistanceM(nearest));
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   el.innerHTML = `<div class="ais-time-block ${cls}">
-    <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${lockLabel && !waiting && !beforeLock ? lockLabel : label}</div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">${lockLabel && !etaPauze ? lockLabel : label}</div>
     <div class="ais-time">${eta}${eta && dist ? ` — ${dist}` : dist || ""}</div>
     <div style="font-size:11px;">until <strong>${vesselName(nearest)}</strong> (${dir})</div>
   </div>`;
@@ -1161,18 +1167,15 @@ function updateNearestPanel(nearest, updated) {
   const lastSeen = updated ? `${new Date(updated).toLocaleDateString("en-GB")} ${new Date(updated).toLocaleTimeString("en-GB")}` : "—";
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   const lockLabel = lockStateLabel(nearest.lock_state);
-  const waiting = nearest.lock_state === "IN_LOCK_WAITING";
-  const beforeLock = nearest.lock_state === "NORTH_OF_LOCK"; // zuidwaarts, sluistijd onzeker
-  const {cls, label} = waiting
-    ? {cls:"ais-yellow", label:"In lock — waiting"}
-    : beforeLock
-    ? {cls:"ais-yellow", label:"Before lock"}
+  const etaPauze = etaGepauzeerd(nearest.lock_state);
+  const {cls, label} = etaPauze
+    ? {cls:"ais-yellow", label: lockLabel || "Approaching"}
     : aisLiveColor(nearest.eta_sec);
   const dist = distanceLabel(vesselDistanceM(nearest));
-  const etaPart = (waiting || beforeLock) ? "" : ` — ETA: ${etaLabel(nearest.eta_sec)}`;
+  const etaPart = etaPauze ? "" : ` — ETA: ${etaLabel(nearest.eta_sec)}`;
   el.innerHTML = `
     <div class="ais-time-block ${cls}" style="margin-bottom:10px;">
-      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${lockLabel && !waiting && !beforeLock ? lockLabel : label}${etaPart}${dist ? ` — ${dist}` : ""}</div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${lockLabel && !etaPauze ? lockLabel : label}${etaPart}${dist ? ` — ${dist}` : ""}</div>
       <div style="font-size:18px;font-weight:600;">${vesselName(nearest)}</div>
       <div style="font-size:11px;margin-top:3px;">${nearest.type || "—"} · ${nearest.length || "—"} · ${nearest.speed ? nearest.speed.toFixed(1)+" km/h" : "—"} · ${dir}</div>
       <div style="font-size:10px;margin-top:6px;opacity:0.75;">Last message received: ${lastSeen}</div>
