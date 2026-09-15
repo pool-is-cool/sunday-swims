@@ -310,6 +310,11 @@
       </div>
     </div>
     <div class="chart-card-full">
+      <div class="chart-title">Vessels today</div>
+      <div id="ais-today-updated" style="font-size:10px;color:var(--mid);margin-bottom:8px;"></div>
+      <table class="ais-table" id="ais-today-table"></table>
+    </div>
+    <div class="chart-card-full">
       <div class="chart-title">Vessel passages — 28-day history</div>
       <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span><span class="legend-item"><span class="legend-dot" style="background:#1565c0"></span>Sunday</span></div>
       <div class="chart-wrap-sm"><canvas id="ais-chart"></canvas></div>
@@ -916,6 +921,65 @@ function groepeerPassagesPerDag(passages, dagen) {
   return {labels, values, isSunday};
 }
 
+function localTimeLabel(utcDateStr, utcTimeStr) {
+  // Zet een UTC-datum+tijd (zoals gelogd door de pipeline) om naar lokale tijd.
+  if (!utcDateStr) return "—";
+  const iso = utcTimeStr ? `${utcDateStr}T${utcTimeStr}:00Z` : `${utcDateStr}T00:00:00Z`;
+  const d = new Date(iso);
+  if (isNaN(d)) return "—";
+  return d.toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"});
+}
+
+function vandaagLokaalISO() {
+  // Huidige lokale kalenderdag (reset om middernacht lokale tijd, niet UTC).
+  const nu = new Date();
+  const jaar = nu.getFullYear();
+  const maand = String(nu.getMonth()+1).padStart(2,"0");
+  const dag = String(nu.getDate()).padStart(2,"0");
+  return `${jaar}-${maand}-${dag}`;
+}
+
+async function renderTodayVessels() {
+  const tbl = document.getElementById("ais-today-table");
+  const upEl = document.getElementById("ais-today-updated");
+  if (!tbl) return;
+
+  const passages = await haalAISPassagesOp();
+  // 'date'/'time' in het logbestand zijn UTC. We bepalen 'vandaag' op basis
+  // van de lokale kalenderdag, dus we vergelijken elk entry's UTC-tijdstip
+  // omgezet naar lokale datum met de huidige lokale datum.
+  const vandaagLokaal = vandaagLokaalISO();
+  const vanVandaag = (passages || []).filter(p => {
+    if (!p.date) return false;
+    const iso = p.time ? `${p.date}T${p.time}:00Z` : `${p.date}T00:00:00Z`;
+    const d = new Date(iso);
+    if (isNaN(d)) return false;
+    const lokaleDag = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    return lokaleDag === vandaagLokaal;
+  }).sort((a,b) => (a.time||"").localeCompare(b.time||""));
+
+  if (upEl) upEl.textContent = `${vanVandaag.length} vessel${vanVandaag.length===1?"":"s"} today (local calendar day)`;
+
+  if (vanVandaag.length === 0) {
+    tbl.innerHTML = `<tr><td colspan="5" style="color:var(--mid);padding:12px 10px;font-size:12px;">No vessels passed today yet.</td></tr>`;
+    return;
+  }
+
+  tbl.innerHTML =
+    `<thead><tr><th>Time</th><th>Vessel</th><th>Type</th><th>Length</th><th>Direction</th></tr></thead><tbody>` +
+    vanVandaag.map(p => {
+      const dir = p.direction === "N" ? "↑ N" : p.direction === "S" ? "↓ S" : p.direction || "—";
+      const naam = (p.name && p.name !== "Unknown") ? p.name : (p.mmsi ? `MMSI ${p.mmsi}` : "Unknown vessel");
+      return `<tr>
+        <td>${localTimeLabel(p.date, p.time)}</td>
+        <td>${naam}</td>
+        <td class="${vesselTypeClass(p.type||"")}">${p.type && p.type!=="Unknown" ? p.type : "—"}</td>
+        <td>${p.length && p.length!=="?m" ? p.length : "—"}</td>
+        <td>${dir}</td>
+      </tr>`;
+    }).join("") + `</tbody>`;
+}
+
 function lockStateLabel(lock_state) {
   switch (lock_state) {
     case "NORTH_OF_LOCK":  return "Before lock";
@@ -1028,21 +1092,12 @@ function aisLiveColor(eta_sec) {
 function updateSwimAISTile(nearest) {
   const el = document.getElementById("swim-ais-live");
   if (!el) return;
-  if (!nearest) {
+  // Enkel echt naderende schepen tonen — een schip dat voorbij is (ook al
+  // levert de pipeline het nog als 'nearest') wordt hier volledig verborgen;
+  // het blijft wel zichtbaar in de 'all tracked vessels'-tabel.
+  if (!nearest || isGenuinelyApproaching(nearest) === false) {
     el.innerHTML = `<div class="ais-time-block ais-green" style="padding:10px 14px;">
       <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">No vessels approaching</div>
-    </div>`;
-    return;
-  }
-  // Vangnet: als de gemeten afstand aantoonbaar toeneemt, vertrouwen we
-  // 'nearest'/lock_state niet blindelings en tonen we het schip neutraal
-  // in plaats van als een naderend schip.
-  if (isGenuinelyApproaching(nearest) === false) {
-    const dist = distanceLabel(vesselDistanceM(nearest));
-    el.innerHTML = `<div class="ais-time-block ais-green">
-      <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">Moving away</div>
-      <div class="ais-time">${dist || ""}</div>
-      <div style="font-size:11px;"><strong>${vesselName(nearest)}</strong> has passed</div>
     </div>`;
     return;
   }
@@ -1067,22 +1122,11 @@ function updateSwimAISTile(nearest) {
 function updateNearestPanel(nearest, updated) {
   const el = document.getElementById("ais-nearest-panel");
   if (!el) return;
-  if (!nearest) {
+  if (!nearest || isGenuinelyApproaching(nearest) === false) {
     el.innerHTML = `<div style="color:var(--mid);font-size:12px;padding:12px 0;">No vessels approaching.</div>`;
     return;
   }
   const lastSeen = updated ? `${new Date(updated).toLocaleDateString("en-GB")} ${new Date(updated).toLocaleTimeString("en-GB")}` : "—";
-  if (isGenuinelyApproaching(nearest) === false) {
-    const dist = distanceLabel(vesselDistanceM(nearest));
-    el.innerHTML = `
-      <div class="ais-time-block ais-green" style="margin-bottom:10px;">
-        <div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Moving away${dist ? ` — ${dist}` : ""}</div>
-        <div style="font-size:18px;font-weight:600;">${vesselName(nearest)}</div>
-        <div style="font-size:11px;margin-top:3px;">Has passed the swim zone</div>
-        <div style="font-size:10px;margin-top:6px;opacity:0.75;">Last message received: ${lastSeen}</div>
-      </div>`;
-    return;
-  }
   const dir = nearest.direction === "N" ? "↑ Northbound" : nearest.direction === "S" ? "↓ Southbound" : nearest.direction || "—";
   const lockLabel = lockStateLabel(nearest.lock_state);
   const waiting = nearest.lock_state === "IN_LOCK_WAITING";
@@ -1113,15 +1157,29 @@ function updateLiveTable(vessels_nearby) {
   tbl.innerHTML =
     `<thead><tr><th>Vessel</th><th>Type</th><th>Direction</th><th>Speed</th><th>Distance</th><th>Status</th></tr></thead><tbody>` +
     vessels_nearby.map(v => {
-      const dir = v.direction === "N" ? "↑ N" : v.direction === "S" ? "↓ S" : v.direction || "—";
+      // Stilliggend schip (bv. wachtend in de sluis, of gemeerd): snelheid
+      // en richting zijn dan niet betekenisvol.
+      const gestopt = (v.speed !== null && v.speed !== undefined && v.speed < 0.5)
+                      || v.lock_state === "IN_LOCK_WAITING";
+      const dir = gestopt ? "-" : (v.direction === "N" ? "↑ N" : v.direction === "S" ? "↓ S" : v.direction || "—");
+      const snelheid = gestopt ? "-" : (v.speed ? v.speed.toFixed(1)+" km/h" : "—");
       const dist = distanceLabel(vesselDistanceM(v));
       const lockLabel = lockStateLabel(v.lock_state);
-      const status = lockLabel || etaLabel(v.eta_sec);
+      let status;
+      if (gestopt) {
+        status = "Stopped";
+      } else if (lockLabel) {
+        status = lockLabel;
+      } else if (isGenuinelyApproaching(v) === false) {
+        status = "Moving away";
+      } else {
+        status = `ETA ${etaLabel(v.eta_sec)}`;
+      }
       return `<tr>
         <td>${vesselName(v)}</td>
         <td class="${vesselTypeClass(v.type||"")}">${v.type||"—"}</td>
         <td>${dir}</td>
-        <td>${v.speed ? v.speed.toFixed(1)+" km/h" : "—"}</td>
+        <td>${snelheid}</td>
         <td>${dist || "—"}</td>
         <td>${status}</td>
       </tr>`;
@@ -1145,15 +1203,33 @@ function updateAISMapLive(vessels_all, map) {
       ? v.cog
       : (v.direction === "N" ? 0 : v.direction === "S" ? 180 : 0);
 
+    // Kleur: grijs voor stilliggende schepen, anders per vaarrichting
+    // (blauw = noordwaarts, rood = zuidwaarts, grijs = onbekende richting).
+    const gestopt = (v.speed !== null && v.speed !== undefined && v.speed < 0.5)
+                    || v.lock_state === "IN_LOCK_WAITING";
+    const scheepskleur = gestopt ? "#757575"
+      : v.direction === "N" ? "#1565c0"
+      : v.direction === "S" ? "#c62828"
+      : "#757575";
+
     // Scheepsvorm zoals op MarineTraffic: een afgeronde pijlpunt/druppelvorm,
-    // wijzend naar boven (0°) en vervolgens geroteerd. Eén uniforme kleur
-    // voor alle types — geen onderscheid meer per vaarrichting.
-    const html = `
+    // wijzend naar boven (0°) en vervolgens geroteerd.
+    const html = gestopt ? `
+      <div style="position:relative;width:0;height:0;">
+        <div style="position:absolute;left:-6px;top:-6px;width:12px;height:12px;
+                    border-radius:50%;background:#757575;border:1.5px solid white;
+                    box-shadow:0 0 2px rgba(0,0,0,0.5);"></div>
+        <div style="position:absolute;left:10px;top:-7px;white-space:nowrap;
+                    font-size:10px;font-weight:700;color:white;
+                    text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000;">
+          ${vesselName(v)}
+        </div>
+      </div>` : `
       <div style="position:relative;width:0;height:0;">
         <svg width="22" height="22" viewBox="-11 -11 22 22"
              style="position:absolute;left:-11px;top:-11px;transform:rotate(${rotatie}deg);overflow:visible;">
           <path d="M 0 -9 C 5 -4, 6 4, 3 9 L -3 9 C -6 4, -5 -4, 0 -9 Z"
-                fill="#1565c0" stroke="white" stroke-width="1.2"/>
+                fill="${scheepskleur}" stroke="white" stroke-width="1.2"/>
         </svg>
         <div style="position:absolute;left:14px;top:-7px;white-space:nowrap;
                     font-size:10px;font-weight:700;color:white;
@@ -1255,6 +1331,7 @@ async function renderAIS() {
 
   // 28-day history bar chart — real vessel passages from data/ais_passages.json
   const passages = await haalAISPassagesOp();
+  renderTodayVessels(); // eigen fetch — onafhankelijk van bovenstaande, filtert op lokale dag
   const {labels,values,isSunday} = groepeerPassagesPerDag(passages, 28);
   const barColors  = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
   const borderClrs = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
