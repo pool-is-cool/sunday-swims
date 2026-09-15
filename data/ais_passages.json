@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 226004090,
+    "name": "BALTES / MYLLANA",
+    "type": "Motor Vessel",
+    "length": "39m",
+    "callsign": "FM4868",
+    "destination": "GENNEVILLIERS",
+    "direction": "N",
+    "date": "2026-09-15",
+    "time": "04:45",
+    "lat": 50.815452,
+    "lon": 4.299508
+  },
+  {
     "mmsi": 226002430,
     "name": "FILOU",
     "type": "Motor Vessel",
