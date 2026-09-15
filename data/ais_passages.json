@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 226001760,
+    "name": "CALVI",
+    "type": "Motor Vessel",
+    "length": "80m",
+    "callsign": "FM6599",
+    "destination": "RUISBROEK",
+    "direction": "N",
+    "date": "2026-09-15",
+    "time": "08:46",
+    "lat": 50.815512,
+    "lon": 4.299655
+  },
+  {
     "mmsi": 227090320,
     "name": "SEABIRD",
     "type": "Motor Vessel",
