@@ -885,6 +885,7 @@ const AIS_ENDPOINT = "https://sunday-swims-ais.lingering-recipe-4347.workers.dev
 const AIS_POLL_MS  = 10000; // 10 seconds
 let   aisLiveMarkers = {};  // mmsi → leaflet marker
 let   aisDistanceHistory = {}; // mmsi → laatste 2 distance_m-waarden, voor veiligheidscheck
+let   aisLastDirection = {};   // mmsi → laatst gekende vaarrichting (N/S), blijft bewaard als het schip stopt
 
 const AIS_PASSAGES_URL = "/sunday-swims/data/ais_passages.json";
 
@@ -1034,45 +1035,61 @@ function updateDistanceHistory(v) {
   // terwijl het in werkelijkheid al voorbij is en zich verwijdert.
   if (!v || !v.mmsi) return;
   const d = vesselDistanceM(v);
-  if (d === null) return;
-  const hist = aisDistanceHistory[v.mmsi] || [];
-  hist.push(d);
-  if (hist.length > 3) hist.shift();
-  aisDistanceHistory[v.mmsi] = hist;
+  if (d !== null) {
+    const hist = aisDistanceHistory[v.mmsi] || [];
+    hist.push(d);
+    if (hist.length > 3) hist.shift();
+    aisDistanceHistory[v.mmsi] = hist;
+  }
+  // Laatst gekende vaarrichting bewaren — een gestopt schip (bv. wachtend in
+  // de sluis) rapporteert vaak geen betrouwbare 'direction' meer, terwijl we
+  // net dan moeten weten uit welke richting het kwam om te bepalen of het
+  // de zwemzone al gepasseerd is.
+  if (v.direction === "N" || v.direction === "S") {
+    aisLastDirection[v.mmsi] = v.direction;
+  }
+}
+
+function vesselRichting(v) {
+  // Huidige richting indien bekend, anders de laatst gekende richting.
+  if (!v) return null;
+  if (v.direction === "N" || v.direction === "S") return v.direction;
+  return (v.mmsi && aisLastDirection[v.mmsi]) || null;
 }
 
 function isGenuinelyApproaching(v) {
   // true  = benaderd als echt naderend
-  // false = benaderd als NIET naderend (verwijdert zich of rijdt weg)
+  // false = benaderd als NIET naderend (verwijdert zich, gestopt na passage, enz.)
   // null  = onvoldoende info om te beoordelen — vertrouw de pipeline
   if (!v || !v.mmsi) return null;
 
-  // De sluis ligt ten noorden van de zwemzone. Een noordwaarts schip dat al
-  // in/bij de sluis is (wachtend, aan het vertrekken, of net voorbij) heeft
-  // de zwemzone per definitie al gepasseerd — ongeacht de exacte breedtegraad
-  // op dat moment (bv. tijdens het wachten in de sluiskolk kan lat nog net
-  // niet boven de zwemzone liggen, wat de onderstaande lat-regel zou missen).
-  if (v.direction === "N" &&
-      (v.lock_state === "IN_LOCK_WAITING" ||
-       v.lock_state === "IN_LOCK_MOVING"  ||
-       v.lock_state === "SOUTH_OF_LOCK")) {
-    return false;
-  }
+  const richting = vesselRichting(v); // 'N', 'S', of null — ook geldig als het schip net gestopt is
+  const heeftLat = v.lat !== null && v.lat !== undefined;
 
-  // Harde regel op basis van vaarrichting + positie t.o.v. de zwemzone
-  // (het kanaal loopt hier grofweg noord-zuid, dus breedtegraad is een
-  // betrouwbare maat voor 'noord/zuid van de zwemzone'):
-  //   - noordwaarts varend EN al ten noorden van de zwemzone  → verwijdert zich
-  //   - zuidwaarts varend  EN al ten zuiden van de zwemzone   → verwijdert zich
-  // Een noordwaarts schip dat nog ten zuiden van de zwemzone is, nadert wel
-  // degelijk nog (komt van beneden/stroomafwaarts) — enkel de combinatie van
-  // richting + al-voorbij-de-zwemzone-zijn betekent 'verwijdert zich'.
-  if (v.lat !== null && v.lat !== undefined) {
-    if (v.direction === "N" && v.lat > SWIM_ZONE_LAT) return false;
-    if (v.direction === "S" && v.lat < SWIM_ZONE_LAT) return false;
-  }
+  // Positie is de doorslaggevende, stabiele factor (blijft correct ook als
+  // het schip stopt en 'direction' wegvalt) — richting bepaalt enkel welke
+  // kant 'voorbij' betekent:
+  //   - noordwaarts (of laatst noordwaarts) + al ten noorden van de zwemzone
+  //     → altijd voorbij, ongeacht sluisstatus (gestopt in de sluis = ook
+  //       gewoon 'voorbij', toont als 'gestopt' in de lijst, niet in de tegel)
+  //   - zuidwaarts (of laatst zuidwaarts) + al ten zuiden van de zwemzone
+  //     → voorbij; sluisgevoeligheid blijft hier wél gelden zolang het schip
+  //       nog ten NOORDEN van de zwemzone is (nog moet naderen via de sluis)
+  if (heeftLat && richting === "N" && v.lat > SWIM_ZONE_LAT) return false;
+  if (heeftLat && richting === "S" && v.lat < SWIM_ZONE_LAT) return false;
 
-  // Voor overige gevallen: aantoonbare afstandsverandering als indicatie.
+  // Zuidwaarts schip nog ten noorden van de zwemzone (dus nog moet passeren,
+  // eventueel via de sluis) — dit is de enige situatie waar sluisstatus nog
+  // relevant is voor 'approaching'; behandel als genuine approaching zodat
+  // lockStateLabel() (bv. "In lock — waiting") gewoon getoond wordt.
+  if (heeftLat && richting === "S" && v.lat >= SWIM_ZONE_LAT) return true;
+
+  // Noordwaarts schip nog ten zuiden van de zwemzone: nadert nog steeds
+  // (komt van beneden/stroomafwaarts).
+  if (heeftLat && richting === "N" && v.lat <= SWIM_ZONE_LAT) return true;
+
+  // Voor overige gevallen (richting onbekend, geen lat): aantoonbare
+  // afstandsverandering als indicatie.
   const hist = aisDistanceHistory[v.mmsi];
   if (!hist || hist.length < 2) return null;
   const eerste = hist[0], laatste = hist[hist.length - 1];
