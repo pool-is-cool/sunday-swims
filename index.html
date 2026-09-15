@@ -966,13 +966,17 @@ async function renderTodayVessels() {
   }
 
   tbl.innerHTML =
-    `<thead><tr><th>Time</th><th>Vessel</th><th>Type</th><th>Length</th><th>Direction</th></tr></thead><tbody>` +
+    `<thead><tr><th>Time</th><th>Vessel</th><th>MMSI</th><th>Type</th><th>Length</th><th>Direction</th></tr></thead><tbody>` +
     vanVandaag.map(p => {
       const dir = p.direction === "N" ? "↑ N" : p.direction === "S" ? "↓ S" : p.direction || "—";
       const naam = (p.name && p.name !== "Unknown") ? p.name : (p.mmsi ? `MMSI ${p.mmsi}` : "Unknown vessel");
+      const mmsiCel = p.mmsi
+        ? `<a href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:${p.mmsi}" target="_blank" rel="noopener">${p.mmsi}</a>`
+        : "—";
       return `<tr>
         <td>${localTimeLabel(p.date, p.time)}</td>
         <td>${naam}</td>
+        <td>${mmsiCel}</td>
         <td class="${vesselTypeClass(p.type||"")}">${p.type && p.type!=="Unknown" ? p.type : "—"}</td>
         <td>${p.length && p.length!=="?m" ? p.length : "—"}</td>
         <td>${dir}</td>
@@ -1043,6 +1047,18 @@ function isGenuinelyApproaching(v) {
   // false = benaderd als NIET naderend (verwijdert zich of rijdt weg)
   // null  = onvoldoende info om te beoordelen — vertrouw de pipeline
   if (!v || !v.mmsi) return null;
+
+  // De sluis ligt ten noorden van de zwemzone. Een noordwaarts schip dat al
+  // in/bij de sluis is (wachtend, aan het vertrekken, of net voorbij) heeft
+  // de zwemzone per definitie al gepasseerd — ongeacht de exacte breedtegraad
+  // op dat moment (bv. tijdens het wachten in de sluiskolk kan lat nog net
+  // niet boven de zwemzone liggen, wat de onderstaande lat-regel zou missen).
+  if (v.direction === "N" &&
+      (v.lock_state === "IN_LOCK_WAITING" ||
+       v.lock_state === "IN_LOCK_MOVING"  ||
+       v.lock_state === "SOUTH_OF_LOCK")) {
+    return false;
+  }
 
   // Harde regel op basis van vaarrichting + positie t.o.v. de zwemzone
   // (het kanaal loopt hier grofweg noord-zuid, dus breedtegraad is een
