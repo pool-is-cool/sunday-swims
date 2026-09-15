@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 227084170,
+    "name": "MANAVAI",
+    "type": "Fishing",
+    "length": "12m",
+    "callsign": "FGH3280",
+    "destination": "",
+    "direction": "N",
+    "date": "2026-09-15",
+    "time": "08:46",
+    "lat": 50.8153,
+    "lon": 4.299568
+  },
+  {
     "mmsi": 226001760,
     "name": "CALVI",
     "type": "Motor Vessel",
