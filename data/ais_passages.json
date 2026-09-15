@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 227090320,
+    "name": "SEABIRD",
+    "type": "Motor Vessel",
+    "length": "80m",
+    "callsign": "FM2871",
+    "destination": "",
+    "direction": "N",
+    "date": "2026-09-15",
+    "time": "06:56",
+    "lat": 50.815372,
+    "lon": 4.299652
+  },
+  {
     "mmsi": 205571390,
     "name": "DJIRO",
     "type": "Motor Vessel",
