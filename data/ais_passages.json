@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "mmsi": 226002430,
+    "name": "FILOU",
+    "type": "Motor Vessel",
+    "length": "38m",
+    "callsign": "FM2479",
+    "destination": "",
+    "direction": "N",
+    "date": "2026-09-15",
+    "time": "04:44",
+    "lat": 50.815485,
+    "lon": 4.299493
+  }
+]
