@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 244690999,
+    "name": "ALLEGRO",
+    "type": "Motor Vessel",
+    "length": "80m",
+    "callsign": "PH9418",
+    "destination": "GOUDA",
+    "direction": "N",
+    "date": "2026-09-15",
+    "time": "14:01",
+    "lat": 50.81537,
+    "lon": 4.29953
+  },
+  {
     "mmsi": 205591290,
     "name": "CYANE",
     "type": "Cargo",
