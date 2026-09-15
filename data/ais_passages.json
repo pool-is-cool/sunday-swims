@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205297590,
+    "name": "CANBERRA",
+    "type": "Motor Vessel",
+    "length": "39m",
+    "callsign": "",
+    "destination": "",
+    "direction": "S",
+    "date": "2026-09-15",
+    "time": "15:21",
+    "lat": 50.81537,
+    "lon": 4.29953
+  },
+  {
     "mmsi": 244690999,
     "name": "ALLEGRO",
     "type": "Motor Vessel",
