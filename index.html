@@ -38,8 +38,8 @@
     /* SWIMMING SNAPSHOT — highlighted */
     .swim-section { background: var(--blue-light); border-radius: 16px; padding: 28px; margin-bottom: 0; border: 1px solid #90caf9; }
     .swim-section-title { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--blue); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #90caf9; }
-    .swim-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
-    @media (max-width: 900px) { .swim-grid { grid-template-columns: 1fr 1fr; } }
+    .swim-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 900px) { .swim-grid { grid-template-columns: 1fr; } }
     @media (max-width: 500px) { .swim-grid { grid-template-columns: 1fr; } }
     .swim-card { background: #fff; border: 1px solid #90caf9; border-radius: 10px; padding: 18px; }
     .swim-card-title { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue-mid); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -154,12 +154,6 @@
 </head>
 <body>
 <div class="container">
-  <div style="background:#1565c0;padding:8px 0;margin-bottom:0;text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:0.08em;">
-    <span style="color:rgba(255,255,255,0.7);">Viewing: Full version (including work in progress)</span>
-    &nbsp;&nbsp;·&nbsp;&nbsp;
-    <a href="index-live.html" style="color:white;font-weight:600;text-decoration:underline;">Switch to live data only →</a>
-  </div>
-
   <header>
     <div class="header-label">Pool is Cool — Canal Monitoring</div>
     <h1>Sunday <em>Swims</em></h1>
@@ -200,10 +194,10 @@
     </div>
 
     <div class="sub-section-title">Sunday Swims — Focus location</div>
-    <div style="font-size:10px;color:#e65100;background:#fff8f5;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Water temperature: live Blueriiot sensor (early morning reading, ~06:00) at the monitoring station | E. coli, Enterococci, Cyanobacteria: dummy/test data — to be replaced by lab analyses</div>
+    <div style="font-size:10px;color:#e65100;background:#fff8f5;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Water temperature: manual samples | E. coli, Enterococci, Cyanobacteria: dummy/test data — to be replaced by lab analyses</div>
     <div class="chart-card-full">
       <div class="chart-title">Water temperature (°C) — past 2 months</div>
-      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>Automatic (Blueriiot, °C)</span><span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:3px;border:1px solid #ccc;"></span>Manual sample (°C)</span></div>
+      <div class="chart-legend"><span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:3px;border:1px solid #ccc;"></span>Manual sample (°C)</span></div>
       <div class="chart-wrap"><canvas id="watertemp-chart"></canvas></div>
     </div>
     <div class="chart-card-full">
@@ -292,7 +286,7 @@
   <!-- 5. AIS -->
   <div id="ais">
     <div class="section-title">AIS vessel tracking — canal Anderlecht</div>
-    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Live data — AIS receiver Anderlecht, updated every 10 seconds</div>
+    <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Live data — AIS receiver Anderlecht, pushed from receiver every 15 s while vessels are moving, every 60 s when no active traffic</div>
     <div class="ais-explain">
       <strong>How AIS works:</strong> Commercial vessels are required by law to broadcast an AIS (Automatic Identification System) signal containing their position, speed, heading, name and vessel type. This allows real-time tracking of large ships on the canal. The data shown here is collected from an AIS receiver installed near the swimming zone.
     </div>
@@ -620,7 +614,6 @@ function renderSwimSnapshot(data, forecast, metingen, watertemperatuur) {
   const pb = precipBadge(precip72);
   const pb24 = precip24hBadge(precip24);
   document.getElementById("swim-water-content").innerHTML = `
-    <div class="swim-row"><span class="swim-row-label">Water temp.</span><span class="swim-row-val">${waterTemp!==null?fmt(waterTemp,1)+" °C":"—"}${waterTempTijd?` <span style="font-size:9px;color:var(--mid);">(${waterTempTijd})</span>`:""}</span></div>
     <div class="swim-row"><span class="swim-row-label">E. coli forecast</span><span class="swim-row-val na">— <span style="font-size:10px">(model pending)</span></span></div>
     <div class="swim-row"><span class="swim-row-label">E. coli (last lab)</span><div style="display:flex;align-items:center;gap:5px;"><span class="swim-row-val">${ecoliLast!==null?fmt(ecoliLast,0)+" KVE":"—"}</span>${ecoliLast!==null?`<span class="quality-badge ${eb.cls}">${eb.label}</span>`:""}</div></div>
     <div class="swim-row"><span class="swim-row-label">Last sample</span><span class="swim-row-val" style="font-size:11px">${lastDate}</span></div>
@@ -1484,12 +1477,11 @@ async function init() {
       });
     },200);
 
-    // Water temp chart — Blueriiot (automatic, line) + manual measurements (dots)
+    // Water temp chart — manual measurements (dots)
     setTimeout(()=>{
       makeLineChart("watertemp-chart",
         [
-          {label:"Water temp. (Blueriiot, automatic)",data:tail2months(data,"ss_watertemp_blueriiot_c"),color:"#0891b2",bold:true,showLine:true},
-          {label:"Water temp. (manual sample)",data:tail2months(metingen,"ss_watertemp_c"),color:"#f97316",showLine:false},
+                    {label:"Water temp. (manual sample)",data:tail2months(metingen,"ss_watertemp_c"),color:"#f97316",showLine:false},
         ],
         {});
     },200);
