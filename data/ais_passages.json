@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 244750070,
+    "name": "AMIGO",
+    "type": "Motor Vessel",
+    "length": "85m",
+    "callsign": "PG2326",
+    "destination": "",
+    "direction": "N",
+    "date": "2026-10-15",
+    "time": "09:08",
+    "lat": 50.81538,
+    "lon": 4.299548
+  },
+  {
     "mmsi": 205563090,
     "name": "URUS",
     "type": "Motor Vessel",
