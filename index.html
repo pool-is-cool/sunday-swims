@@ -1272,8 +1272,27 @@ function updateLiveTable(vessels_nearby) {
     }).join("") + `</tbody>`;
 }
 
+function vesselLengthM(v) {
+  // lengte uit AIS: "81m", "81.5m" of numeriek; onbekend ("?m") -> null
+  const raw = v.length_m !== undefined ? v.length_m : v.length;
+  const n = parseFloat(String(raw ?? "").replace(",", "."));
+  return (isFinite(n) && n >= 5 && n <= 400) ? n : null;
+}
+
+function metersPerPixel(map, lat) {
+  return 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, map.getZoom());
+}
+
+let aisLastVessels = [];
+let aisZoomHooked = false;
+
 function updateAISMapLive(vessels_all, map) {
   if (!map) return;
+  aisLastVessels = vessels_all || [];
+  if (!aisZoomHooked) {
+    aisZoomHooked = true;
+    map.on("zoomend", () => updateAISMapLive(aisLastVessels, map)); // schepen schalen mee met zoom
+  }
   const seen = new Set();
   (vessels_all || []).forEach(v => {
     if (!v.lat || !v.lon) return;
@@ -1298,31 +1317,50 @@ function updateAISMapLive(vessels_all, map) {
       : v.direction === "S" ? "#c62828"
       : "#757575";
 
-    // Scheepsvorm zoals op MarineTraffic: een afgeronde pijlpunt/druppelvorm,
-    // wijzend naar boven (0°) en vervolgens geroteerd.
-    const html = gestopt ? `
+    // Scheepsvorm: bij bekende lengte een romp op ware grootte (meters -> pixels
+    // volgens het zoomniveau). De AIS-positie ligt op 90% van de lengte vanaf de
+    // boeg (antenne/stuurhut achteraan), dus de boeg ligt 0,9 L vóór de positie
+    // en de achtersteven 0,1 L erachter. Zonder lengte: standaardsymbool.
+    const lenM = vesselLengthM(v);
+    const mpp = metersPerPixel(map, v.lat);
+    const labelStyle = `position:absolute;white-space:nowrap;font-size:10px;font-weight:700;color:white;
+                    text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000;`;
+    let html;
+    if (lenM) {
+      const Lpx = Math.max(lenM / mpp, 14);          // minimale zichtbare lengte
+      const Wpx = Math.max(lenM * 0.105 / mpp, 5);   // breedte ~ 10,5% van lengte (geschat)
+      const bow = 0.9 * Lpx, stern = 0.1 * Lpx, hw = Wpx / 2;
+      const shoulder = Math.min(0.18 * Lpx, 1.6 * Wpx);
+      const hull = `M 0 ${-bow} L ${hw} ${-bow + shoulder} L ${hw} ${stern} L ${-hw} ${stern} L ${-hw} ${-bow + shoulder} Z`;
+      // stilliggende schepen: cog is dan ruis -> gebruik vaarrichting N/S indien bekend
+      const rot = gestopt ? (v.direction === "N" ? 0 : v.direction === "S" ? 180 : rotatie) : rotatie;
+      html = `
+      <div style="position:relative;width:0;height:0;">
+        <svg width="1" height="1" style="position:absolute;left:0;top:0;overflow:visible;transform:rotate(${rot}deg);transform-origin:0 0;">
+          <path d="${hull}" fill="${scheepskleur}" fill-opacity="0.9" stroke="white" stroke-width="1.2"/>
+          <circle cx="0" cy="0" r="1.6" fill="white"/>
+        </svg>
+        <div style="${labelStyle}left:${Math.max(14, hw + 6)}px;top:-7px;">${vesselName(v)}</div>
+      </div>`;
+    } else if (gestopt) {
+      html = `
       <div style="position:relative;width:0;height:0;">
         <div style="position:absolute;left:-6px;top:-6px;width:12px;height:12px;
                     border-radius:50%;background:#757575;border:1.5px solid white;
                     box-shadow:0 0 2px rgba(0,0,0,0.5);"></div>
-        <div style="position:absolute;left:10px;top:-7px;white-space:nowrap;
-                    font-size:10px;font-weight:700;color:white;
-                    text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000;">
-          ${vesselName(v)}
-        </div>
-      </div>` : `
+        <div style="${labelStyle}left:10px;top:-7px;">${vesselName(v)}</div>
+      </div>`;
+    } else {
+      html = `
       <div style="position:relative;width:0;height:0;">
         <svg width="22" height="22" viewBox="-11 -11 22 22"
              style="position:absolute;left:-11px;top:-11px;transform:rotate(${rotatie}deg);overflow:visible;">
           <path d="M 0 -9 C 5 -4, 6 4, 3 9 L -3 9 C -6 4, -5 -4, 0 -9 Z"
                 fill="${scheepskleur}" stroke="white" stroke-width="1.2"/>
         </svg>
-        <div style="position:absolute;left:14px;top:-7px;white-space:nowrap;
-                    font-size:10px;font-weight:700;color:white;
-                    text-shadow:-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000;">
-          ${vesselName(v)}
-        </div>
+        <div style="${labelStyle}left:14px;top:-7px;">${vesselName(v)}</div>
       </div>`;
+    }
 
     if (aisLiveMarkers[v.mmsi]) {
       aisLiveMarkers[v.mmsi].setLatLng([v.lat, v.lon]).setPopupContent(popup);
