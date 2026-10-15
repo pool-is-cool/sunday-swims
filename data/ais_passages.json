@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205563090,
+    "name": "URUS",
+    "type": "Motor Vessel",
+    "length": "80m",
+    "callsign": "OT5630",
+    "destination": "",
+    "direction": "N",
+    "date": "2026-10-15",
+    "time": "07:09",
+    "lat": 50.815378,
+    "lon": 4.299512
+  },
+  {
     "mmsi": 244690999,
     "name": "ALLEGRO",
     "type": "Motor Vessel",
