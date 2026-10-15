@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 244312796,
+    "name": "IJSVOGEL",
+    "type": "Survey Vessel",
+    "length": "56m",
+    "callsign": "PC3736",
+    "destination": "ERQUELINE",
+    "direction": "S",
+    "date": "2026-10-15",
+    "time": "05:33",
+    "lat": 50.815115,
+    "lon": 4.299463
+  },
+  {
     "mmsi": 226000550,
     "name": "BULLITT",
     "type": "Motor Vessel",
