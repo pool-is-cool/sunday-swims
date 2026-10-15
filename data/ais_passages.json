@@ -1,5 +1,44 @@
 [
   {
+    "mmsi": 205289090,
+    "name": "FOLLOW ME",
+    "type": "Motor Vessel",
+    "length": "39m",
+    "callsign": "OT2890",
+    "destination": "HERENT",
+    "direction": "N",
+    "date": "2026-10-15",
+    "time": "16:36",
+    "lat": 50.81541,
+    "lon": 4.299665
+  },
+  {
+    "mmsi": 226003510,
+    "name": "NETTY",
+    "type": "Motor Vessel",
+    "length": "38m",
+    "callsign": "FM2316",
+    "destination": "HERENT",
+    "direction": "S",
+    "date": "2026-10-15",
+    "time": "16:35",
+    "lat": 50.815167,
+    "lon": 4.299403
+  },
+  {
+    "mmsi": 205588490,
+    "name": "TORNADO",
+    "type": "Motor Vessel",
+    "length": "39m",
+    "callsign": "OT5884",
+    "destination": "",
+    "direction": "N",
+    "date": "2026-10-15",
+    "time": "16:34",
+    "lat": 50.8154,
+    "lon": 4.299655
+  },
+  {
     "mmsi": 244660056,
     "name": "MATANJA",
     "type": "Fishing",
