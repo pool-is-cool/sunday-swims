@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205268590,
+    "name": "RO-MA",
+    "type": "Motor Vessel",
+    "length": "80m",
+    "callsign": "OT2685",
+    "destination": "ONDERWEG",
+    "direction": "N",
+    "date": "2026-10-15",
+    "time": "10:52",
+    "lat": 50.815353,
+    "lon": 4.29949
+  },
+  {
     "mmsi": 244750070,
     "name": "AMIGO",
     "type": "Motor Vessel",
