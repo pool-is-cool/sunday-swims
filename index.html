@@ -307,6 +307,9 @@
       <div class="chart-title">Vessels today</div>
       <div id="ais-today-updated" style="font-size:10px;color:var(--mid);margin-bottom:8px;"></div>
       <table class="ais-table" id="ais-today-table"></table>
+      <div style="margin-top:18px;font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">Distribution over the day (local time)</div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Northbound</span><span class="legend-item"><span class="legend-dot" style="background:#d32f2f"></span>Southbound</span><span class="legend-item"><span class="legend-dot" style="background:#9e9e9e"></span>Direction unknown</span></div>
+      <div style="overflow-x:auto;"><div id="ais-today-timeline" style="min-width:680px;"></div></div>
     </div>
     <div class="chart-card-full">
       <div class="chart-title">Vessel passages — 28-day history</div>
@@ -933,6 +936,59 @@ function vandaagLokaalISO() {
   return `${jaar}-${maand}-${dag}`;
 }
 
+function renderTodayTimeline(list) {
+  const el = document.getElementById("ais-today-timeline");
+  if (!el) return;
+  const W = 1000, padL = 16, padR = 24, x0 = padL, x1 = W - padR, rowH = 15, charW = 6.3;
+  const xOf = min => x0 + (x1 - x0) * min / 1440;
+  const items = list.map(p => {
+    const d = new Date(p.time ? `${p.date}T${p.time}:00Z` : `${p.date}T00:00:00Z`);
+    const name = (p.name && p.name !== "Unknown") ? p.name : (p.mmsi ? `MMSI ${p.mmsi}` : "Unknown");
+    const col = p.direction === "N" ? "#1976d2" : p.direction === "S" ? "#d32f2f" : "#9e9e9e";
+    const hhmm = String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+    return { min: d.getHours()*60 + d.getMinutes(), name, col, hhmm };
+  }).sort((a,b) => a.min - b.min);
+  // labels stacked in levels above the line so they never overlap
+  const ends = [];
+  items.forEach(it => {
+    it.x = xOf(it.min);
+    const w = it.name.length * charW;
+    const flip = it.x + 8 + w > x1;              // near right edge: label to the left of the dot
+    it.start = flip ? it.x - 8 - w : it.x + 8;
+    it.end = it.start + w;
+    it.anchor = flip ? "end" : "start";
+    it.tx = flip ? it.x - 8 : it.x + 8;
+    let lv = 0;
+    while (ends[lv] !== undefined && it.start < ends[lv] + 6) lv++;
+    ends[lv] = it.end;
+    it.lv = lv;
+  });
+  const levels = Math.max(1, ends.length);
+  const lineY = 14 + levels * rowH + 10;
+  const H = lineY + 34;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Vessel passages over the day" style="display:block;font-family:var(--mono);">`;
+  // night shading (before 06:00 and after 21:00 is just a hint: plain grid only)
+  for (let h = 0; h <= 24; h += 3) {
+    const x = xOf(h*60);
+    svg += `<line x1="${x}" y1="${lineY-4}" x2="${x}" y2="${lineY+4}" stroke="#90a4ae"/>`;
+    svg += `<text x="${x}" y="${lineY+20}" font-size="10" fill="#78909c" text-anchor="${h===0?"start":h===24?"end":"middle"}">${String(h).padStart(2,"0")}:00</text>`;
+  }
+  svg += `<line x1="${x0}" y1="${lineY}" x2="${x1}" y2="${lineY}" stroke="#90a4ae" stroke-width="2"/>`;
+  const now = new Date(), nowMin = now.getHours()*60 + now.getMinutes();
+  svg += `<line x1="${xOf(nowMin)}" y1="${lineY-14}" x2="${xOf(nowMin)}" y2="${lineY+10}" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="3 2"/>`;
+  svg += `<text x="${xOf(nowMin)}" y="${lineY+32}" font-size="9" fill="#2e7d32" text-anchor="middle">now</text>`;
+  const esc = t => String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  items.forEach(it => {
+    const ly = lineY - 14 - it.lv * rowH;
+    svg += `<line x1="${it.x}" y1="${lineY}" x2="${it.x}" y2="${ly+3}" stroke="${it.col}" stroke-width="0.8" opacity="0.5"/>`;
+    svg += `<circle cx="${it.x}" cy="${lineY}" r="5" fill="${it.col}" stroke="#fff" stroke-width="1.5"><title>${esc(it.name)} — ${it.hhmm}</title></circle>`;
+    svg += `<text x="${it.tx}" y="${ly}" font-size="10.5" fill="#37474f" text-anchor="${it.anchor}">${esc(it.name)}</text>`;
+  });
+  svg += `</svg>`;
+  if (!items.length) svg = `<div style="color:var(--mid);font-size:12px;padding:6px 0;">No vessels passed today yet.</div>` + svg;
+  el.innerHTML = svg;
+}
+
 async function renderTodayVessels() {
   const tbl = document.getElementById("ais-today-table");
   const upEl = document.getElementById("ais-today-updated");
@@ -953,6 +1009,8 @@ async function renderTodayVessels() {
   }).sort((a,b) => (a.time||"").localeCompare(b.time||""));
 
   if (upEl) upEl.textContent = `${vanVandaag.length} vessel${vanVandaag.length===1?"":"s"} today (local calendar day)`;
+
+  renderTodayTimeline(vanVandaag);
 
   if (vanVandaag.length === 0) {
     tbl.innerHTML = `<tr><td colspan="5" style="color:var(--mid);padding:12px 10px;font-size:12px;">No vessels passed today yet.</td></tr>`;
