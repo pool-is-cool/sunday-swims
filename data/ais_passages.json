@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205268590,
+    "name": "RO-MA",
+    "type": "Motor Vessel",
+    "length": "80m",
+    "callsign": "OT2685",
+    "destination": "ONDERWEG",
+    "direction": "S",
+    "date": "2026-10-16",
+    "time": "10:32",
+    "lat": 50.815073,
+    "lon": 4.29944
+  },
+  {
     "mmsi": 244690047,
     "name": "EBENHAEZER + TWIN",
     "type": "Motor Vessel",
