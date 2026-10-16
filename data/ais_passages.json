@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 244730246,
+    "name": "SPIDO II",
+    "type": "Motor Vessel",
+    "length": "55m",
+    "callsign": "PI3317",
+    "destination": "",
+    "direction": "N",
+    "date": "2026-10-16",
+    "time": "14:17",
+    "lat": 50.81532,
+    "lon": 4.299565
+  },
+  {
     "mmsi": 205210190,
     "name": "OCTOPUS",
     "type": "Motor Vessel",
