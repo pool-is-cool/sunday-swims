@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 244750070,
+    "name": "AMIGO",
+    "type": "Motor Vessel",
+    "length": "85m",
+    "callsign": "PG2326",
+    "destination": "",
+    "direction": "S",
+    "date": "2026-10-16",
+    "time": "11:18",
+    "lat": 50.81521,
+    "lon": 4.299483
+  },
+  {
     "mmsi": 244690366,
     "name": "TELESTO",
     "type": "Motor Tanker (dry cargo)",
