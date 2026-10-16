@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 244690366,
+    "name": "TELESTO",
+    "type": "Motor Tanker (dry cargo)",
+    "length": "80m",
+    "callsign": "PH3322",
+    "destination": "ANTWERPEN INSTEEKDO",
+    "direction": "N",
+    "date": "2026-10-16",
+    "time": "11:09",
+    "lat": 50.815323,
+    "lon": 4.299547
+  },
+  {
     "mmsi": 205268590,
     "name": "RO-MA",
     "type": "Motor Vessel",
