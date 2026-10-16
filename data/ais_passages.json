@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205269390,
+    "name": "GERSOM",
+    "type": "Fishing",
+    "length": "80m",
+    "callsign": "OT2693",
+    "destination": "CHERCQ",
+    "direction": "S",
+    "date": "2026-10-16",
+    "time": "04:32",
+    "lat": 50.815222,
+    "lon": 4.299508
+  },
+  {
     "mmsi": 205591290,
     "name": "CYANE",
     "type": "Cargo",
