@@ -4,7 +4,7 @@ SUNDAY SWIMS — Weerdataverzameling (GitHub versie)
 =====================================================
 Dit script draait automatisch elke dag via GitHub Actions.
 - Haalt gemeten weerdata op via KMI open data (station Ukkel, code 6447)
-- Haalt weersvoorspelling op via Open-Meteo (7 dagen)
+- Haalt weersvoorspelling op via Open-Meteo (7 dagen, met retry; fallback MET Norway)
 - Haalt kanaaldata op via MOW-HIC groep 3323277 (indien token beschikbaar)
 - Haalt sluisdata en neerslag op via Flowbru/Hydria API (indien credentials beschikbaar)
 - Combineert met handmatige metingen uit data/metingen.csv
@@ -302,8 +302,7 @@ def haal_uv_index_op(start_datum: str, eind_datum: str) -> pd.DataFrame:
         "timezone":   "Europe/Brussels",
     }
     try:
-        r = requests.get(url, params=params, timeout=30)
-        r.raise_for_status()
+        r = get_met_retry(url, params=params, pogingen=3, timeout=30)
         d = r.json()
         df = pd.DataFrame({
             "datum":        [pd.Timestamp(t).date() for t in d["daily"]["time"]],
@@ -1026,9 +1025,40 @@ def laad_metingen() -> pd.DataFrame:
     print(f"  → {len(df)} handmatige meting(en) geladen uit metingen.csv")
     return df
 
-# ─── WEERSVOORSPELLING (Open-Meteo) ──────────────────────────────────────────
+# ─── WEERSVOORSPELLING (Open-Meteo, met retry + fallback MET Norway) ─────────
 
-def haal_voorspelling_op() -> list:
+USER_AGENT = "sunday-swims/1.0 (https://github.com/pool-is-cool/sunday-swims; paulsteinbrueck@gmail.com)"
+
+
+def get_met_retry(url: str, params: dict = None, headers: dict = None,
+                  pogingen: int = 4, timeout: int = 60):
+    """GET met herhaalde pogingen en oplopende wachttijd (10/30/60 s).
+
+    Open-Meteo is gratis en wordt gedeeld door veel GitHub-Actions-servers;
+    op drukke momenten (zoals rond 06:00) geeft het regelmatig 429/5xx of een
+    timeout. Een nieuwe poging na enkele seconden lukt meestal wel."""
+    import time
+    wachttijden = [10, 30, 60]
+    laatste_fout = None
+    for poging in range(1, pogingen + 1):
+        try:
+            r = requests.get(url, params=params, headers=headers, timeout=timeout)
+            if r.status_code == 429 or r.status_code >= 500:
+                laatste_fout = requests.HTTPError(f"HTTP {r.status_code}")
+                wacht = int(r.headers.get("Retry-After", 0) or 0) or wachttijden[min(poging-1, 2)]
+            else:
+                r.raise_for_status()
+                return r
+        except (requests.Timeout, requests.ConnectionError) as e:
+            laatste_fout = e
+            wacht = wachttijden[min(poging-1, 2)]
+        if poging < pogingen:
+            print(f"    poging {poging}/{pogingen} mislukt ({laatste_fout}); nieuwe poging over {wacht}s...")
+            time.sleep(min(wacht, 90))
+    raise laatste_fout
+
+
+def haal_voorspelling_open_meteo() -> list:
     """Haalt de weersvoorspelling voor de komende 7 dagen op via Open-Meteo."""
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
@@ -1052,8 +1082,7 @@ def haal_voorspelling_op() -> list:
     }
 
     print("  → Weersvoorspelling ophalen via Open-Meteo (7 dagen)...")
-    r = requests.get(url, params=params, timeout=60)
-    r.raise_for_status()
+    r = get_met_retry(url, params=params, timeout=60)
     d = r.json()
 
     records = []
@@ -1076,7 +1105,127 @@ def haal_voorspelling_op() -> list:
         })
     return records
 
-# ─── JSON ────────────────────────────────────────────────────────────────────
+
+# MET Norway symbol_code -> WMO-code (enkel de codes die de website kent)
+_SYMBOOL_NAAR_WMO = {
+    "clearsky": 0, "fair": 1, "partlycloudy": 2, "cloudy": 3, "fog": 45,
+    "lightrain": 61, "rain": 63, "heavyrain": 65,
+    "lightrainshowers": 80, "rainshowers": 81, "heavyrainshowers": 82,
+    "lightsleet": 61, "sleet": 63, "heavysleet": 65,
+    "lightsleetshowers": 80, "sleetshowers": 81, "heavysleetshowers": 82,
+    "lightsnow": 71, "snow": 73, "heavysnow": 75,
+    "lightsnowshowers": 85, "snowshowers": 85, "heavysnowshowers": 85,
+}
+
+
+def _symbool_naar_wmo(symbol: str):
+    if not symbol:
+        return None
+    basis = symbol.split("_")[0]
+    if "thunder" in basis:
+        return 95
+    return _SYMBOOL_NAAR_WMO.get(basis)
+
+
+def haal_voorspelling_met_no() -> list:
+    """Fallback: weersvoorspelling via MET Norway (officieel, gratis, zonder key).
+
+    Levert geen UV-index en zonneschijnduur (blijven leeg). De voorspelling voor
+    vandaag omvat enkel de uren die nog moeten komen."""
+    import math
+    from collections import Counter
+    from zoneinfo import ZoneInfo
+    tz = ZoneInfo("Europe/Brussels")
+    url = "https://api.met.no/weatherapi/locationforecast/2.0/complete"
+    params = {"lat": round(LATITUDE, 4), "lon": round(LONGITUDE, 4)}
+    print("  → Weersvoorspelling ophalen via MET Norway (fallback)...")
+    r = get_met_retry(url, params=params, headers={"User-Agent": USER_AGENT},
+                      pogingen=3, timeout=30)
+    reeks = r.json()["properties"]["timeseries"]
+
+    dagen = {}
+    for t in reeks:
+        lokaal = datetime.fromisoformat(t["time"].replace("Z", "+00:00")).astimezone(tz)
+        dag = dagen.setdefault(lokaal.date().isoformat(), {
+            "temp": [], "wind": [], "richting": [], "wolken": [], "neerslag": 0.0,
+            "kans": [], "codes": []})
+        inst = t["data"]["instant"]["details"]
+        if "air_temperature" in inst:
+            dag["temp"].append(inst["air_temperature"])
+        if "wind_speed" in inst:
+            dag["wind"].append(inst["wind_speed"] * 3.6)      # m/s -> km/h
+            if "wind_from_direction" in inst:
+                dag["richting"].append((inst["wind_speed"], inst["wind_from_direction"]))
+        if "cloud_area_fraction" in inst:
+            dag["wolken"].append(inst["cloud_area_fraction"])
+        # neerslag: 1-uurs blokken waar beschikbaar, anders 6-uurs blokken (geen dubbeltelling)
+        n1, n6 = t["data"].get("next_1_hours"), t["data"].get("next_6_hours")
+        blok = n1 if n1 else n6
+        if blok:
+            det = blok.get("details", {})
+            dag["neerslag"] += det.get("precipitation_amount", 0) or 0
+            if "probability_of_precipitation" in det:
+                dag["kans"].append(det["probability_of_precipitation"])
+        if n1 and 8 <= lokaal.hour <= 20:
+            code = _symbool_naar_wmo(n1.get("summary", {}).get("symbol_code"))
+            if code is not None:
+                dag["codes"].append(code)
+
+    vandaag = datetime.now(tz).date()
+    records = []
+    for i in range(7):
+        datum = (vandaag + timedelta(days=i)).isoformat()
+        dag = dagen.get(datum)
+        if not dag or not dag["temp"]:
+            continue
+        # overheersende windrichting: vectorgemiddelde, gewogen met windsnelheid
+        x = sum(w * math.sin(math.radians(g)) for w, g in dag["richting"])
+        y = sum(w * math.cos(math.radians(g)) for w, g in dag["richting"])
+        graden = (math.degrees(math.atan2(x, y)) % 360) if dag["richting"] else None
+        code = None
+        if dag["codes"]:
+            tel = Counter(dag["codes"])
+            code = max(tel, key=lambda c: (tel[c], c))
+        records.append({
+            "datum":                datum,
+            "temp_max_c":           round(max(dag["temp"]), 1),
+            "temp_min_c":           round(min(dag["temp"]), 1),
+            "temp_gemiddeld_c":     round(sum(dag["temp"]) / len(dag["temp"]), 1),
+            "neerslag_mm":          round(dag["neerslag"], 1),
+            "neerslag_kans_pct":    round(max(dag["kans"])) if dag["kans"] else None,
+            "windsnelheid_max_kmh": round(max(dag["wind"]), 0) if dag["wind"] else None,
+            "windrichting_naam":    windrichting_naar_naam(graden) if graden is not None else None,
+            "uv_index_max":         None,
+            "zonneschijn_uur":      None,
+            "bewolking_pct":        round(sum(dag["wolken"]) / len(dag["wolken"])) if dag["wolken"] else None,
+            "weathercode":          code,
+        })
+    if not records:
+        raise ValueError("MET Norway gaf geen bruikbare gegevens")
+    return records
+
+
+def haal_voorspelling_op() -> list:
+    """Voorspelling: Open-Meteo (met retry) -> MET Norway -> vorige voorspelling."""
+    try:
+        return haal_voorspelling_open_meteo()
+    except Exception as e:
+        print(f"  ! Open-Meteo mislukt na meerdere pogingen: {e}")
+    try:
+        return haal_voorspelling_met_no()
+    except Exception as e:
+        print(f"  ! MET Norway mislukt: {e}")
+    # laatste redmiddel: de vorige voorspelling (alleen dagen vanaf vandaag)
+    try:
+        oud = json.loads(JSON_FILE.read_text(encoding="utf-8")).get("voorspelling", [])
+        vandaag = date.today().isoformat()
+        oud = [d for d in oud if d.get("datum", "") >= vandaag]
+        if oud:
+            print(f"  ! Vorige voorspelling hergebruikt ({len(oud)} dagen).")
+            return oud
+    except Exception as e:
+        print(f"  ! Vorige voorspelling niet beschikbaar: {e}")
+    raise RuntimeError("Geen enkele voorspellingsbron beschikbaar")
 
 def laad_bestaande_watertemperatuur() -> dict:
     """
