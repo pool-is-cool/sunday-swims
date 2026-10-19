@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205268590,
+    "name": "RO-MA",
+    "type": "Cargo",
+    "length": "80m",
+    "callsign": "OT2685",
+    "destination": "ONDERWEG",
+    "direction": "N",
+    "date": "2026-10-19",
+    "time": "17:00",
+    "lat": 50.81549,
+    "lon": 4.299563
+  },
+  {
     "mmsi": 244730246,
     "name": "SPIDO II",
     "type": "Motor Vessel",
