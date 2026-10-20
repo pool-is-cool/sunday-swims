@@ -285,6 +285,7 @@
 
   <!-- 5. AIS -->
   <div id="ais">
+    <div id="ais-offline-banner" style="display:none;"></div>
     <div class="section-title">AIS vessel tracking — canal Anderlecht</div>
     <div style="font-size:10px;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:3px 8px;margin-bottom:12px;display:inline-block;font-family:var(--mono);letter-spacing:0.04em;">Live data — AIS receiver Anderlecht, pushed from receiver every 15 s while vessels are moving, every 60 s when no active traffic</div>
     <div class="ais-explain">
@@ -308,7 +309,7 @@
       <div id="ais-today-updated" style="font-size:10px;color:var(--mid);margin-bottom:8px;"></div>
       <table class="ais-table" id="ais-today-table"></table>
       <div style="margin-top:18px;font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">Distribution over the day (local time)</div>
-      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Northbound</span><span class="legend-item"><span class="legend-dot" style="background:#d32f2f"></span>Southbound</span><span class="legend-item"><span class="legend-dot" style="background:#9e9e9e"></span>Direction unknown</span></div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Northbound</span><span class="legend-item"><span class="legend-dot" style="background:#d32f2f"></span>Southbound</span><span class="legend-item"><span class="legend-dot" style="background:#9e9e9e"></span>Direction unknown</span><span class="legend-item"><span style="display:inline-block;width:14px;height:8px;background:#ffb300;opacity:0.5;margin-right:3px;"></span>Receiver offline</span></div>
       <div style="overflow-x:auto;"><div id="ais-today-timeline" style="min-width:680px;"></div></div>
     </div>
     <div class="chart-card-full">
@@ -936,7 +937,7 @@ function vandaagLokaalISO() {
   return `${jaar}-${maand}-${dag}`;
 }
 
-function renderTodayTimeline(list) {
+function renderTodayTimeline(list, outages) {
   const el = document.getElementById("ais-today-timeline");
   if (!el) return;
   const W = 1000, padL = 16, padR = 24, x0 = padL, x1 = W - padR, rowH = 15, charW = 6.3;
@@ -973,6 +974,16 @@ function renderTodayTimeline(list) {
     svg += `<line x1="${x}" y1="${lineY-4}" x2="${x}" y2="${lineY+4}" stroke="#90a4ae"/>`;
     svg += `<text x="${x}" y="${lineY+20}" font-size="10" fill="#78909c" text-anchor="${h===0?"start":h===24?"end":"middle"}">${String(h).padStart(2,"0")}:00</text>`;
   }
+  // storingen van de ontvanger (offline-periodes) als grijze band op de tijdlijn
+  const dagStart = new Date(); dagStart.setHours(0,0,0,0);
+  const dagEind  = new Date(dagStart.getTime() + 86400000);
+  (outages || []).forEach(o => {
+    const f = Math.max(new Date(o.from).getTime(), dagStart.getTime());
+    const t = Math.min(new Date(o.to).getTime(), dagEind.getTime());
+    if (!(t > f)) return;
+    const xa = xOf((f - dagStart.getTime()) / 60000), xb = xOf((t - dagStart.getTime()) / 60000);
+    svg += `<rect x="${xa}" y="${lineY-10}" width="${Math.max(xb-xa,2)}" height="20" fill="#ffb300" fill-opacity="0.35"><title>Receiver offline ${fmtLocalTime(new Date(f))}–${fmtLocalTime(new Date(t))}</title></rect>`;
+  });
   svg += `<line x1="${x0}" y1="${lineY}" x2="${x1}" y2="${lineY}" stroke="#90a4ae" stroke-width="2"/>`;
   const now = new Date(), nowMin = now.getHours()*60 + now.getMinutes();
   svg += `<line x1="${xOf(nowMin)}" y1="${lineY-14}" x2="${xOf(nowMin)}" y2="${lineY+10}" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="3 2"/>`;
@@ -1010,7 +1021,13 @@ async function renderTodayVessels() {
 
   if (upEl) upEl.textContent = `${vanVandaag.length} vessel${vanVandaag.length===1?"":"s"} today (local calendar day)`;
 
-  renderTodayTimeline(vanVandaag);
+  let storingen = [];
+  try {
+    const ro = await fetch(AIS_OUTAGES_URL, {cache: "no-store"});
+    if (ro.ok) storingen = (await ro.json()).outages || [];
+  } catch(e) {}
+  if (aisOfflineSince !== null) storingen = storingen.concat([{from: aisOfflineSince.getTime() ? aisOfflineSince.toISOString() : new Date(new Date().setHours(0,0,0,0)).toISOString(), to: new Date().toISOString()}]);
+  renderTodayTimeline(vanVandaag, storingen);
 
   if (vanVandaag.length === 0) {
     tbl.innerHTML = `<tr><td colspan="5" style="color:var(--mid);padding:12px 10px;font-size:12px;">No vessels passed today yet.</td></tr>`;
@@ -1381,12 +1398,62 @@ function updateAISMapLive(vessels_all, map) {
   });
 }
 
+let aisPollFouten = 0;
+const AIS_OFFLINE_AFTER_MS = 5 * 60 * 1000; // >5 min zonder update = ontvanger offline
+const AIS_OUTAGES_URL = AIS_ENDPOINT.replace(/\/live$/, "/outages");
+let aisOfflineSince = null; // Date van laatste update zolang de ontvanger offline is
+
+function fmtLocalTime(d) {
+  return d.toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"});
+}
+
+function setAISOffline(lastUpdate) {
+  // lastUpdate: Date of null (onbekend). Toon duidelijke melding en verberg verouderde info.
+  aisOfflineSince = lastUpdate || new Date(0);
+  const mins = lastUpdate ? Math.round((Date.now() - lastUpdate.getTime()) / 60000) : null;
+  const sinds = lastUpdate
+    ? `last data received ${lastUpdate.toLocaleDateString("en-GB",{day:"numeric",month:"short"})} ${fmtLocalTime(lastUpdate)}` +
+      (mins < 120 ? ` (${mins} min ago)` : "")
+    : "no recent data received";
+  const msg = `<strong>AIS receiver offline</strong> — ${sinds}. Vessel information below is <em>not current</em>; ` +
+              `the absence of vessels does <em>not</em> mean there is no traffic. Please check visually.`;
+  const b = document.getElementById("ais-offline-banner");
+  if (b) {
+    b.style.cssText = "display:block;background:#fff8e1;border:1px solid #ffb300;border-left:4px solid #f57c00;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.5;color:#5d4037;";
+    b.innerHTML = "⚠ " + msg;
+  }
+  const tile = document.getElementById("swim-ais-live");
+  if (tile) tile.innerHTML = `<div style="padding:10px 14px;background:#fff8e1;border-left:4px solid #f57c00;border-radius:6px;font-size:11px;line-height:1.5;color:#5d4037;">⚠ <strong>AIS receiver offline</strong><br>${lastUpdate ? "Last data " + fmtLocalTime(lastUpdate) : "No recent data"} — vessel traffic currently unknown. Check visually.</div>`;
+  const np = document.getElementById("ais-nearest-panel");
+  if (np) np.innerHTML = `<div style="color:var(--mid);font-size:12px;">Receiver offline — no current data.</div>`;
+  const lt = document.getElementById("ais-live-table");
+  if (lt) lt.innerHTML = `<tr><td style="color:var(--mid);padding:12px 10px;font-size:12px;">Receiver offline — no current data.</td></tr>`;
+  if (typeof updateAISMapLive === "function" && window.__aisMap) updateAISMapLive([], window.__aisMap);
+  const upEl = document.getElementById("ais-map-updated");
+  if (upEl) upEl.textContent = lastUpdate ? `Last updated: ${fmtLocalTime(lastUpdate)} (offline)` : "Offline";
+}
+
+function clearAISOffline() {
+  if (aisOfflineSince === null) return;
+  aisOfflineSince = null;
+  const b = document.getElementById("ais-offline-banner");
+  if (b) { b.style.display = "none"; b.innerHTML = ""; }
+}
+
 function startAISLivePoll(map) {
+  window.__aisMap = map;
   async function poll() {
     try {
       const resp = await fetch(AIS_ENDPOINT, {cache: "no-store"});
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const d = await resp.json();
+      const upd = d.updated ? new Date(d.updated) : null;
+      if (!upd || isNaN(upd) || Date.now() - upd.getTime() > AIS_OFFLINE_AFTER_MS) {
+        setAISOffline(upd && !isNaN(upd) ? upd : null);
+        return;
+      }
+      clearAISOffline();
+      aisPollFouten = 0;
       // Vangnet: houd afstandshistoriek bij voor alle gekende schepen, zodat
       // we kunnen nagaan of 'nearest' echt nadert of zich in werkelijkheid
       // al verwijdert.
@@ -1401,6 +1468,8 @@ function startAISLivePoll(map) {
       if (upEl) upEl.textContent = `Last updated: ${updated}`;
     } catch(e) {
       console.warn("AIS poll error:", e);
+      // Worker onbereikbaar: behandel als offline, behalve bij een kortstondige hapering
+      if (aisOfflineSince === null) { aisPollFouten = (typeof aisPollFouten === "number" ? aisPollFouten : 0) + 1; if (aisPollFouten >= 3) setAISOffline(null); }
     }
   }
   poll();

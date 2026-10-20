@@ -1417,10 +1417,37 @@ def exporteer_json(df: pd.DataFrame, alle_metingen: pd.DataFrame = None,
 
 # ─── HOOFDPROGRAMMA ──────────────────────────────────────────────────────────
 
+AIS_OUTAGES_URL = "https://sunday-swims-ais.lingering-recipe-4347.workers.dev/outages"
+AIS_OUTAGES_CSV = DATA_DIR / "ais_outages.csv"
+
+
+def sync_ais_storingen():
+    """Haalt de offline-periodes van de AIS-ontvanger op uit de Cloudflare Worker
+    en voegt nieuwe toe aan data/ais_outages.csv (voor latere statistiek)."""
+    print("  → AIS-storingen synchroniseren...")
+    try:
+        r = get_met_retry(AIS_OUTAGES_URL, headers={"User-Agent": USER_AGENT}, pogingen=2, timeout=20)
+        nieuw = pd.DataFrame(r.json().get("outages", []))
+        if nieuw.empty:
+            print("  ✓ Geen storingen geregistreerd.")
+            return
+        if AIS_OUTAGES_CSV.exists():
+            oud = pd.read_csv(AIS_OUTAGES_CSV, dtype=str)
+            nieuw = pd.concat([oud, nieuw.astype(str)], ignore_index=True)
+        nieuw = (nieuw.drop_duplicates(subset=["from", "to"], keep="last")
+                      .sort_values("from")[["from", "to", "minutes"]])
+        nieuw.to_csv(AIS_OUTAGES_CSV, index=False)
+        print(f"  ✓ {len(nieuw)} storing(en) in {AIS_OUTAGES_CSV.name}.")
+    except Exception as e:
+        print(f"  ! AIS-storingen synchroniseren mislukt: {e}")
+
+
 def main():
     print("\n╔══════════════════════════════════════════╗")
     print("║  SUNDAY SWIMS — Weerdataverzameling      ║")
     print("╚══════════════════════════════════════════╝\n")
+
+    sync_ais_storingen()
 
     # Stap 1: HIC access token ophalen (eenmalig per run)
     access_token = haal_hic_access_token()

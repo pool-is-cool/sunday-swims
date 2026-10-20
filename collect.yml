@@ -1,0 +1,42 @@
+name: Collect weather & canal data
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'data/metingen.csv'
+permissions:
+  contents: write
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run data collection
+        env:
+          HIC_TOKEN: ${{ secrets.HIC_TOKEN }}
+          FLOWBRU_USER: ${{ secrets.FLOWBRU_USER }}
+          FLOWBRU_PASS: ${{ secrets.FLOWBRU_PASS }}
+          BLUERIIOT_USER: ${{ secrets.BLUERIIOT_USER }}
+          BLUERIIOT_PASS: ${{ secrets.BLUERIIOT_PASS }}
+        run: python collect_weather.py
+      - name: Commit and push updated data
+        run: |
+          git config user.name  "Sunday Swims Bot"
+          git config user.email "bot@sundayswims"
+          git add data/sunday_swims_data.json
+          if [ -f data/blueriiot_log.csv ]; then
+            git add data/blueriiot_log.csv
+          fi
+          if [ -f data/ais_outages.csv ]; then
+            git add data/ais_outages.csv
+          fi
+          git diff --cached --quiet || git commit -m "data: update $(date +'%Y-%m-%d')"
+          git push
