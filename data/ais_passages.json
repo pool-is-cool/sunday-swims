@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205597890,
+    "name": "MAKIMBO",
+    "type": "Motor Tanker (dry cargo)",
+    "length": "81m",
+    "callsign": "OT5978",
+    "destination": "GENT MOERVAART  EVO",
+    "direction": "N",
+    "date": "2026-10-20",
+    "time": "11:34",
+    "lat": 50.815305,
+    "lon": 4.29951
+  },
+  {
     "mmsi": 226000230,
     "name": "IMERINA",
     "type": "Vessel",
