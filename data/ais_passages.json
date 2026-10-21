@@ -1,5 +1,18 @@
 [
   {
+    "mmsi": 205262190,
+    "name": "AVISO",
+    "type": "Unknown",
+    "length": "71m",
+    "callsign": "OT2621",
+    "destination": "WALSUM",
+    "direction": "N",
+    "date": "2026-10-21",
+    "time": "04:56",
+    "lat": 50.817345,
+    "lon": 4.30051
+  },
+  {
     "mmsi": 205581390,
     "name": "ELENA",
     "type": "Motor Vessel",
