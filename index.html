@@ -937,6 +937,21 @@ function vandaagLokaalISO() {
   return `${jaar}-${maand}-${dag}`;
 }
 
+let aisLoggedOutages = [];   // afgesloten storingen uit de Worker (/outages)
+let aisTodayList = [];       // passages van vandaag (voor hertekenen van de tijdlijn)
+
+function redrawTodayTimeline() {
+  // Afgesloten storingen + een eventuele lopende storing (sinds laatste update tot nu).
+  // Wordt ook hertekend zodra de offline-status wijzigt, zodat de band nooit afhangt
+  // van de volgorde waarin pagina-onderdelen laden.
+  let st = aisLoggedOutages.slice();
+  if (aisOfflineSince !== null) {
+    const van = aisOfflineSince.getTime() > 0 ? aisOfflineSince : new Date(new Date().setHours(0,0,0,0));
+    st.push({from: van.toISOString(), to: new Date().toISOString()});
+  }
+  renderTodayTimeline(aisTodayList, st);
+}
+
 function renderTodayTimeline(list, outages) {
   const el = document.getElementById("ais-today-timeline");
   if (!el) return;
@@ -1021,13 +1036,12 @@ async function renderTodayVessels() {
 
   if (upEl) upEl.textContent = `${vanVandaag.length} vessel${vanVandaag.length===1?"":"s"} today (local calendar day)`;
 
-  let storingen = [];
   try {
     const ro = await fetch(AIS_OUTAGES_URL, {cache: "no-store"});
-    if (ro.ok) storingen = (await ro.json()).outages || [];
+    if (ro.ok) aisLoggedOutages = (await ro.json()).outages || [];
   } catch(e) {}
-  if (aisOfflineSince !== null) storingen = storingen.concat([{from: aisOfflineSince.getTime() ? aisOfflineSince.toISOString() : new Date(new Date().setHours(0,0,0,0)).toISOString(), to: new Date().toISOString()}]);
-  renderTodayTimeline(vanVandaag, storingen);
+  aisTodayList = vanVandaag;
+  redrawTodayTimeline();
 
   if (vanVandaag.length === 0) {
     tbl.innerHTML = `<tr><td colspan="5" style="color:var(--mid);padding:12px 10px;font-size:12px;">No vessels passed today yet.</td></tr>`;
@@ -1399,6 +1413,7 @@ function updateAISMapLive(vessels_all, map) {
 }
 
 let aisPollFouten = 0;
+let aisLaatsteRedraw = 0;
 const AIS_OFFLINE_AFTER_MS = 5 * 60 * 1000; // >5 min zonder update = ontvanger offline
 const AIS_OUTAGES_URL = AIS_ENDPOINT.replace(/\/live$/, "/outages");
 let aisOfflineSince = null; // Date van laatste update zolang de ontvanger offline is
@@ -1409,7 +1424,13 @@ function fmtLocalTime(d) {
 
 function setAISOffline(lastUpdate) {
   // lastUpdate: Date of null (onbekend). Toon duidelijke melding en verberg verouderde info.
+  const eersteKeer = aisOfflineSince === null;
   aisOfflineSince = lastUpdate || new Date(0);
+  // Tijdlijn: 1 pixel is ~1,5 min, dus hertekenen bij start van de storing en daarna hooguit 1x per 5 min
+  if (eersteKeer || Date.now() - aisLaatsteRedraw > 5 * 60 * 1000) {
+    aisLaatsteRedraw = Date.now();
+    redrawTodayTimeline();
+  }
   const mins = lastUpdate ? Math.round((Date.now() - lastUpdate.getTime()) / 60000) : null;
   const sinds = lastUpdate
     ? `last data received ${lastUpdate.toLocaleDateString("en-GB",{day:"numeric",month:"short"})} ${fmtLocalTime(lastUpdate)}` +
@@ -1436,6 +1457,7 @@ function setAISOffline(lastUpdate) {
 function clearAISOffline() {
   if (aisOfflineSince === null) return;
   aisOfflineSince = null;
+  redrawTodayTimeline();
   const b = document.getElementById("ais-offline-banner");
   if (b) { b.style.display = "none"; b.innerHTML = ""; }
 }
