@@ -1444,14 +1444,14 @@ function setAISOffline(lastUpdate) {
     b.innerHTML = "⚠ " + msg;
   }
   const tile = document.getElementById("swim-ais-live");
-  if (tile) tile.innerHTML = `<div style="padding:10px 14px;background:#fff8e1;border-left:4px solid #f57c00;border-radius:6px;font-size:11px;line-height:1.5;color:#5d4037;">⚠ <strong>AIS receiver offline</strong><br>${lastUpdate ? "Last data " + fmtLocalTime(lastUpdate) : "No recent data"} — vessel traffic currently unknown. Check visually.</div>`;
+  if (tile) tile.innerHTML = `<div style="padding:10px 14px;background:#fff8e1;border-left:4px solid #f57c00;border-radius:6px;font-size:11px;line-height:1.5;color:#5d4037;">⚠ <strong>AIS receiver offline</strong><br>${lastUpdate ? "Last data " + lastUpdate.toLocaleDateString("en-GB",{day:"numeric",month:"short"}) + ", " + fmtLocalTime(lastUpdate) : "No recent data"} — vessel traffic currently unknown. Check visually.</div>`;
   const np = document.getElementById("ais-nearest-panel");
   if (np) np.innerHTML = `<div style="color:var(--mid);font-size:12px;">Receiver offline — no current data.</div>`;
   const lt = document.getElementById("ais-live-table");
   if (lt) lt.innerHTML = `<tr><td style="color:var(--mid);padding:12px 10px;font-size:12px;">Receiver offline — no current data.</td></tr>`;
   if (typeof updateAISMapLive === "function" && window.__aisMap) updateAISMapLive([], window.__aisMap);
   const upEl = document.getElementById("ais-map-updated");
-  if (upEl) upEl.textContent = lastUpdate ? `Last updated: ${fmtLocalTime(lastUpdate)} (offline)` : "Offline";
+  if (upEl) upEl.textContent = lastUpdate ? `Last updated: ${lastUpdate.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}, ${fmtLocalTime(lastUpdate)} (offline)` : "Offline";
 }
 
 function clearAISOffline() {
