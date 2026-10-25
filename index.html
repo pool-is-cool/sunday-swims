@@ -314,8 +314,9 @@
     </div>
     <div class="chart-card-full">
       <div class="chart-title">Vessel passages — 28-day history</div>
-      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span><span class="legend-item"><span class="legend-dot" style="background:#1565c0"></span>Sunday</span></div>
+      <div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#1976d2"></span>Ships/day</span><span class="legend-item"><span class="legend-dot" style="background:#1565c0"></span>Sunday</span><span class="legend-item"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2e7d32;margin-right:3px;"></span>Receiver online (% of day, right axis)</span></div>
       <div class="chart-wrap-sm"><canvas id="ais-chart"></canvas></div>
+      <div id="ais-offline-since" style="font-size:10px;color:var(--mid);margin-top:6px;line-height:1.4;"></div>
     </div>
     <div class="ais-full-disclaimer">
       <strong>Important:</strong> Only larger commercial vessels equipped with AIS transponders can be tracked. Tracking may be inaccurate or delayed. Many other waterway users — pleasure crafts, rowing boats, kayaks, paddle boards — do not carry AIS and will not appear on this system. <strong>Always verify visually before entering the water. Personal visual verification is always necessary.</strong>
@@ -897,26 +898,79 @@ async function haalAISPassagesOp() {
   }
 }
 
+function localDateKey(d) {
+  // YYYY-MM-DD volgens de LOKALE kalenderdag (niet via toISOString, dat naar UTC omzet)
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
 function groepeerPassagesPerDag(passages, dagen) {
   // Vaste tijdlijn van de afgelopen 'dagen' dagen — zelfde aanpak als
   // de watertemperatuur/e.coli-grafieken, zodat lege dagen zichtbaar
   // blijven in plaats van de grafiek uit te rekken.
+  // 'date'/'time' in het logbestand zijn UTC: elke passage wordt eerst naar
+  // lokale tijd omgezet, zodat ze op de juiste lokale kalenderdag landen
+  // (ook rond middernacht en bij het wisselen tussen zomer- en wintertijd).
   const vandaag = new Date(); vandaag.setHours(0,0,0,0);
-  const labels = [], values = [], isSunday = [];
+  const labels = [], values = [], isSunday = [], dagStarts = [];
   const telling = {};
   (passages || []).forEach(p => {
     if (!p.date) return;
-    telling[p.date] = (telling[p.date] || 0) + 1;
+    const d = new Date(p.time ? `${p.date}T${p.time}:00Z` : `${p.date}T12:00:00Z`);
+    if (isNaN(d)) return;
+    const k = localDateKey(d);
+    telling[k] = (telling[k] || 0) + 1;
   });
   for (let i = dagen - 1; i >= 0; i--) {
     const d = new Date(vandaag);
     d.setDate(d.getDate() - i);
-    const iso = d.toISOString().slice(0,10);
     labels.push(d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}));
-    values.push(telling[iso] || 0);
+    values.push(telling[localDateKey(d)] || 0);
     isSunday.push(d.getDay() === 0);
+    dagStarts.push(d);
   }
-  return {labels, values, isSunday};
+  return {labels, values, isSunday, dagStarts};
+}
+
+let aisStoringenPromise = null;
+function laadAISStoringen() {
+  // Eén keer ophalen: afgesloten storingen uit de Worker + startmoment van de registratie.
+  if (!aisStoringenPromise) {
+    aisStoringenPromise = (async () => {
+      try {
+        const r = await fetch(AIS_OUTAGES_URL, {cache: "no-store"});
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const j = await r.json();
+        aisLoggedOutages = j.outages || [];
+        let since = j.since ? new Date(j.since) : null;
+        if (!since || isNaN(since)) {
+          // zonder 'since': vroegste gelogde storing als ondergrens (voorzichtig)
+          const vroegste = aisLoggedOutages.map(o => Date.parse(o.from)).filter(t => !isNaN(t));
+          since = vroegste.length ? new Date(Math.min(...vroegste)) : null;
+        }
+        const vroegste2 = aisLoggedOutages.map(o => Date.parse(o.from)).filter(t => !isNaN(t));
+        if (vroegste2.length && (!since || Math.min(...vroegste2) < since.getTime())) since = new Date(Math.min(...vroegste2));
+        return {outages: aisLoggedOutages, since};
+      } catch(e) { return {outages: [], since: null}; }
+    })();
+  }
+  return aisStoringenPromise;
+}
+
+function offlinePerDag(dagStarts, outages, since) {
+  // Per lokale dag: {offline, gedekt} in minuten; null als de dag niet gevolgd werd.
+  const nu = Date.now();
+  const lijst = (outages || []).map(o => [Date.parse(o.from), Date.parse(o.to)]).filter(x => !isNaN(x[0]) && !isNaN(x[1]));
+  if (aisOfflineSince !== null && aisOfflineSince.getTime() > 0) lijst.push([aisOfflineSince.getTime(), nu]);
+  return dagStarts.map(d0 => {
+    if (!since) return null;
+    const s = d0.getTime();
+    const e = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + 1).getTime(); // lokale middernacht (DST-proof)
+    const van = Math.max(s, since.getTime()), tot = Math.min(e, nu);
+    if (tot <= van) return null;
+    let off = 0;
+    lijst.forEach(([f, t]) => { off += Math.max(0, Math.min(t, tot) - Math.max(f, van)); });
+    return {offline: off / 60000, gedekt: (tot - van) / 60000};
+  });
 }
 
 function localTimeLabel(utcDateStr, utcTimeStr) {
@@ -1036,10 +1090,7 @@ async function renderTodayVessels() {
 
   if (upEl) upEl.textContent = `${vanVandaag.length} vessel${vanVandaag.length===1?"":"s"} today (local calendar day)`;
 
-  try {
-    const ro = await fetch(AIS_OUTAGES_URL, {cache: "no-store"});
-    if (ro.ok) aisLoggedOutages = (await ro.json()).outages || [];
-  } catch(e) {}
+  await laadAISStoringen();
   aisTodayList = vanVandaag;
   redrawTodayTimeline();
 
@@ -1547,17 +1598,40 @@ async function renderAIS() {
   // 28-day history bar chart — real vessel passages from data/ais_passages.json
   const passages = await haalAISPassagesOp();
   renderTodayVessels(); // eigen fetch — onafhankelijk van bovenstaande, filtert op lokale dag
-  const {labels,values,isSunday} = groepeerPassagesPerDag(passages, 28);
+  const {labels,values,isSunday,dagStarts} = groepeerPassagesPerDag(passages, 28);
   const barColors  = values.map((_,i)=> isSunday[i] ? "rgba(21,101,192,0.15)" : "rgba(25,118,210,0.55)");
   const borderClrs = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
+  // Offline-tijd van de ontvanger per dag (null = niet gevolgd)
+  const st = await laadAISStoringen();
+  const offl = offlinePerDag(dagStarts, st.outages, st.since);
+  const onlinePct = offl.map(o => o ? Math.round(1000 * (o.gedekt - o.offline) / o.gedekt) / 10 : null);
+  const fmtDuur = min => { const m = Math.round(min); return m >= 60 ? `${Math.floor(m/60)} h ${String(m%60).padStart(2,"0")} min` : `${m} min`; };
+  const sinceEl = document.getElementById("ais-offline-since");
+  if (sinceEl) sinceEl.textContent = st.since
+    ? `Receiver uptime has been logged since ${st.since.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}; earlier days show no uptime data. On days when the receiver was not fully online, the number of ships is a minimum.`
+    : "Receiver uptime is not logged yet.";
   setTimeout(()=>{
     const el=document.getElementById("ais-chart"); if(!el) return;
     new Chart(el.getContext("2d"),{type:"bar",
-      data:{labels,datasets:[{data:values,backgroundColor:barColors,borderColor:borderClrs,borderWidth:1.5,borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,
+      data:{labels,datasets:[
+        {label:"Ships",data:values,backgroundColor:barColors,borderColor:borderClrs,borderWidth:1.5,borderRadius:4,order:2},
+        {type:"line",label:"Receiver online",data:onlinePct,yAxisID:"y2",borderColor:"#2e7d32",backgroundColor:"#2e7d32",
+         borderWidth:1.5,pointRadius:3,pointHoverRadius:5,spanGaps:false,tension:0,order:1},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
         plugins:{legend:{display:false},tooltip:{backgroundColor:"rgba(13,27,42,0.9)",padding:10,
-          callbacks:{title: items => items[0].label + (isSunday[items[0].dataIndex] ? " ☀ Sunday (no commercial navigation)" : "")}}},
-        scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5}}}}
+          callbacks:{
+            title: items => items[0].label + (isSunday[items[0].dataIndex] ? " ☀ Sunday (no commercial navigation)" : ""),
+            label: item => {
+              if (item.dataset.yAxisID === "y2") {
+                const o = offl[item.dataIndex];
+                return o ? `Receiver online: ${fmtDuur(o.gedekt - o.offline)} of ${fmtDuur(o.gedekt)} (${onlinePct[item.dataIndex]} %)` : "Receiver online: not tracked";
+              }
+              return `Ships: ${item.parsed.y}`;
+            }}}},
+        scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
+                y:{grid:{color:"rgba(0,0,0,0.06)"},ticks:{stepSize:1,maxTicksLimit:5},beginAtZero:true},
+                y2:{position:"right",min:0,max:100,grid:{display:false},ticks:{maxTicksLimit:5,callback:v=>v+" %",color:"#2e7d32"}}}}
     });
   },200);
   // Start live polling — init map first, then start polling
