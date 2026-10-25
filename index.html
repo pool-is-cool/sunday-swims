@@ -933,34 +933,46 @@ function groepeerPassagesPerDag(passages, dagen) {
 
 let aisStoringenPromise = null;
 function laadAISStoringen() {
-  // Eén keer ophalen: afgesloten storingen uit de Worker + startmoment van de registratie.
+  // Eén keer ophalen: afgesloten storingen uit de Worker, het startmoment van de registratie
+  // en een eventuele LOPENDE storing (laatste update ouder dan 5 min). Die laatste is nog
+  // niet in de Worker-log opgenomen: die wordt pas bij herstel weggeschreven.
   if (!aisStoringenPromise) {
     aisStoringenPromise = (async () => {
+      let outages = [], since = null, lopend = null;
       try {
         const r = await fetch(AIS_OUTAGES_URL, {cache: "no-store"});
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        const j = await r.json();
-        aisLoggedOutages = j.outages || [];
-        let since = j.since ? new Date(j.since) : null;
-        if (!since || isNaN(since)) {
-          // zonder 'since': vroegste gelogde storing als ondergrens (voorzichtig)
-          const vroegste = aisLoggedOutages.map(o => Date.parse(o.from)).filter(t => !isNaN(t));
-          since = vroegste.length ? new Date(Math.min(...vroegste)) : null;
+        if (r.ok) {
+          const j = await r.json();
+          outages = j.outages || [];
+          since = j.since ? new Date(j.since) : null;
+          if (since && isNaN(since)) since = null;
         }
-        const vroegste2 = aisLoggedOutages.map(o => Date.parse(o.from)).filter(t => !isNaN(t));
-        if (vroegste2.length && (!since || Math.min(...vroegste2) < since.getTime())) since = new Date(Math.min(...vroegste2));
-        return {outages: aisLoggedOutages, since};
-      } catch(e) { return {outages: [], since: null}; }
+      } catch(e) {}
+      try {
+        const r2 = await fetch(AIS_ENDPOINT, {cache: "no-store"});
+        if (r2.ok) {
+          const j2 = await r2.json();
+          const u = j2.updated ? new Date(j2.updated) : null;
+          if (u && !isNaN(u) && Date.now() - u.getTime() > AIS_OFFLINE_AFTER_MS) lopend = u;
+        }
+      } catch(e) {}
+      aisLoggedOutages = outages;
+      // ondergrens van de registratie: 'since', maar nooit later dan de vroegste bekende storing
+      const starts = outages.map(o => Date.parse(o.from)).filter(t => !isNaN(t));
+      if (lopend) starts.push(lopend.getTime());
+      if (starts.length && (!since || Math.min(...starts) < since.getTime())) since = new Date(Math.min(...starts));
+      return {outages, since, lopend};
     })();
   }
   return aisStoringenPromise;
 }
 
-function offlinePerDag(dagStarts, outages, since) {
+function offlinePerDag(dagStarts, outages, since, lopend) {
   // Per lokale dag: {offline, gedekt} in minuten; null als de dag niet gevolgd werd.
   const nu = Date.now();
   const lijst = (outages || []).map(o => [Date.parse(o.from), Date.parse(o.to)]).filter(x => !isNaN(x[0]) && !isNaN(x[1]));
-  if (aisOfflineSince !== null && aisOfflineSince.getTime() > 0) lijst.push([aisOfflineSince.getTime(), nu]);
+  const lopendVan = (aisOfflineSince !== null && aisOfflineSince.getTime() > 0) ? aisOfflineSince : lopend;
+  if (lopendVan) lijst.push([lopendVan.getTime(), nu]);
   return dagStarts.map(d0 => {
     if (!since) return null;
     const s = d0.getTime();
@@ -1044,14 +1056,24 @@ function renderTodayTimeline(list, outages) {
     svg += `<text x="${x}" y="${lineY+20}" font-size="10" fill="#78909c" text-anchor="${h===0?"start":h===24?"end":"middle"}">${String(h).padStart(2,"0")}:00</text>`;
   }
   // storingen van de ontvanger (offline-periodes) als grijze band op de tijdlijn
+  // De as loopt van 0:00 tot 24:00 op de KLOK. Op de dag van de wintertijd/zomertijd-wissel
+  // duurt de dag 25/23 uur, dus tijdstippen worden naar klokminuten omgezet (niet naar
+  // verstreken minuten sinds middernacht), anders schuift de band een uur op.
   const dagStart = new Date(); dagStart.setHours(0,0,0,0);
-  const dagEind  = new Date(dagStart.getTime() + 86400000);
+  const dagEind  = new Date(dagStart.getFullYear(), dagStart.getMonth(), dagStart.getDate() + 1);
+  const klokMin = ms => {
+    if (ms <= dagStart.getTime()) return 0;
+    if (ms >= dagEind.getTime()) return 1440;
+    const d = new Date(ms);
+    return d.getHours() * 60 + d.getMinutes();
+  };
   (outages || []).forEach(o => {
-    const f = Math.max(new Date(o.from).getTime(), dagStart.getTime());
-    const t = Math.min(new Date(o.to).getTime(), dagEind.getTime());
-    if (!(t > f)) return;
-    const xa = xOf((f - dagStart.getTime()) / 60000), xb = xOf((t - dagStart.getTime()) / 60000);
-    svg += `<rect x="${xa}" y="${lineY-10}" width="${Math.max(xb-xa,2)}" height="20" fill="#ffb300" fill-opacity="0.35"><title>Receiver offline ${fmtLocalTime(new Date(f))}–${fmtLocalTime(new Date(t))}</title></rect>`;
+    const f = new Date(o.from).getTime(), t = new Date(o.to).getTime();
+    if (isNaN(f) || isNaN(t) || t <= dagStart.getTime() || f >= dagEind.getTime()) return;
+    const mf = klokMin(f), mt = klokMin(t);
+    if (!(mt > mf)) return;
+    const xa = xOf(mf), xb = xOf(mt);
+    svg += `<rect x="${xa}" y="${lineY-10}" width="${Math.max(xb-xa,2)}" height="20" fill="#ffb300" fill-opacity="0.35"><title>Receiver offline ${fmtLocalTime(new Date(Math.max(f, dagStart.getTime())))}–${fmtLocalTime(new Date(Math.min(t, dagEind.getTime())))}</title></rect>`;
   });
   svg += `<line x1="${x0}" y1="${lineY}" x2="${x1}" y2="${lineY}" stroke="#90a4ae" stroke-width="2"/>`;
   const now = new Date(), nowMin = now.getHours()*60 + now.getMinutes();
@@ -1603,7 +1625,7 @@ async function renderAIS() {
   const borderClrs = values.map((_,i)=> isSunday[i] ? "#1565c0" : "#1976d2");
   // Offline-tijd van de ontvanger per dag (null = niet gevolgd)
   const st = await laadAISStoringen();
-  const offl = offlinePerDag(dagStarts, st.outages, st.since);
+  const offl = offlinePerDag(dagStarts, st.outages, st.since, st.lopend);
   const onlinePct = offl.map(o => o ? Math.round(1000 * (o.gedekt - o.offline) / o.gedekt) / 10 : null);
   const fmtDuur = min => { const m = Math.round(min); return m >= 60 ? `${Math.floor(m/60)} h ${String(m%60).padStart(2,"0")} min` : `${m} min`; };
   const sinceEl = document.getElementById("ais-offline-since");
